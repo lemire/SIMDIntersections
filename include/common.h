@@ -36,8 +36,8 @@
 #include <string>
 #include <stdexcept>
 #include <sstream>
-#include <tr1/memory>
-#include <unordered_set>
+//#include <tr1/memory>
+#include <tr1/unordered_set>
 #include <vector>
 
 #endif /* COMMON_H_ */
