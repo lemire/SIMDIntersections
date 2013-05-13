@@ -15,7 +15,6 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 #include "common.h"
-//#include "util.h"
 #include "timer.h"
 #include "synthetic.h"
 
@@ -106,7 +105,7 @@ int main(int argc, char **argv) {
 	uint64_t time = 0;
 	cardinalityintersectionfunction mycardinterfunc[] = {
 			danielshybridintersectioncardinality,
-			widevector2_cardinality_intersect, intersectioncardinality,
+			widevector_cardinality_intersect, intersectioncardinality,
 			frogintersectioncardinality,
 			onesidedgallopingintersectioncardinality,
 			classicalintersectioncardinality,
@@ -114,7 +113,7 @@ int main(int argc, char **argv) {
 			highlyscalablewordpresscom::cardinality_intersect_SIMD,
 			highlyscalablewordpresscom::opti_cardinality_intersect_SIMD,
 			highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD,
-			nate_count_medium, nate2_count_medium, nate3_count_medium, };
+			nate_count_medium, nate2_count_medium, nate3_count_medium};
 	cardinalityintersectionfunctionpart
 			mypartcardinterfunc[] =
 					{

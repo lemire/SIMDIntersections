@@ -25,7 +25,7 @@ size_t danielshybridintersectioncardinality(const uint32_t * set1,
 				return nate3_count_medium(set2, length2, set1, length1);
 		}
 	}
-	return widevector2_cardinality_intersect(set1, length1, set2, length2);
+	return widevector_cardinality_intersect(set1, length1, set2, length2);
 }
 
 #endif /* HYBRIDINTERSECTION_H_ */

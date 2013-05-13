@@ -387,6 +387,7 @@ size_t nate4_count_medium(const uint32_t *rare, const size_t lenRare,
 			stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
 }
 
+
 size_t nate5_count_medium(const uint32_t *rare, const size_t lenRare,
 		const uint32_t *freq, const size_t lenFreq) {
 	// FUTURE: could swap freq and rare if inverted
