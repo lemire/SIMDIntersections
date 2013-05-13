@@ -7,6 +7,13 @@
 #include <unistd.h>
 
 #include "intersection.h"
+#include "partitionedintersection.h"
+#include "hscalableintersection.h"
+#include "gallopingintersection.h"
+#include "binarysearchintersection.h"
+#include "hybridintersection.h"
+#include "mediumintersection.h"
+#include "widevectorintersection.h"
 #include "common.h"
 #include "util.h"
 #include "timer.h"
@@ -111,8 +118,8 @@ int main(int argc, char **argv) {
 	cardinalityintersectionfunctionpart
 			mypartcardinterfunc[] =
 					{
-							highlyscalablewordpresscom::cardinality_intersect_partitioned,
-							highlyscalablewordpresscom::faster2_cardinality_intersect_partitioned };
+							partitioned::cardinality_intersect_partitioned,
+							partitioned::faster2_cardinality_intersect_partitioned };
 	cout << "# " << endl;
 	cout << "#schemes are : " << endl;
 	cout << "# Daniel's super hyper hybrid " << endl;
@@ -253,7 +260,7 @@ int main(int argc, char **argv) {
 		assert(pdata.size() == 2 * howmany);
 		for (size_t zz = 0; zz < data.size(); ++zz) {
 			pdata[zz].resize(data[zz].size() * 4);
-			const size_t c = highlyscalablewordpresscom::partition(
+			const size_t c = partitioned::partition(
 					&data[zz][0], data[zz].size(), &pdata[zz][0],
 					pdata[zz].size());
 			pdata[zz].resize(c);
@@ -263,7 +270,7 @@ int main(int argc, char **argv) {
 			if (safe) {
 				vector < uint32_t > testvec(data[zz].size());
 				size_t recovsize =
-						highlyscalablewordpresscom::inverse_partition(
+						partitioned::inverse_partition(
 								&testvec[0], testvec.size(), &pdata[zz][0],
 								pdata[zz].size());
 				if (testvec.size() != recovsize)
