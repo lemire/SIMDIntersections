@@ -111,9 +111,8 @@ int main(int argc, char **argv) {
 			classicalintersectioncardinality,
 			highlyscalablewordpresscom::cardinality_intersect_scalar,
 			highlyscalablewordpresscom::cardinality_intersect_SIMD,
-			highlyscalablewordpresscom::opti_cardinality_intersect_SIMD,
 			highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD,
-			nate_count_medium, nate2_count_medium, nate3_count_medium};
+			nate_count_medium, natedan_count_medium};
 	cardinalityintersectionfunctionpart
 			mypartcardinterfunc[] =
 					{
@@ -129,11 +128,9 @@ int main(int argc, char **argv) {
 	cout << "# textbook scalar merge (Daniel's version) " << endl;
 	cout << "# another textbook scalar merge " << endl;
 	cout << "# SIMD taken from web " << endl;
-	cout << "# Daniel's version of the SIMD taken from web " << endl;
-	cout << "# Daniel's version of the SIMD taken from web (2) " << endl;
+	cout << "# Daniel's version of the SIMD taken from web  " << endl;
 	cout << "# Nate's medium range SSE for -r 20 to -r 200" << endl;
-	cout << "# Hacked version of Nate's by D. Lemire (1)" << endl;
-	cout << "# Hacked version of Nate's by D. Lemire (2)" << endl;
+	cout << "# Hacked version of Nate's by D. Lemire " << endl;
 
 	cout
 			<< "# Something from a paper by Intel guys (*not* over sorted arrays) "
@@ -142,7 +139,7 @@ int main(int argc, char **argv) {
 			<< "# Daniel's version of the previous scheme (*not* over sorted arrays) "
 			<< endl;
 	cout << "# " << endl;
-	const size_t HOWMANYALGO = 13;
+	const size_t HOWMANYALGO = 11;
 	const size_t HOWMANYPARTALGO = 2;
 	cout << "# first column is relative size of intersection" << endl;
 	if (ratio > 1) {
