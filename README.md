@@ -1,0 +1,4 @@
+SIMDIntersections
+=================
+
+Vectorized intersections
