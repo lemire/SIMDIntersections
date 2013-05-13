@@ -387,20 +387,20 @@ size_t frogintersectioncardinality(const uint32_t * set1, const size_t length1,
 /**
  * assumes that smalllength < largelength
  */
-size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset, const size_t smalllength,
-		const uint32_t * largeset, const size_t largelength) {
+size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
+		const size_t smalllength, const uint32_t * largeset,
+		const size_t largelength) {
 	if (0 == smalllength)
 		return 0;
 	size_t answer = 0;
 	size_t k1 = 0, k2 = 0;
 	while (true) {
-		if (largeset[k1] <  smallset[k2]) {
+		if (largeset[k1] < smallset[k2]) {
 			k1 = __frogadvanceUntil(largeset, k1, largelength, smallset[k2]);
 			if (k1 == largelength)
 				return answer;
 		}
-		midpoint:
-		if (smallset[k2] < largeset[k1]) {
+		midpoint: if (smallset[k2] < largeset[k1]) {
 			++k2;
 			if (k2 == smalllength)
 				return answer;
@@ -418,7 +418,6 @@ size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset, const
 	return answer;
 
 }
-
 
 /**
  * This is the classical approach
@@ -2005,14 +2004,14 @@ size_t nate5_count_medium(const uint32_t *rare, const size_t lenRare,
 	if (freq > stopFreq) {
 		return nate_count_scalar(freq, lenFreq, rare, lenRare);
 	}
-	uint32_t maxFreq = freq[ veclen + vecmax];
+	uint32_t maxFreq = freq[veclen + vecmax];
 	vec M0, M1;
 
 	while (maxFreq < *rare) { // advance freq to a possible match
 		freq += veclen * 2; // NOTE: loop below requires this
 		if (freq > stopFreq)
 			goto FINISH_SCALAR;
-		maxFreq = freq[veclen  + vecmax];
+		maxFreq = freq[veclen + vecmax];
 	}
 	M0 = _mm_load_si128((vec *) freq + 0);
 	M1 = _mm_load_si128((vec *) freq + 1);
@@ -2024,12 +2023,12 @@ size_t nate5_count_medium(const uint32_t *rare, const size_t lenRare,
 			freq += veclen * 2; // advance 8 vectors
 			if (freq > stopFreq)
 				goto FINISH_SCALAR;
-			maxFreq = freq[veclen  + vecmax];
+			maxFreq = freq[veclen + vecmax];
 			while (maxFreq < matchRare) { // if still no match possible
 				freq += veclen * 2; // advance another 8 vectors
 				if (freq > stopFreq)
 					goto FINISH_SCALAR;
-				maxFreq = freq[veclen  + vecmax];
+				maxFreq = freq[veclen + vecmax];
 			}
 			M0 = _mm_load_si128((vec *) freq + 0);
 			M1 = _mm_load_si128((vec *) freq + 1);
@@ -2046,15 +2045,16 @@ size_t nate5_count_medium(const uint32_t *rare, const size_t lenRare,
 			stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
 }
 
-
 size_t danielshybridintersectioncardinality(const uint32_t * set1,
 		const size_t length1, const uint32_t * set2, const size_t length2) {
 	if ((10 * length1 <= length2) or (10 * length2 <= length1)) {
 		if ((200 * length1 < length2) or (200 * length2 < length1)) {
-			if(length1 < length2)
-				return onesidedgallopingintersectioncardinality(set1, length1, set2, length2);
+			if (length1 < length2)
+				return onesidedgallopingintersectioncardinality(set1, length1,
+						set2, length2);
 			else
-				return onesidedgallopingintersectioncardinality(set2, length2, set1, length1);
+				return onesidedgallopingintersectioncardinality(set2, length2,
+						set1, length1);
 		} else {
 			if (length1 < length2)
 				return nate3_count_medium(set1, length1, set2, length2);

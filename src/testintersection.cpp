@@ -67,13 +67,17 @@ int main(int argc, char **argv) {
 		default:
 			abort();
 		}
-        if(howmany == 0) {
-          if(natemode) howmany = 1; else howmany = 20;
-        }
+	if (howmany == 0) {
+		if (natemode)
+			howmany = 1;
+		else
+			howmany = 20;
+	}
 	uint32_t MaxBit = 31;
-	if(natemode) {
-		MaxBit = S+7;
-		if(MaxBit>31) MaxBit = 31;
+	if (natemode) {
+		MaxBit = S + 7;
+		if (MaxBit > 31)
+			MaxBit = 31;
 	}
 
 	const uint32_t N = 1U << S;
@@ -85,7 +89,8 @@ int main(int argc, char **argv) {
 		} else {
 			cout << "# size of arrays = " << N << endl;
 		}
-	else cout <<"# in natemode" << endl;
+	else
+		cout << "# in natemode" << endl;
 
 	ClusteredDataGenerator cdg;
 	WallClockTimer z;
@@ -94,8 +99,7 @@ int main(int argc, char **argv) {
 	uint64_t time = 0;
 	cardinalityintersectionfunction mycardinterfunc[] = {
 			danielshybridintersectioncardinality,
-			widevector2_cardinality_intersect,
-			intersectioncardinality,
+			widevector2_cardinality_intersect, intersectioncardinality,
 			frogintersectioncardinality,
 			onesidedgallopingintersectioncardinality,
 			classicalintersectioncardinality,
@@ -103,40 +107,46 @@ int main(int argc, char **argv) {
 			highlyscalablewordpresscom::cardinality_intersect_SIMD,
 			highlyscalablewordpresscom::opti_cardinality_intersect_SIMD,
 			highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD,
-                        nate_count_medium,
-                        nate2_count_medium,
-                        nate3_count_medium,
-			 };
-	cardinalityintersectionfunctionpart mypartcardinterfunc[] = {
-			highlyscalablewordpresscom::cardinality_intersect_partitioned,
-			highlyscalablewordpresscom::faster2_cardinality_intersect_partitioned
-	};
-	cout<<"# "<<endl;
-	cout<<"#schemes are : "<<endl;
-	cout<<"# Daniel's super hyper hybrid "<<endl;
-	cout<<"# Daniel's 'widevector' SIMD merge (256-bit) "<<endl;
-	cout<<"# Daniel's scalar merge "<<endl;
-	cout<<"# 'frog' (galloping) scalar merge "<<endl;
-	cout<<"# 'frog' (galloping) scalar merge -- one-sided "<<endl;
-	cout<<"# textbook scalar merge (Daniel's version) "<<endl;
-	cout<<"# another textbook scalar merge "<<endl;
-	cout<<"# SIMD taken from web "<<endl;
-	cout<<"# Daniel's version of the SIMD taken from web "<<endl;
-	cout<<"# Daniel's version of the SIMD taken from web (2) "<<endl;
-	cout<<"# Nate's medium range SSE for -r 20 to -r 200"<<endl;
-	cout<<"# Hacked version of Nate's by D. Lemire (1)"<<endl;
-	cout<<"# Hacked version of Nate's by D. Lemire (2)"<<endl;
+			nate_count_medium, nate2_count_medium, nate3_count_medium, };
+	cardinalityintersectionfunctionpart
+			mypartcardinterfunc[] =
+					{
+							highlyscalablewordpresscom::cardinality_intersect_partitioned,
+							highlyscalablewordpresscom::faster2_cardinality_intersect_partitioned };
+	cout << "# " << endl;
+	cout << "#schemes are : " << endl;
+	cout << "# Daniel's super hyper hybrid " << endl;
+	cout << "# Daniel's 'widevector' SIMD merge (256-bit) " << endl;
+	cout << "# Daniel's scalar merge " << endl;
+	cout << "# 'frog' (galloping) scalar merge " << endl;
+	cout << "# 'frog' (galloping) scalar merge -- one-sided " << endl;
+	cout << "# textbook scalar merge (Daniel's version) " << endl;
+	cout << "# another textbook scalar merge " << endl;
+	cout << "# SIMD taken from web " << endl;
+	cout << "# Daniel's version of the SIMD taken from web " << endl;
+	cout << "# Daniel's version of the SIMD taken from web (2) " << endl;
+	cout << "# Nate's medium range SSE for -r 20 to -r 200" << endl;
+	cout << "# Hacked version of Nate's by D. Lemire (1)" << endl;
+	cout << "# Hacked version of Nate's by D. Lemire (2)" << endl;
 
-	cout<<"# Something from a paper by Intel guys (*not* over sorted arrays) "<<endl;
-	cout<<"# Daniel's version of the previous scheme (*not* over sorted arrays) "<<endl;
-	cout<<"# "<<endl;
+	cout
+			<< "# Something from a paper by Intel guys (*not* over sorted arrays) "
+			<< endl;
+	cout
+			<< "# Daniel's version of the previous scheme (*not* over sorted arrays) "
+			<< endl;
+	cout << "# " << endl;
 	const size_t HOWMANYALGO = 13;
 	const size_t HOWMANYPARTALGO = 2;
 	cout << "# first column is relative size of intersection" << endl;
-	if(ratio > 1) {
-		cout << "# next two are estimated average bits per int for differential coding"<<endl;
+	if (ratio > 1) {
+		cout
+				<< "# next two are estimated average bits per int for differential coding"
+				<< endl;
 	} else {
-		cout << "# next is estimated average bits per int for differential coding"<<endl;
+		cout
+				<< "# next is estimated average bits per int for differential coding"
+				<< endl;
 	}
 
 	cout
@@ -146,11 +156,16 @@ int main(int argc, char **argv) {
 	for (uint32_t gap = 0; gap + S <= MaxBit; gap += 1) {
 		vector < vector<uint32_t> > data;
 		for (size_t zz = 0; zz < howmany; ++zz) {
-			if(natemode) {
-				data.push_back(cdg.generateClustered((1U << (MaxBit-gap)) / ratio, 1U << MaxBit));
-				data.push_back(cdg.generateClustered((1U << (MaxBit-gap)), 1U << MaxBit));
+			if (natemode) {
+				data.push_back(
+						cdg.generateClustered((1U << (MaxBit - gap)) / ratio,
+								1U << MaxBit));
+				data.push_back(
+						cdg.generateClustered((1U << (MaxBit - gap)),
+								1U << MaxBit));
 			} else {
-				data.push_back(cdg.generateClustered(N / ratio, 1U << (gap + S)));
+				data.push_back(
+						cdg.generateClustered(N / ratio, 1U << (gap + S)));
 				data.push_back(cdg.generateClustered(N, 1U << (gap + S)));
 			}
 		}
@@ -168,37 +183,49 @@ int main(int argc, char **argv) {
 		cout << std::fixed << std::setprecision(3) << intersize * 1.0
 				/ smallestsize << "\t";
 		cout.flush();
-		if(ratio > 1) {
-			if(natemode) {
-				cout<< log( 1+(1U << MaxBit) * 1.0 /((1U << (MaxBit-gap)) / ratio) ) / log(2) <<"\t";
-				cout<< log(1+(1U << MaxBit) * 1.0 /((1U << (MaxBit-gap)) )) / log(2) << "\t";
+		if (ratio > 1) {
+			if (natemode) {
+				cout << log(
+						1 + (1U << MaxBit) * 1.0 / ((1U << (MaxBit - gap))
+								/ ratio)) / log(2) << "\t";
+				cout
+						<< log(
+								1 + (1U << MaxBit) * 1.0 / ((1U << (MaxBit
+										- gap)))) / log(2) << "\t";
 			} else {
-				cout<< log(1+(1U << (gap + S)) * 1.0 /(N / ratio) ) / log(2)<<"\t";
-				cout<< log(1+(1U << (gap + S)) * 1.0 /(N )) / log(2) << "\t";
+				cout << log(1 + (1U << (gap + S)) * 1.0 / (N / ratio)) / log(2)
+						<< "\t";
+				cout << log(1 + (1U << (gap + S)) * 1.0 / (N)) / log(2) << "\t";
 			}
 		} else {
-			if(natemode) {
-				cout<< log(1+(1U << MaxBit) * 1.0 /((1U << (MaxBit-gap)) ) ) / log(2)<< "\t";
+			if (natemode) {
+				cout
+						<< log(
+								1 + (1U << MaxBit) * 1.0 / ((1U << (MaxBit
+										- gap)))) / log(2) << "\t";
 			} else {
-				cout<< log(1+(1U << (gap + S)) * 1.0 /(N )) / log(2) << "\t";
+				cout << log(1 + (1U << (gap + S)) * 1.0 / (N)) / log(2) << "\t";
 			}
 
 		}
-		cout << "\t" ;
+		cout << "\t";
 		cout.flush();
 		for (uint32_t whichalgo = 0; whichalgo < HOWMANYALGO; ++whichalgo) {
-			if(safe) for (size_t k = 0; k < 2 * howmany; k += 2) {
-				size_t correctanswer = classicalintersectioncardinality(&data[k][0],
-						data[k].size(), &data[k + 1][0], data[k + 1].size());
-				size_t thisschemesanswer = mycardinterfunc[whichalgo](&data[k][0],
-						data[k].size(), &data[k + 1][0],
-						data[k + 1].size());
-				if(correctanswer != thisschemesanswer) {
-					cerr << "expecting cardinality of "<< correctanswer;
-					cerr << " got " << thisschemesanswer << " instead." <<endl;
-					throw runtime_error("bug");
+			if (safe)
+				for (size_t k = 0; k < 2 * howmany; k += 2) {
+					size_t correctanswer = classicalintersectioncardinality(
+							&data[k][0], data[k].size(), &data[k + 1][0],
+							data[k + 1].size());
+					size_t thisschemesanswer = mycardinterfunc[whichalgo](
+							&data[k][0], data[k].size(), &data[k + 1][0],
+							data[k + 1].size());
+					if (correctanswer != thisschemesanswer) {
+						cerr << "expecting cardinality of " << correctanswer;
+						cerr << " got " << thisschemesanswer << " instead."
+								<< endl;
+						throw runtime_error("bug");
+					}
 				}
-			}
 			volume = 0;
 			z.reset();
 			for (size_t L = 0; L < loop; ++L) {
@@ -246,35 +273,35 @@ int main(int argc, char **argv) {
 			}
 
 		}
-		cout <<"\t";
+		cout << "\t";
 		for (uint32_t whichalgo = 0; whichalgo < HOWMANYPARTALGO; ++whichalgo) {
 
 			volume = 0;
 			if (safe)
-			for (size_t k = 0; k < 2*howmany; k+=2) {
-				size_t correctanswer = classicalintersectioncardinality(&data[k][0],
-						data[k].size(), &data[k + 1][0], data[k + 1].size());
-				size_t thisschemesanswer = mypartcardinterfunc[whichalgo](
-						&pdata[ k][0], &pdata[ k + 1][0],
-						pdata[ k].size(), pdata[ k + 1].size());
-				if(correctanswer != thisschemesanswer) {
-					cerr << "expecting cardinality of "<< correctanswer;
-					cerr << " got " << thisschemesanswer << " instead." <<endl;
-					throw runtime_error("bug");
-				}
+				for (size_t k = 0; k < 2 * howmany; k += 2) {
+					size_t correctanswer = classicalintersectioncardinality(
+							&data[k][0], data[k].size(), &data[k + 1][0],
+							data[k + 1].size());
+					size_t thisschemesanswer = mypartcardinterfunc[whichalgo](
+							&pdata[k][0], &pdata[k + 1][0], pdata[k].size(),
+							pdata[k + 1].size());
+					if (correctanswer != thisschemesanswer) {
+						cerr << "expecting cardinality of " << correctanswer;
+						cerr << " got " << thisschemesanswer << " instead."
+								<< endl;
+						throw runtime_error("bug");
+					}
 
-			}
+				}
 
 			z.reset();
 
-			for (size_t k = 0; k < 2*howmany; k+=2) {
+			for (size_t k = 0; k < 2 * howmany; k += 2) {
 				volume += data[k].size();
 				volume += data[k + 1].size();
 
-				bogus
-						+= mypartcardinterfunc[whichalgo](
-								&pdata[k][0], &pdata[k + 1][0],
-								pdata[k].size(), pdata[k + 1].size());
+				bogus += mypartcardinterfunc[whichalgo](&pdata[k][0],
+						&pdata[k + 1][0], pdata[k].size(), pdata[k + 1].size());
 			}
 
 			time = z.split();
