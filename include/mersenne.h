@@ -7,7 +7,7 @@
 #define MERSENNE_H_
 
 #include "common.h"
-#include "util.h"
+///#include "util.h"
 
 /**
  *  Mersenne twister - random number generator.

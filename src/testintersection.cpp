@@ -15,7 +15,7 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 #include "common.h"
-#include "util.h"
+//#include "util.h"
 #include "timer.h"
 #include "synthetic.h"
 

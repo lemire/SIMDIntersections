@@ -9,7 +9,7 @@
 #define SYNTHETIC_H_
 
 #include "common.h"
-#include "util.h"
+//#include "util.h"
 #include "mersenne.h"
 
 using namespace std;
