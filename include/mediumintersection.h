@@ -271,18 +271,11 @@ size_t natedanalt_count_medium(const uint32_t *rare, const size_t lenRare,
     for (; rare < stopRare; ++rare) {
         const uint32_t matchRare = *rare;//nextRare;
         const vec Match = _mm_set1_epi32(matchRare);
-        if (maxFreq < matchRare) { // if no match possible
+        while (maxFreq < matchRare) { // if no match possible
             freq += veclen * 8; // advance 8 vectors
             if (freq > stopFreq)
                 goto FINISH_SCALAR;
             maxFreq = freq[veclen * 7 + vecmax];
-            while (maxFreq < matchRare) { // if still no match possible
-                freq += veclen * 8; // advance another 8 vectors
-                if (freq > stopFreq)
-                    goto FINISH_SCALAR;
-                maxFreq = freq[veclen * 7 + vecmax];
-            }
-
         }
         vec F0;
         if(freq[veclen * 3 + vecmax] < matchRare  ) {
