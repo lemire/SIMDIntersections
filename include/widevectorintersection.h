@@ -26,6 +26,7 @@ static size_t __simd4by4(const __m128i v_a, const __m128i v_b) {
 
 }
 
+
 /**
  * Vectorized version by D. Lemire.
  */

@@ -29,7 +29,8 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"danhssimd", highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD},
 	{	"natemedium", nate_count_medium},
 	{	"natedanmedium", natedan_count_medium},
-	{   "natedanaltmedium", natedanalt_count_medium}
+	{   "natedanaltmedium", natedanalt_count_medium},
+    {   "danfarmedium", danfar_count_medium}
 };
 
 
