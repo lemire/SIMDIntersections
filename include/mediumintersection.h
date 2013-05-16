@@ -235,7 +235,7 @@ size_t natedan_count_medium(const uint32_t *rare, const size_t lenRare,
     }
 
     FINISH_SCALAR: return count + nate_count_scalar(freq,
-            stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
+            stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
 
 /**
@@ -297,7 +297,7 @@ size_t natedanalt_count_medium(const uint32_t *rare, const size_t lenRare,
     }
 
     FINISH_SCALAR: return count + nate_count_scalar(freq,
-            stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
+            stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
 
 
@@ -320,22 +320,18 @@ size_t danfar_count_medium(const uint32_t *rare, const size_t lenRare,
     if (freq > stopFreq) {
         return nate_count_scalar(freq, lenFreq, rare, lenRare);
     }
-    uint32_t maxFreq = freq[15 * veclen + vecmax];
-
-    while (maxFreq < *rare) { // advance freq to a possible match
-        freq += veclen * 16; // NOTE: loop below requires this
+    while (freq[veclen * 15 + vecmax] < *rare) {
+        freq += veclen * 16;
         if (freq > stopFreq)
             goto FINISH_SCALAR;
-        maxFreq = freq[veclen * 15 + vecmax];
     }
     for (; rare < stopRare; ++rare) {
         const uint32_t matchRare = *rare;//nextRare;
         const vec Match = _mm_set1_epi32(matchRare);
-        while (maxFreq < matchRare) { // if no match possible
+        while (freq[veclen * 15 + vecmax] < matchRare) { // if no match possible
             freq += veclen * 16; // advance 8 vectors
             if (freq > stopFreq)
                 goto FINISH_SCALAR;
-            maxFreq = freq[veclen * 15 + vecmax];
         }
         vec Q0,Q1,Q2,Q3;
         if(freq[veclen * 7 + vecmax] < matchRare  ) {
@@ -372,8 +368,77 @@ size_t danfar_count_medium(const uint32_t *rare, const size_t lenRare,
     }
 
     FINISH_SCALAR: return count + nate_count_scalar(freq,
-            stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
+            stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
+
+size_t danfarfine_count_medium(const uint32_t *rare, const size_t lenRare,
+        const uint32_t *freq, const size_t lenFreq) {
+    size_t count = 0;
+    if (lenFreq == 0 || lenRare == 0)
+        return count;
+    typedef __m128i vec;
+    const uint32_t veclen = sizeof(VEC) / sizeof(uint32_t);
+    const size_t vecmax = veclen - 1;
+    const size_t freqspace = 16 * veclen;
+    const size_t rarespace = 1;
+
+    const uint32_t *stopFreq = freq + lenFreq - freqspace;
+    const uint32_t *stopRare = rare + lenRare - rarespace;
+    if (freq > stopFreq) {
+        return nate_count_scalar(freq, lenFreq, rare, lenRare);
+    }
+    while (freq[veclen * 15 + vecmax] < *rare) {
+        freq += veclen * 16;
+        if (freq > stopFreq)
+            goto FINISH_SCALAR;
+    }
+    for (; rare < stopRare; ++rare) {
+        const uint32_t matchRare = *rare;//nextRare;
+        const vec Match = _mm_set1_epi32(matchRare);
+        while (freq[veclen * 15 + vecmax] < matchRare) { // if no match possible
+            freq += veclen * 16; // advance 8 vectors
+            if (freq > stopFreq)
+                goto FINISH_SCALAR;
+        }
+        vec Q0,Q1;
+        if(freq[veclen * 7 + vecmax] < matchRare  ) {
+            if(freq[veclen * 11 + vecmax] < matchRare) {
+                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 12), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 13), Match));
+                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 14), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 15), Match));
+
+            } else {
+                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 8), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 9), Match));
+                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 10), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 11), Match));
+            }
+        } else {
+            if(freq[veclen * 3 + vecmax] < matchRare) {
+                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 4), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 5), Match));
+                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 6), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 7), Match));
+            } else {
+                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 0), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 1), Match));
+                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 2), Match),
+                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 3), Match));
+            }
+        }
+        const vec F0 = _mm_or_si128(Q0, Q1);
+        if (_mm_testz_si128(F0, F0)) {
+        } else {
+            count += 1;
+        }
+    }
+
+    FINISH_SCALAR: return count + nate_count_scalar(freq,
+            stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
+}
+
+
 
 
 #endif /* MEDIUMINTERSECTION_H_ */
