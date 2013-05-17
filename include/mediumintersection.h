@@ -133,7 +133,7 @@ size_t nate_count_medium(const uint32_t *rare, const size_t lenRare,
         M5 = _mm_cmpeq_epi32(M5, Match);
         Q2 = _mm_or_si128(M4, M5);
 
-        M6 = _mm_cmpeq_epi32(M6, Match);
+        M6 = _mm_cmpeq_epi32(M6, Match);  
         M7 = _mm_cmpeq_epi32(M7, Match);
         Q3 = _mm_or_si128(M6, M7);
 
@@ -152,6 +152,115 @@ size_t nate_count_medium(const uint32_t *rare, const size_t lenRare,
 
     FINISH_SCALAR: return count + nate_count_scalar(freq,
             stopFreq + FREQSPACE - freq, rare, stopRare + RARESPACE - rare);
+}
+
+
+size_t nate_count_simple16(const uint32_t *rare, const size_t lenRare,
+                          const uint32_t *freq, const size_t lenFreq) {
+    size_t count = 0;
+    if (lenFreq == 0 || lenRare == 0)
+        return count;
+    typedef __m128i vec;
+    const uint32_t veclen = sizeof(VEC) / sizeof(uint32_t);
+    const size_t vecmax = veclen - 1;
+    const size_t freqspace = 16 * veclen;
+    const size_t rarespace = 1;
+
+    const uint32_t *stopFreq = freq + lenFreq - freqspace;
+    const uint32_t *stopRare = rare + lenRare - rarespace;
+    if (freq > stopFreq) {
+        return nate_count_scalar(freq, lenFreq, rare, lenRare);
+    }
+    while (freq[veclen * 15 + vecmax] < *rare) {
+        freq += veclen * 16;
+        if (freq > stopFreq)
+            goto FINISH_SCALAR;
+    }
+
+
+    for (; rare < stopRare; ++rare) {
+        const uint32_t matchRare = *rare;
+        const vec Match = _mm_set1_epi32(matchRare);
+        while (freq[veclen * 15 + vecmax] < matchRare) { // if no match possible
+            freq += veclen * 16; // advance 16 vectors
+            if (freq > stopFreq)
+                goto FINISH_SCALAR;
+        }
+
+        VEC M0, M1, M2, M3, M4, M5, M6, M7;
+        VEC Q0, Q1, Q2, Q3; // quarters
+        VEC S0, S1; // semis
+        VEC F0, F1; // final
+
+        M0 = _mm_load_si128((VEC *) freq + 0);
+        M1 = _mm_load_si128((VEC *) freq + 1);
+        M2 = _mm_load_si128((VEC *) freq + 2);
+        M3 = _mm_load_si128((VEC *) freq + 3);
+        M4 = _mm_load_si128((VEC *) freq + 4);
+        M5 = _mm_load_si128((VEC *) freq + 5);
+        M6 = _mm_load_si128((VEC *) freq + 6);
+        M7 = _mm_load_si128((VEC *) freq + 7);
+
+        M0 = _mm_cmpeq_epi32(M0, Match);
+        M1 = _mm_cmpeq_epi32(M1, Match);
+        Q0 = _mm_or_si128(M0, M1);
+        M0 = _mm_load_si128((VEC *) freq + 8);
+        M1 = _mm_load_si128((VEC *) freq + 9);
+
+        M2 = _mm_cmpeq_epi32(M2, Match);
+        M3 = _mm_cmpeq_epi32(M3, Match);
+        Q1 = _mm_or_si128(M2, M3);
+        M2 = _mm_load_si128((VEC *) freq + 10);
+        M3 = _mm_load_si128((VEC *) freq + 11);
+
+        M4 = _mm_cmpeq_epi32(M4, Match);
+        M5 = _mm_cmpeq_epi32(M5, Match);
+        Q2 = _mm_or_si128(M4, M5);
+        M4 = _mm_load_si128((VEC *) freq + 12);
+        M5 = _mm_load_si128((VEC *) freq + 13);
+
+        M6 = _mm_cmpeq_epi32(M6, Match);
+        M7 = _mm_cmpeq_epi32(M7, Match);
+        Q3 = _mm_or_si128(M6, M7);
+        M6 = _mm_load_si128((VEC *) freq + 14);
+        M7 = _mm_load_si128((VEC *) freq + 15);
+
+        S0 = _mm_or_si128(Q0, Q1);
+        S1 = _mm_or_si128(Q2, Q3);
+        F0 = _mm_or_si128(S0, S1);
+
+        // M0 - M7 have been reloaded 
+
+        M0 = _mm_cmpeq_epi32(M0, Match);
+        M1 = _mm_cmpeq_epi32(M1, Match);
+        Q0 = _mm_or_si128(M0, M1);
+
+        M2 = _mm_cmpeq_epi32(M2, Match);
+        M3 = _mm_cmpeq_epi32(M3, Match);
+        Q1 = _mm_or_si128(M2, M3);
+
+        M4 = _mm_cmpeq_epi32(M4, Match);
+        M5 = _mm_cmpeq_epi32(M5, Match);
+        Q2 = _mm_or_si128(M4, M5);
+
+        M6 = _mm_cmpeq_epi32(M6, Match);
+        M7 = _mm_cmpeq_epi32(M7, Match);
+        Q3 = _mm_or_si128(M6, M7);
+
+        S0 = _mm_or_si128(Q0, Q1);
+        S1 = _mm_or_si128(Q2, Q3);
+        F1 = _mm_or_si128(S0, S1);
+
+        F0 = _mm_or_si128(F0, F1);
+
+        if (_mm_testz_si128(F0, F0)) {
+        } else {
+            count += 1;
+        }
+    }
+
+    FINISH_SCALAR: return count + nate_count_scalar(freq,
+            stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
 
 /**

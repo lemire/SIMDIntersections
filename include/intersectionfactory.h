@@ -33,6 +33,7 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     schemes[ "natedanaltmedium" ] =  natedanalt_count_medium;
     schemes[ "danfarmedium" ] =  danfar_count_medium;
     schemes[ "danfarfinemedium" ] =  danfarfine_count_medium;
+    schemes[ "natesimple16"] = nate_count_simple16;
     return schemes;
 }
 
@@ -65,6 +66,7 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
 	{	"danhssimd", highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD},
 	{	"natemedium", nate_count_medium},
+	{	"natesimple16", nate_count_simple16},
 	{	"natedanmedium", natedan_count_medium},
 	{   "natedanaltmedium", natedanalt_count_medium},
         {   "danfarmedium", danfar_count_medium},
