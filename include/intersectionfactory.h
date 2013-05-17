@@ -12,10 +12,10 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 
-std::map<std::string,std::string> hhh = {
-    {   "schlegel","sfds"},
-    {   "danschlegel","sfds"}
-};
+//std::map<std::string,std::string> hhh = {
+  //  {   "schlegel","sfds"},
+   // {   "danschlegel","sfds"}
+//};
 
 std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"danhybrid",danielshybridintersectioncardinality},
