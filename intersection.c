@@ -117,7 +117,6 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         SETALL(NextMatch, nextMatch);
     }
 
-    const uint32_t *nextChunk = freq;
     goto FIRST_TIME; 
 
     while (usually(rare <= lastRare)) {  
@@ -136,7 +135,6 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
 
         // NOTE: the correct vectors usually are already reloaded 
         //       this loop is the fallback if they are not (or first time)
-        freq = nextChunk;
         if (rarely(maxChunk1 < match)) {  
             do {
                 freq += CHUNKINTS;  
@@ -162,14 +160,14 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         if (sometimes(nextMatch > maxChunk1)) { // PROFILE: verify cmov
             jump = CHUNKINTS;  
         }        
-        nextChunk += jump;
+        freq += jump;
 
 #if (MAXCHUNK >= 2)
         jump = 0;
         if (unlikely(nextMatch > maxChunk2)) { // PROFILE: verify cmov
             jump = CHUNKINTS;  
         }        
-        nextChunk += jump;
+        freq += jump;
 #endif // MAXCHUNK >= 2
 #endif // MAXCHUNK >= 1
 
@@ -179,35 +177,35 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         M1 = _mm_cmpeq_epi32(M1, Match);
         Q0 = _mm_or_si128(M0, M1);
 #if (MAXCHUNK >= 1)
-        maxChunk1 = nextChunk[1 * CHUNKINTS - 1];
+        maxChunk1 = freq[1 * CHUNKINTS - 1];
 #if (MAXCHUNK >= 2)
-        maxChunk2 = nextChunk[2 * CHUNKINTS - 1]; 
+        maxChunk2 = freq[2 * CHUNKINTS - 1]; 
 #endif // MAXCHUNK >= 2
 #endif // MAXCHUNK >= 1
 
         M2 = _mm_cmpeq_epi32(M2, Match);
         M3 = _mm_cmpeq_epi32(M3, Match);
         Q1 = _mm_or_si128(M2, M3);
-        M0 = _mm_load_si128((VECTYPE *) nextChunk + 0);
-        M1 = _mm_load_si128((VECTYPE *) nextChunk + 1);
+        M0 = _mm_load_si128((VECTYPE *) freq + 0);
+        M1 = _mm_load_si128((VECTYPE *) freq + 1);
 
         M4 = _mm_cmpeq_epi32(M4, Match);
         M5 = _mm_cmpeq_epi32(M5, Match);
         Q2 = _mm_or_si128(M4, M5);
-        M2 = _mm_load_si128((VECTYPE *) nextChunk + 2);
-        M3 = _mm_load_si128((VECTYPE *) nextChunk + 3);
+        M2 = _mm_load_si128((VECTYPE *) freq + 2);
+        M3 = _mm_load_si128((VECTYPE *) freq + 3);
 
         M6 = _mm_cmpeq_epi32(M6, Match);
         M7 = _mm_cmpeq_epi32(M7, Match);
         Q3 = _mm_or_si128(M6, M7);
-        M4 = _mm_load_si128((VECTYPE *) nextChunk + 4);
-        M5 = _mm_load_si128((VECTYPE *) nextChunk + 5);
+        M4 = _mm_load_si128((VECTYPE *) freq + 4);
+        M5 = _mm_load_si128((VECTYPE *) freq + 5);
 
         S0 = _mm_or_si128(Q0, Q1);
         S1 = _mm_or_si128(Q2, Q3);
         F0 = _mm_or_si128(S0, S1);
-        M6 = _mm_load_si128((VECTYPE *) nextChunk + 6);
-        M7 = _mm_load_si128((VECTYPE *) nextChunk + 7);
+        M6 = _mm_load_si128((VECTYPE *) freq + 6);
+        M7 = _mm_load_si128((VECTYPE *) freq + 7);
 
         if (! _mm_testz_si128(F0, F0)) {
             count += 1;             // PROFILE: verify cmov
