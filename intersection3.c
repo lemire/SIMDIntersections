@@ -45,8 +45,8 @@
 
 
 
-size_t finish_scalar(const uint32_t *A, const size_t lenA,
-                     const uint32_t *B, const size_t lenB) {
+size_t finish_scalar(const uint32_t *A, size_t lenA,
+                     const uint32_t *B, size_t lenB) {
 
     size_t count = 0;
     if (lenA == 0 || lenB == 0) return count;
@@ -75,8 +75,8 @@ size_t finish_scalar(const uint32_t *A, const size_t lenA,
     return count; // NOTREACHED
 }
 
-size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
-                     const uint32_t *rare, const size_t lenRare) {
+size_t search_chunks(const uint32_t *freq, size_t lenFreq,
+                     const uint32_t *rare, size_t lenRare) {
     
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0) {
@@ -93,16 +93,14 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
 
     uint32_t maxChunk = freq[CHUNKINTS - 1];
     uint32_t nextMatch = *rare;
-    VECTYPE NextMatch = SETALL(nextMatch);
 
-    while (rarely(maxChunk < nextMatch)) {
+    while (sometimes(maxChunk < nextMatch)) {
     RELOAD_FREQ:
-        uint32_t nextFreq = freq + CHUNKINTS;
-        if (nextFreq >= stopFreq) {
+        if (rarely(freq + CHUNKINTS >= stopFreq)) {
             goto FINISH_SCALAR;
         }
-        maxChunk = nextFreq[CHUNKINTS - 1];
-        freq = nextFreq;
+        freq += CHUNKINTS;
+        maxChunk = freq[CHUNKINTS - 1];
     }
         
     VECTYPE M0 = LOAD((VECTYPE *)freq + 0); 
@@ -118,25 +116,22 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
 #endif 
 
-    VECTYPE Q0, Q1, Q2, Q3; // quarters
-    VECTYPE S0, S1; // semis
-    VECTYPE F0; // final
     VECTYPE Match;
 
  CHECK_NEXT_RARE:
-    Match = NextMatch;
+    Match = SETALL(nextMatch);
     ASSERT(maxChunk >= nextMatch);
     if (usually(rare < lastRare)) { 
-    nextMatch = rare[1];     
-    NextMatch = SETALL(nextMatch);
-}
-    rare += 1;   
+        nextMatch = rare[1];     
+    }
+    // NOTE: safe to leave nextMatch set to *rare on last iteration
+    // FUTURE: skip over freq jumps for last iteration?
 
 #if (MAXCHUNK >= 1)
-    uint32_t jump = 0;
+    uint32_t jump = 0;  // convince compiler we really want a cmov
     if (sometimes(nextMatch > maxChunk)) { // PROFILE: verify cmov
-    jump = CHUNKINTS;
-}        
+        jump = CHUNKINTS;
+    }        
     freq += jump;
 #if (MAXCHUNK >= 2)
     jump = 0;
@@ -148,6 +143,10 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
 #endif // MAXCHUNK >= 1
 
     COMPILER_BARRIER;
+
+    VECTYPE Q0, Q1, Q2, Q3; // quarters
+    VECTYPE S0, S1; // semis
+    VECTYPE F0; // final
 
     M0 = _mm_cmpeq_epi32(M0, Match);
     M1 = _mm_cmpeq_epi32(M1, Match);
@@ -195,11 +194,12 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         count += 1;             // PROFILE: verify cmov
     }
 
-    // Exit if we have already checked lastRare
-    if (rarely(rare > lastRare)) {
-        ASSERT(rare = lastRare + 1);
+    // completely done if we have already checked lastRare
+    if (rarely(rare >= lastRare)) {
+        ASSERT(rare == lastRare);
         return count; // no scalar finish after lastRare done
     }
+    rare += 1;  
 
     if (rarely(freq >= stopFreq)) {
         // FUTURE: could add one more pass for preloaded vectors?
@@ -213,8 +213,8 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
     goto RELOAD_FREQ;
     
  FINISH_SCALAR:
-    const uint32_t lenFreq = lastFreq - freq + 1;
-    const uint32_t lenRare = lastRare - rare + 1;
+    lenFreq = lastFreq - freq + 1;
+    lenRare = lastRare - rare + 1;
     return count + finish_scalar(freq, lenFreq, rare, lenRare);
 }
 
