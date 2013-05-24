@@ -27,12 +27,6 @@
 
 #define CHUNKINTS (NUMVECS * (sizeof(VECTYPE)/sizeof(uint32_t))) 
 
-#ifdef MAX2
-#define FREQSPACE ((2 * CHUNKINTS) - 1)
-#else
-#define FREQSPACE ((1 * CHUNKINTS) - 1)
-#endif // MAX2
-
 #define COMPILER_BARRIER asm volatile("" ::: "memory");
 
 #define ASSERT(x) // do nothing
@@ -75,6 +69,12 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
     return count; // NOTREACHED
 }
 
+#if MAXCHUNK > 0
+#define FREQSPACE (MAXCHUNK * CHUNKINTS - 1)
+#else 
+#define FREQSPACE (CHUNKINTS - 1)
+#endif
+
 size_t search_chunks(const uint32_t *freq, size_t lenFreq,
                      const uint32_t *rare, size_t lenRare) {
     
@@ -87,6 +87,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     const uint32_t *lastFreq = &rare[lenRare];
     const uint32_t *stopFreq = freq + lenFreq - FREQSPACE;
     
+    // skip straight to scalar if not enough room to load vectors
     if (rarely(freq >= stopFreq)) {
         goto FINISH_SCALAR;
     }
@@ -114,7 +115,11 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         
 #if (MAXCHUNK >= 2)
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
-#endif 
+#if (MAXCHUNK >= 3)
+    uint32_t maxChunk3 = freq[3 * CHUNKINTS - 1]; 
+#endif // 3
+#endif // 2
+
 
     VECTYPE Match;
 
@@ -125,8 +130,9 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         nextMatch = rare[1];     
     }
     // NOTE: safe to leave nextMatch set to *rare on last iteration
-    // FUTURE: skip over freq jumps for last iteration?
+    // FUTURE: skip over freq jumps for last iteration? No, would be less efficient.
 
+    // FUTURE: clearer to use nextFreq below here?
 #if (MAXCHUNK >= 1)
     uint32_t jump = 0;  // convince compiler we really want a cmov
     if (sometimes(nextMatch > maxChunk)) { // PROFILE: verify cmov
@@ -139,8 +145,15 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         jump = CHUNKINTS;  
     }        
     freq += jump;
-#endif // MAXCHUNK >= 2
-#endif // MAXCHUNK >= 1
+#if (MAXCHUNK >= 3)
+    jump = 0;
+    if (unlikely(nextMatch > maxChunk3)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    freq += jump;
+#endif // 3
+#endif // 2
+#endif // 1
 
     COMPILER_BARRIER;
 
@@ -154,7 +167,10 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     maxChunk = freq[CHUNKINTS - 1];
 #if (MAXCHUNK >= 2)
     maxChunk2 = freq[2 * CHUNKINTS - 1]; 
-#endif // MAXCHUNK >= 2
+#if (MAXCHUNK >= 3)
+    maxChunk3 = freq[3 * CHUNKINTS - 1]; 
+#endif // 3
+#endif // 2
 
     COMPILER_BARRIER;
 
@@ -194,6 +210,8 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         count += 1;             // PROFILE: verify cmov
     }
 
+    // NOTE: vectors have been reloaded for next use and nextMatch updated
+
     // completely done if we have already checked lastRare
     if (rarely(rare >= lastRare)) {
         ASSERT(rare == lastRare);
@@ -202,15 +220,15 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     rare += 1;  
 
     if (rarely(freq >= stopFreq)) {
-        // FUTURE: could add one more pass for preloaded vectors?
+        // FUTURE: try to add one more pass for preloaded vectors?
         goto FINISH_SCALAR;
     }        
 
     if (usually(maxChunk >= nextMatch)) {
-        goto CHECK_NEXT_RARE;
+        goto CHECK_NEXT_RARE; // preload worked and vectors are ready
     } 
 
-    goto RELOAD_FREQ;
+    goto RELOAD_FREQ;  // need to scan farther along in freq 
     
  FINISH_SCALAR:
     lenFreq = lastFreq - freq + 1;
