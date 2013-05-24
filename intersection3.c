@@ -1,3 +1,13 @@
+/* TODO */
+
+// Increase MAXCHUNK (rename to LOOKAHEAD) for 0-4 
+// Add support for 1, 2, 4, 8, 12, 16 vectors
+// Make more explicitly a template file (split off)
+// Create assembly.S template also
+// Add support for different size vectors?
+
+
+
 #include <stdint.h>
 #include <stddef.h>
 #include <strings.h>
@@ -14,7 +24,7 @@
 // NOTE: for icc, seems like these prevent use of conditional moves
 #define usually(x)    __builtin_expect((x),1)
 #define likely(x)     __builtin_expect((x),1)
-#define often(x)     __builtin_expect((x),1)
+#define often(x)      __builtin_expect((x),1)
 #define sometimes(x)  __builtin_expect((x),0)
 #define unlikely(x)   __builtin_expect((x),0)
 #define rarely(x)     __builtin_expect((x),0)
@@ -112,6 +122,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VECTYPE M5 = LOAD((VECTYPE *)freq + 5); 
     VECTYPE M6 = LOAD((VECTYPE *)freq + 6); 
     VECTYPE M7 = LOAD((VECTYPE *)freq + 7); 
+    VECTYPE Match;
         
 #if (MAXCHUNK >= 2)
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
@@ -119,9 +130,6 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     uint32_t maxChunk3 = freq[3 * CHUNKINTS - 1]; 
 #endif // 3
 #endif // 2
-
-
-    VECTYPE Match;
 
  CHECK_NEXT_RARE:
     Match = SETALL(nextMatch);
@@ -147,7 +155,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     freq += jump;
 #if (MAXCHUNK >= 3)
     jump = 0;
-    if (unlikely(nextMatch > maxChunk3)) { // PROFILE: verify cmov
+    if (rarely(nextMatch > maxChunk3)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     freq += jump;
@@ -210,7 +218,8 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         count += 1;             // PROFILE: verify cmov
     }
 
-    // NOTE: vectors have been reloaded for next use and nextMatch updated
+    // NOTE: best effort has been made so that vectors are reloaded for next use 
+    //       if maxChunk >= nextMatch, they are loaded correctly.  If not, search farther.
 
     // completely done if we have already checked lastRare
     if (rarely(rare >= lastRare)) {
