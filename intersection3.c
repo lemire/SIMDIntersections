@@ -260,51 +260,184 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     }
 
 #elif NUMVECS == 8
-    VECTYPE Q0, Q1, Q2, Q3; // quarters
-    VECTYPE S0, S1; // semis
-    VECTYPE F0; // final
 
     M0 = _mm_cmpeq_epi32(M0, Match);
     M1 = _mm_cmpeq_epi32(M1, Match);
-    Q0 = _mm_or_si128(M0, M1);
 
     COMPILER_BARRIER;
 
     M2 = _mm_cmpeq_epi32(M2, Match);
     M3 = _mm_cmpeq_epi32(M3, Match);
-    Q1 = _mm_or_si128(M2, M3);
+    M1 = _mm_or_si128(M0, M1);
     M0 = _mm_load_si128((VECTYPE *) freq + 0);
-    M1 = _mm_load_si128((VECTYPE *) freq + 1);
 
     COMPILER_BARRIER;
 
     M4 = _mm_cmpeq_epi32(M4, Match);
     M5 = _mm_cmpeq_epi32(M5, Match); 
-    Q2 = _mm_or_si128(M4, M5);
+    M3 = _mm_or_si128(M3, M2);
     M2 = _mm_load_si128((VECTYPE *) freq + 2);
-    M3 = _mm_load_si128((VECTYPE *) freq + 3);
 
     COMPILER_BARRIER;
 
     M6 = _mm_cmpeq_epi32(M6, Match);
     M7 = _mm_cmpeq_epi32(M7, Match);
-    Q3 = _mm_or_si128(M6, M7);
+    M3 = _mm_or_si128(M3, M1)
+    M1 = _mm_load_si128((VECTYPE *) freq + 1);
+
+    COMPILER_BARRIER;
+
+    M5 = _mm_or_si128(M5, M4);
+    M7 = _mm_or_si128(M7, M6);
     M4 = _mm_load_si128((VECTYPE *) freq + 4);
+    M6 = _mm_load_si128((VECTYPE *) freq + 6);
+
+    COMPILER_BARRIER;
+
+    M7 = _mm_or_si128(M7, M5);
     M5 = _mm_load_si128((VECTYPE *) freq + 5);
 
     COMPILER_BARRIER;
 
-    S0 = _mm_or_si128(Q0, Q1);
-    S1 = _mm_or_si128(Q2, Q3);
-    F0 = _mm_or_si128(S0, S1);
-    M6 = _mm_load_si128((VECTYPE *) freq + 6);
-    M7 = _mm_load_si128((VECTYPE *) freq + 7);
+    M7 = _mm_or_si128(M7, M3);
+    M3 = _mm_load_si128((VECTYPE *) freq + 3);
 
     COMPILER_BARRIER;
 
-    if (! _mm_testz_si128(F0, F0)) {
+    if (! TESTZERO(M7)) {
         count += 1;             // PROFILE: verify cmov
     }
+    M7 = _mm_load_si128((VECTYPE *) freq + 7);
+
+#elif NUMVECS == 12
+
+    M0 = _mm_cmpeq_epi32(M0, Match);
+    M1 = _mm_cmpeq_epi32(M1, Match);
+
+    COMPILER_BARRIER;
+
+    M2 = _mm_cmpeq_epi32(M2, Match);
+    M3 = _mm_cmpeq_epi32(M3, Match);
+    M1 = _mm_or_si128(M0, M1);
+    M0 = _mm_load_si128((VECTYPE *) freq + 0);
+
+    COMPILER_BARRIER;
+
+    M4 = _mm_cmpeq_epi32(M4, Match);
+    M5 = _mm_cmpeq_epi32(M5, Match); 
+    M3 = _mm_or_si128(M3, M2);
+    M2 = _mm_load_si128((VECTYPE *) freq + 2);
+
+    COMPILER_BARRIER;
+
+    M6 = _mm_cmpeq_epi32(M6, Match);
+    M7 = _mm_cmpeq_epi32(M7, Match);
+    M3 = _mm_or_si128(M3, M1);
+    M1 = _mm_load_si128((VECTYPE *) freq + 1);
+
+    COMPILER_BARRIER;
+
+    M8 = _mm_cmpeq_epi32(M8, Match);
+    M9 = _mm_cmpeq_epi32(M9, Match);
+    M5 = _mm_or_si128(M5, M4);
+    M4 = _mm_load_si128((VECTYPE *) freq + 4);
+
+    COMPILER_BARRIER;
+
+    M10 = _mm_cmpeq_epi32(M10, Match);
+    M11 = _mm_cmpeq_epi32(M11, Match);
+    M7 = _mm_or_si128(M7, M6);
+    M6 = _mm_load_si128((VECTYPE *) freq + 6);
+
+    COMPILER_BARRIER;
+    
+    M7 = _mm_or_si128(M7, M3);
+    M9 = _mm_or_si128(M9, M8);
+    M11 = _mm_or_si128(M11, M10);
+    M3 = _mm_load_si128((VECTYPE *) freq + 3);
+    M8 = _mm_load_si128((VECTYPE *) freq + 8);
+
+    COMPILER_BARRIER;
+
+    M11 = _mm_or_si128(M11, M9);
+    M7 = _mm_or_si128(M7, M5);
+    M5 = _mm_load_si128((VECTYPE *) freq + 5);
+    M9 = _mm_load_si128((VECTYPE *) freq + 9);
+
+    COMPILER_BARRIER;
+
+    M11 = _mm_or_si128(M11, M7);
+    M7 = _mm_load_si128((VECTYPE *) freq + 7);
+    M10 = _mm_load_si128((VECTYPE *) freq + 10);
+
+    if (! TESTZERO(M11)) {
+        count += 1;             // PROFILE: verify cmov
+    }
+    M11 = _mm_load_si128((VECTYPE *) freq + 11);
+
+#elif NUMVECS == 16
+    M0 = _mm_cmpeq_epi32(M0, Match);
+    M1 = _mm_cmpeq_epi32(M1, Match);
+
+    M2 = _mm_cmpeq_epi32(M2, Match);
+    M3 = _mm_cmpeq_epi32(M3, Match);
+    M0 = _mm_or_si128(M0, M1);    
+
+    M1 = _mm_load_si128((VECTYPE *) freq + 14);   // 1 doubles as 14
+    M4 = _mm_cmpeq_epi32(M4, Match);
+    M5 = _mm_cmpeq_epi32(M5, Match);
+    M2 = _mm_or_si128(M2, M3);    
+
+    M3 = _mm_load_si128((VECTYPE *) freq + 15);   // 3 doubles as 15
+    M6 = _mm_cmpeq_epi32(M6, Match); 
+    M7 = _mm_cmpeq_epi32(M7, Match);
+    M2 = _mm_or_si128(M2, M0);    
+    M0 = _mm_load_si128((VECTYPE *) freq + 0);
+
+    M8 = _mm_cmpeq_epi32(M8, Match);
+    M9 = _mm_cmpeq_epi32(M9, Match);
+    M7 = _mm_or_si128(M7, M4);    
+    M4 = _mm_load_si128((VECTYPE *) freq + 4);
+
+    M10 = _mm_cmpeq_epi32(M10, Match);
+    M11 = _mm_cmpeq_epi32(M11, Match);
+    M9 = _mm_or_si128(M9, M5);    
+    M5 = _mm_load_si128((VECTYPE *) freq + 5);
+
+    M12 = _mm_cmpeq_epi32(M12, Match);
+    M13 = _mm_cmpeq_epi32(M13, Match);
+    M9 = _mm_or_si128(M9, M7);    
+    M7 = _mm_load_si128((VECTYPE *) freq + 7);
+
+    M1 = _mm_cmpeq_epi32(M1, Match);  // MATCH("14",M) (at least 4 cycles after load)
+    M13 = _mm_or_si128(M13, M10);   
+    M10 = _mm_load_si128((VECTYPE *) freq + 10);
+    M9 = _mm_or_si128(M9, M2);     
+    M2 = _mm_load_si128((VECTYPE *) freq + 2);
+
+    M3 = _mm_cmpeq_epi32(M3, Match); // MATCH("15",M) (at least 4 cycles after load)
+    M12 = _mm_or_si128(M12, M1);   // OR(12,"14");
+    M1 = _mm_load_si128((VECTYPE *) freq + 1);  // Done with "14", reload original 1
+    M13 = _mm_or_si128(M13, M9);   
+    M9 = _mm_load_si128((VECTYPE *) freq + 9); 
+
+    M8 = _mm_or_si128(M8, M3);    //  OR(8,"15");
+    M3 = _mm_load_si128((VECTYPE *) freq + 3);  // Done with "15", reload original 3
+    M11 = _mm_or_si128(M11, M6);   
+    M6 = _mm_load_si128((VECTYPE *) freq + 6);
+
+    M11 = _mm_or_si128(M11, M8);   
+    M8 = _mm_load_si128((VECTYPE *) freq + 8);
+    M13 = _mm_or_si128(M13, M12);  
+    M12 = _mm_load_si128((VECTYPE *) freq + 12);
+
+    M13 = _mm_or_si128(M13, M11);  
+    M11 = _mm_load_si128((VECTYPE *) freq + 11);
+
+    if (! TESTZERO(M13)) {
+        count += 1;
+    }
+    M13 = _mm_load_si128((VECTYPE *) freq + 13);
 #else
 #error NUMVECS must be one of {1, 2, 4, 8, 12, 16}
 #endif
