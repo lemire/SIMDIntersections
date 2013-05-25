@@ -1,6 +1,5 @@
 /* TODO */
 
-// Increase MAXCHUNK (rename to LOOKAHEAD) for 0-4 
 // Add support for 1, 2, 4, 8, 12, 16 vectors
 // Make more explicitly a template file (split off)
 // Create assembly.S template also
@@ -79,8 +78,8 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
     return count; // NOTREACHED
 }
 
-#if MAXCHUNK > 0
-#define FREQSPACE (MAXCHUNK * CHUNKINTS - 1)
+#if LOOKAHEAD > 0
+#define FREQSPACE (LOOKAHEAD * CHUNKINTS - 1)
 #else 
 #define FREQSPACE (CHUNKINTS - 1)
 #endif
@@ -95,7 +94,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
     const uint32_t *lastRare = &rare[lenRare];
     const uint32_t *lastFreq = &rare[lenRare];
-    const uint32_t *stopFreq = freq + lenFreq - FREQSPACE;
+    const uint32_t *stopFreq = lastFreq - FREQSPACE;
     
     // skip straight to scalar if not enough room to load vectors
     if (rarely(freq >= stopFreq)) {
@@ -124,10 +123,13 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VECTYPE M7 = LOAD((VECTYPE *)freq + 7); 
     VECTYPE Match;
         
-#if (MAXCHUNK >= 2)
+#if (LOOKAHEAD >= 2)
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
-#if (MAXCHUNK >= 3)
+#if (LOOKAHEAD >= 3)
     uint32_t maxChunk3 = freq[3 * CHUNKINTS - 1]; 
+#if (LOOKAHEAD >= 4)
+    uint32_t maxChunk4 = freq[4 * CHUNKINTS - 1]; 
+#endif // 4
 #endif // 3
 #endif // 2
 
@@ -141,24 +143,31 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     // FUTURE: skip over freq jumps for last iteration? No, would be less efficient.
 
     // FUTURE: clearer to use nextFreq below here?
-#if (MAXCHUNK >= 1)
+#if (LOOKAHEAD >= 1)
     uint32_t jump = 0;  // convince compiler we really want a cmov
     if (sometimes(nextMatch > maxChunk)) { // PROFILE: verify cmov
         jump = CHUNKINTS;
     }        
     freq += jump;
-#if (MAXCHUNK >= 2)
+#if (LOOKAHEAD >= 2)
     jump = 0;
     if (unlikely(nextMatch > maxChunk2)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     freq += jump;
-#if (MAXCHUNK >= 3)
+#if (LOOKAHEAD >= 3)
     jump = 0;
     if (rarely(nextMatch > maxChunk3)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     freq += jump;
+#if (LOOKAHEAD >= 4)
+    jump = 0;
+    if (rarely(nextMatch > maxChunk4)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    freq += jump;
+#endif // 4
 #endif // 3
 #endif // 2
 #endif // 1
@@ -173,10 +182,13 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     M1 = _mm_cmpeq_epi32(M1, Match);
     Q0 = _mm_or_si128(M0, M1);
     maxChunk = freq[CHUNKINTS - 1];
-#if (MAXCHUNK >= 2)
+#if (LOOKAHEAD >= 2)
     maxChunk2 = freq[2 * CHUNKINTS - 1]; 
-#if (MAXCHUNK >= 3)
+#if (LOOKAHEAD >= 3)
     maxChunk3 = freq[3 * CHUNKINTS - 1]; 
+#if (LOOKAHEAD >= 4)
+    maxChunk4 = freq[4 * CHUNKINTS - 1]; 
+#endif // 4
 #endif // 3
 #endif // 2
 
