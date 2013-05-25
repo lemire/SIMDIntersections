@@ -46,14 +46,22 @@
 #define TESTZERO(reg) _mm_testz_si128(reg, reg)
 #define SETALL(int32)  _mm_set1_epi32(int32)
 
-#define VOR(dest, other) asm volatile("por %1, %0" : "=x" (dest) : "x" (other) );
-#define VLOAD(dest, ptr) asm volatile("movdqu %1, %0" : "=x" (dest) : "*m" (ptr) );
 #define VMOVE(dest, src) asm volatile("movdqa %1, %0" : "=x" (dest) : "x" (src) );
-#define VMATCH(dest, other) asm volatile("pcmpeqd %1, %0" : "=x" (dest) : "x" (other) );
 
 //  __asm__ __volatile__ ("psllq %0, %0" : "=x" (vec.full128b) : "x"  (vec.full128b));
 // asm volatile("movdqu %0, %%xmm0" :  : "m" (xmm_reg) : "%xmm0"  );
 
+#define VOR(dest, other) \
+    asm volatile("por %1, %0" : "+x" (dest) : "x" (other) );
+
+#define VLOAD(dest, ptr, offset)                                        \
+    asm volatile("movdqu %c2(%1), %0" : "+x" (dest) : "g" (ptr), "i" (offset * sizeof(VECTYPE)) );
+
+#define VSETALL(dest, int32)                                            \
+    asm volatile("movd %1, %0; pshufd $0, %0, %0" : "+x" (dest) : "g" (int32) ) 
+
+#define VMATCH(dest, other) \
+    asm volatile("pcmpeqd %1, %0" : "+x" (dest) : "x" (other) )
 
 size_t finish_scalar(const uint32_t *A, size_t lenA,
                      const uint32_t *B, size_t lenB) {
@@ -114,7 +122,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
     uint32_t maxChunk = freq[CHUNKINTS - 1];
     uint32_t nextMatch = *rare;
-    VECTYPE Match;
+    register VECTYPE Match asm("xmm15");
 
     while (sometimes(maxChunk < nextMatch)) {
     RELOAD_FREQ:
@@ -125,25 +133,30 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         maxChunk = freq[CHUNKINTS - 1];
     }
 
-    VECTYPE M0 = LOAD((VECTYPE *)freq + 0); 
+    register VECTYPE M0 asm("xmm0");
+    //= LOAD((VECTYPE *)freq + 0); 
+    VLOAD(M0, freq, 0); 
 #if NUMVECS > 1 
-    VECTYPE M1 = LOAD((VECTYPE *)freq + 1); 
+    register VECTYPE M1 asm("xmm1");
+    VLOAD(M1, freq, 1); 
 #if NUMVECS > 2 
-    VECTYPE M2 = LOAD((VECTYPE *)freq + 2); 
-    VECTYPE M3 = LOAD((VECTYPE *)freq + 3); 
+    register VECTYPE M2 asm("xmm2");
+    VLOAD(M2, freq, 2); 
+    register VECTYPE M3 asm("xmm3");
+    VLOAD(M3, freq,  3); 
 #if NUMVECS > 4 
-    VECTYPE M4 = LOAD((VECTYPE *)freq + 4); 
-    VECTYPE M5 = LOAD((VECTYPE *)freq + 5); 
-    VECTYPE M6 = LOAD((VECTYPE *)freq + 6); 
-    VECTYPE M7 = LOAD((VECTYPE *)freq + 7); 
+    register VECTYPE M4 asm("xmm4") = LOAD((VECTYPE *)freq + 4); 
+    register VECTYPE M5 asm("xmm5") = LOAD((VECTYPE *)freq + 5); 
+    register VECTYPE M6 asm("xmm6") = LOAD((VECTYPE *)freq + 6); 
+    register VECTYPE M7 asm("xmm7") = LOAD((VECTYPE *)freq + 7); 
 #if NUMVECS > 8
-    VECTYPE M8 = LOAD((VECTYPE *)freq + 4); 
-    VECTYPE M9 = LOAD((VECTYPE *)freq + 5); 
-    VECTYPE M10 = LOAD((VECTYPE *)freq + 6); 
-    VECTYPE M11 = LOAD((VECTYPE *)freq + 7); 
+    register VECTYPE M8 asm("xmm8") = LOAD((VECTYPE *)freq + 4); 
+    register VECTYPE M9 asm("xmm9") = LOAD((VECTYPE *)freq + 5); 
+    register VECTYPE M10 asm("xmm10") = LOAD((VECTYPE *)freq + 6); 
+    register VECTYPE M11 asm("xmm11") = LOAD((VECTYPE *)freq + 7); 
 #if NUMVECS > 12  // must be 16
-    VECTYPE M12 = LOAD((VECTYPE *)freq + 6); 
-    VECTYPE M13 = LOAD((VECTYPE *)freq + 7); 
+    register VECTYPE M12 asm("xmm12") = LOAD((VECTYPE *)freq + 6); 
+    register VECTYPE M13 asm("xmm13") = LOAD((VECTYPE *)freq + 7); 
     // NOTE: M14 and M15 will be simulated
 #endif // 12
 #endif // 8
@@ -161,8 +174,13 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 #endif // 3
 #endif // 2
 
+#ifdef IACA
+    IACA_START;
+#endif
+
  CHECK_NEXT_RARE:
-    Match = SETALL(nextMatch);
+    //    Match = SETALL(nextMatch);
+    VSETALL(Match, nextMatch);
     ASSERT(maxChunk >= nextMatch);
     if (usually(rare < lastRare)) { 
         nextMatch = rare[1];     
@@ -229,35 +247,43 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         count += 1;
     }
 #elif NUMVECS == 4
-    VECTYPE S0, S1; // semis
-    VECTYPE F0; // final
+
+    //    M0 = _mm_cmpeq_epi32(M0, Match);
+    VMATCH(M0, Match);
+    //    M1 = _mm_cmpeq_epi32(M1, Match);
+    VMATCH(M1, Match);
 
     COMPILER_BARRIER;
 
-    M0 = _mm_cmpeq_epi32(M0, Match);
-    M1 = _mm_cmpeq_epi32(M1, Match);
-    M2 = _mm_cmpeq_epi32(M2, Match);
+    // M2 = _mm_cmpeq_epi32(M2, Match);
+    VMATCH(M2, Match);
+    // M3 = _mm_cmpeq_epi32(M3, Match);
+    VMATCH(M3, Match);
+    //    S0 = _mm_or_si128(M0, M1);
+    VOR(M1, M0);
+    // M0 = _mm_load_si128((VECTYPE *) freq + 0);
+    VLOAD(M0, freq, 0);
 
     COMPILER_BARRIER;
 
-    M3 = _mm_cmpeq_epi32(M3, Match);
-    S0 = _mm_or_si128(M0, M1);
-    M0 = _mm_load_si128((VECTYPE *) freq + 0);
-    M1 = _mm_load_si128((VECTYPE *) freq + 1);
+    VOR(M3, M2);
+    //    M2 = _mm_load_si128((VECTYPE *) freq + 2);
+    VLOAD(M2, freq, 2);
 
     COMPILER_BARRIER;
 
-    S1 = _mm_or_si128(M2, M3);
-    M2 = _mm_load_si128((VECTYPE *) freq + 2);
-    M3 = _mm_load_si128((VECTYPE *) freq + 3);
+    VOR(M3, M1);
+    // M1 = _mm_load_si128((VECTYPE *) freq + 1);
+    VLOAD(M1, freq, 1);
 
-    COMPILER_BARRIER;
-
-    F0 = _mm_or_si128(S0, S1);
-
-    if (! TESTZERO(F0)) {
+    if (! TESTZERO(M3)) {
         count += 1;
     }
+    //    M3 = _mm_load_si128((VECTYPE *) freq + 3);
+    VLOAD(M3, freq, 3);
+
+    COMPILER_BARRIER;
+
 
 #elif NUMVECS == 8
 
@@ -282,7 +308,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
     M6 = _mm_cmpeq_epi32(M6, Match);
     M7 = _mm_cmpeq_epi32(M7, Match);
-    M3 = _mm_or_si128(M3, M1)
+    M3 = _mm_or_si128(M3, M1);
     M1 = _mm_load_si128((VECTYPE *) freq + 1);
 
     COMPILER_BARRIER;
@@ -460,7 +486,13 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         goto CHECK_NEXT_RARE; // preload worked and vectors are ready
     } 
 
+#ifdef IACA
+    IACA_END;
+#endif
+
     goto RELOAD_FREQ;  // need to scan farther along in freq 
+
+       
     
  FINISH_SCALAR:
     lenFreq = lastFreq - freq + 1;
