@@ -79,9 +79,9 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 }
 
 #if LOOKAHEAD > 0
-#define FREQSPACE (LOOKAHEAD * CHUNKINTS - 1)
+#define SAFESPACE (LOOKAHEAD * CHUNKINTS - 1)
 #else 
-#define FREQSPACE (CHUNKINTS - 1)
+#define SAFESPACE (CHUNKINTS - 1)
 #endif
 
 size_t search_chunks(const uint32_t *freq, size_t lenFreq,
@@ -94,7 +94,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
     const uint32_t *lastRare = &rare[lenRare];
     const uint32_t *lastFreq = &rare[lenRare];
-    const uint32_t *stopFreq = lastFreq - FREQSPACE;
+    const uint32_t *stopFreq = lastFreq - SAFESPACE;
     
     // skip straight to scalar if not enough room to load vectors
     if (rarely(freq >= stopFreq)) {
