@@ -1,11 +1,10 @@
-/* TODO */
-
-// Add support for 1, 2, 4, 8, 12, 16 vectors
+#ifdef TODO
 // Make more explicitly a template file (split off)
 // Create assembly.S template also
 // Add support for different size vectors?
-
-
+// Improve TESTZERO to allow better load interleaves
+// Utilize save and load from stack to save register-register moves?
+#endif // TODO
 
 #include <stdint.h>
 #include <stddef.h>
@@ -46,7 +45,6 @@
 #define TESTZERO(reg) _mm_testz_si128(reg, reg)
 // #define SETALL(int32)  _mm_set1_epi32(int32)
 
-#define VMOVE(dest, src) asm volatile("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
 //  __asm__ __volatile__ ("psllq %0, %0" : "=x" (vec.full128b) : "x"  (vec.full128b));
 // asm volatile("movdqu %0, %%xmm0" :  : "m" (xmm_reg) : "%xmm0"  );
@@ -85,6 +83,11 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 #error LOOKAHEAD must be defined and one of {0,1,2,3,4}
 #endif
 
+#if ! (NUMVECS == 1 || NUMVECS == 2 || NUMVECS == 4 ||  \
+       NUMVECS == 8 || NUMVECS == 12 || NUMVECS == 16)
+#error NUMVECS must be one of {1, 2, 4, 8, 12, 16}
+#endif
+
 #if LOOKAHEAD > 0
 #define SAFESPACE (LOOKAHEAD * CHUNKINTS - 1)
 #else 
@@ -106,6 +109,9 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 // #define VMATCH(dest, other) dest = _mm_cmpeq_epi32(dest, other)
 #define VMATCH(dest, other)                                   \
     asm VOLATILE("pcmpeqd %1, %0" : "+x" (dest) : "x" (other) )
+
+// NOTE: doesn't seem needed, can just use "dest = src"
+// #define VMOVE(dest, src) asm VOLATILE("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
 size_t search_chunks(const uint32_t *freq, size_t lenFreq,
                      const uint32_t *rare, size_t lenRare) {
@@ -196,10 +202,56 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VSETALL(Match, nextMatch);
     ASSERT(maxChunk >= nextMatch);
     if (usually(rare < lastRare)) { 
-        nextMatch = rare[1];     
+        nextMatch = rare[1]; // CAUTION: only can load nextMatch after checking rare < lastRare
     }
     // NOTE: safe to leave nextMatch set to *rare on last iteration
+    // NOTE: Four cycles until nextMatch is loaded for LOOKAHEAD comparisons
 
+#if NUMVECS == 1
+    VMATCH(M0, Match);  
+    VECTYPE X = M0;
+#elif NUMVECS == 2
+    VMATCH(M0, Match);
+    VMATCH(M1, Match); 
+    VOR(M1, M0);
+    VECTYPE X = M1;
+#elif NUMVECS >= 4
+    VMATCH(M0, Match);
+    VMATCH(M1, Match); 
+    VOR(M1, M0);
+    VMATCH(M2, Match);
+    VMATCH(M3, Match);
+    VOR(M3, M2);
+    VOR(M3, M1);
+#elif NUMVECS == 8
+    VMATCH(M0, Match);
+    VMATCH(M1, Match); 
+    VOR(M1, M0);
+    VMATCH(M2, Match);
+    VMATCH(M3, Match);
+    VOR(M3, M2);
+    VOR(M3, M1);
+#elif NUMVECS == 12
+    VMATCH(M0, Match);
+    VMATCH(M1, Match); 
+    VOR(M1, M0);
+    VMATCH(M2, Match);
+    VMATCH(M3, Match);
+    VOR(M3, M2);
+    VOR(M3, M1);
+#elif NUMVECS == 16
+    VMATCH(M0, Match);
+    VMATCH(M1, Match); 
+    VOR(M1, M0);
+    VMATCH(M2, Match);
+    VMATCH(M3, Match);
+    VOR(M3, M2);
+    VOR(M3, M1);
+    // NOTE: these two load from this freq, not nextFreq
+    VLOAD(M0, freq, 14);   // 0 doubles as 14 
+    VLOAD(M1, freq, 15);   // 1 doubles as 15
+#endif
+    
     const uint32_t *nextFreq = freq; // location to reload next set vectors (possibly unchanged)
 
 #if (LOOKAHEAD >= 1)
@@ -208,271 +260,195 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         jump = CHUNKINTS;
     }        
     nextFreq += jump;
+#endif // LOOKAHEAD >= 1
+
 #if (LOOKAHEAD >= 2)
     jump = 0;
     if (unlikely(nextMatch > maxChunk2)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     nextFreq += jump;
+#endif // LOOKAHEAD >= 2
+
 #if (LOOKAHEAD >= 3)
     jump = 0;
     if (rarely(nextMatch > maxChunk3)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     nextFreq += jump;
+#endif // LOOKAHEAD >= 3
+
 #if (LOOKAHEAD >= 4)
     jump = 0;
     if (rarely(nextMatch > maxChunk4)) { // PROFILE: verify cmov
         jump = CHUNKINTS;  
     }        
     nextFreq += jump;
-#endif // 4
-#endif // 3
-#endif // 2
-#endif // 1
+#endif // LOOKAHEAD >= 4
 
+    // CAUTION: No vector reloads before here (waiting on LOOKAHEAD to calculate nextFreq)
+
+    // NOTE: nextFreq is needed to reload vectors below but 
+    //       maxChunks aren't needed until the next iteration
     maxChunk = nextFreq[CHUNKINTS - 1];
 #if (LOOKAHEAD >= 2)
     maxChunk2 = nextFreq[2 * CHUNKINTS - 1]; 
+#endif // 2
+
 #if (LOOKAHEAD >= 3)
     maxChunk3 = nextFreq[3 * CHUNKINTS - 1]; 
+#endif // 3
+
 #if (LOOKAHEAD >= 4)
     maxChunk4 = nextFreq[4 * CHUNKINTS - 1]; 
 #endif // 4
-#endif // 3
-#endif // 2
+
 
 #if NUMVECS == 1
-    VECTYPE F0; // final
-    F0 = _mm_cmpeq_epi32(M0, Match);
-    M0 = _mm_load_si128((VECTYPE *)nextFreq);
-    if (! TESTZERO(F0)) {
+    if (! TESTZERO(X)) {
         count += 1;
     }
+    VLOAD(M0, nextFreq, 0);
 #elif NUMVECS == 2
-    VMATCH(M0, Match);
-    VMATCH(M1, Match);
-    VOR(M1, M0);
-    M0 = _mm_load_si128((VECTYPE *) nextFreq + 0);
-    if (! TESTZERO(M0)) {
+    if (! TESTZERO(X)) {
         count += 1;
     }
-    M1 = _mm_load_si128((VECTYPE *) nextFreq + 1);
-#elif NUMVECS == 4
-
-    VMATCH(M0, Match);
-    VMATCH(M1, Match);
-
-    COMPILER_BARRIER;
-
-    VMATCH(M2, Match);
-    VMATCH(M3, Match);
-    VOR(M1, M0);
     VLOAD(M0, nextFreq, 0);
-
-    COMPILER_BARRIER;
-
-    VOR(M3, M2);
-    VLOAD(M2, nextFreq, 2);
-
-    COMPILER_BARRIER;
-
-    VOR(M3, M1);
     VLOAD(M1, nextFreq, 1);
-
-    if (! TESTZERO(M3)) {
+#elif NUMVECS == 4
+    VECTYPE X3 = M3;
+    VLOAD(M0, nextFreq, 0);
+    VLOAD(M1, nextFreq, 1);
+    VLOAD(M2, nextFreq, 2);
+    VLOAD(M3, nextFreq, 3);
+    if (! TESTZERO(X3)) {
         count += 1;
     }
-    VLOAD(M3, nextFreq, 3);
-
-    COMPILER_BARRIER;
-
-
 #elif NUMVECS == 8
-
-    VMATCH(M0, Match);
-    VMATCH(M1, Match);
-
-    COMPILER_BARRIER;
-
-    VMATCH(M2, Match);
-    VMATCH(M3, Match);
-    VOR(M1, M0);
-    VLOAD(M0, nextFreq, 0);
-
-    COMPILER_BARRIER;
-
     VMATCH(M4, Match);
     VMATCH(M5, Match); 
-    VOR(M3, M2);
-    VLOAD(M2, nextFreq, 2);
-
-    COMPILER_BARRIER;
+    VECTYPE X3 = M3;
+    VLOAD(M0, nextFreq, 0);
+    VLOAD(M1, nextFreq, 1);
 
     VMATCH(M6, Match);
     VMATCH(M7, Match);
-    VOR(M3, M1);
-    VLOAD(M1, nextFreq, 1);
-
-    COMPILER_BARRIER;
-
     VOR(M5, M4);
+    VLOAD(M2, nextFreq, 2);
+    VLOAD(M3, nextFreq, 3);
+
     VOR(M7, M6);
+    VOR(X3, M5);
     VLOAD(M4, nextFreq, 4);
-    VLOAD(M6, nextFreq, 6);
-
-    COMPILER_BARRIER;
-
-    VOR(M7, M5);
     VLOAD(M5, nextFreq, 5);
 
-    COMPILER_BARRIER;
-
-    VOR(M7, M3);
-    VLOAD(M3, nextFreq, 3);
-
-    COMPILER_BARRIER;
-
-    if (! TESTZERO(M7)) {
-        count += 1;             // PROFILE: verify cmov
-    }
+    VOR(X3, M7);
+    VLOAD(M6, nextFreq, 6);
     VLOAD(M7, nextFreq, 7);
 
+    if (! TESTZERO(X3)) {
+        count += 1;             // PROFILE: verify cmov
+    }
+
 #elif NUMVECS == 12
-
-    VMATCH(M0, Match);
-    VMATCH(M1, Match);
-
-    COMPILER_BARRIER;
-
-    VMATCH(M2, Match);
-    VMATCH(M3, Match);
-    VOR(M1, M0);
-    VLOAD(M0, nextFreq, 0);
-
-    COMPILER_BARRIER;
-
     VMATCH(M4, Match);
     VMATCH(M5, Match); 
-    VOR(M3, M2);
-    VLOAD(M2, nextFreq, 2);
-
-    COMPILER_BARRIER;
+    VECTYPE X3 = M3;
+    VLOAD(M0, nextFreq, 0);
+    VLOAD(M1, nextFreq, 1);
 
     VMATCH(M6, Match);
     VMATCH(M7, Match);
-    VOR(M3, M1);
-    VLOAD(M1, nextFreq, 1);
-
-    COMPILER_BARRIER;
+    VOR(M5, M4);
+    VLOAD(M2, nextFreq, 2);
+    VLOAD(M3, nextFreq, 3);
 
     VMATCH(M8, Match);
     VMATCH(M9, Match);
-    VOR(M5, M4);
+    VOR(M7, M6);
     VLOAD(M4, nextFreq, 4);
-
-    COMPILER_BARRIER;
 
     VMATCH(M10, Match);
     VMATCH(M11, Match);
-    VOR(M7, M6);
+    VOR(X3, M5);
+    VLOAD(M5, nextFreq, 5);
     VLOAD(M6, nextFreq, 6);
 
-    COMPILER_BARRIER;
-    
-    VOR(M7, M3);
     VOR(M9, M8);
     VOR(M11, M10);
-    VLOAD(M3, nextFreq, 3);
+    VOR(X3, M7);
+    VLOAD(M7, nextFreq, 7);
     VLOAD(M8, nextFreq, 8);
 
-    COMPILER_BARRIER;
-
     VOR(M11, M9);
-    VOR(M7, M5);
-    VLOAD(M5, nextFreq, 5);
     VLOAD(M9, nextFreq, 9);
+    VLOAD(M10, nextFreq, 10);
 
-    COMPILER_BARRIER;
-
-    VOR(M11, M7);
+    VOR(X3, M11);
     VLOAD(M7, nextFreq, 7);
     VLOAD(M10, nextFreq, 10);
 
-    if (! TESTZERO(M11)) {
+    VLOAD(M11, nextFreq, 11);
+    if (! TESTZERO(X3)) {
         count += 1;             // PROFILE: verify cmov
     }
-    VLOAD(M11, nextFreq, 11);
-
 #elif NUMVECS == 16
-    VMATCH(M0, Match);
-    VMATCH(M1, Match);
-
-    VMATCH(M2, Match);
-    VMATCH(M3, Match);
-    VOR(M0, M1);    
-
-    VLOAD(M1, nextFreq, 14);   // 1 doubles as 14
     VMATCH(M4, Match);
     VMATCH(M5, Match);
-    VOR(M2, M3);    
+    VLOAD(M2, nextFreq, 2);
 
-    VLOAD(M3, nextFreq, 15);   // 3 doubles as 15
     VMATCH(M6, Match); 
     VMATCH(M7, Match);
-    VOR(M2, M0);    
-    VLOAD(M0, nextFreq, 0);
+    VOR(M5, M4);
+    VLOAD(M4, nextFreq, 4);
 
     VMATCH(M8, Match);
     VMATCH(M9, Match);
-    VOR(M7, M4);    
-    VLOAD(M4, nextFreq, 4);
+    VOR(M7, M3);
+    VLOAD(M3, nextFreq, 3);
 
     VMATCH(M10, Match);
     VMATCH(M11, Match);
     VOR(M9, M5);    
     VLOAD(M5, nextFreq, 5);
 
-    VMATCH(M12, Match);
-    VMATCH(M13, Match);
-    VOR(M9, M7);    
-    VLOAD(M7, nextFreq, 7);
-
-    VMATCH(M1, Match);  // MATCH("14",M) (at least 4 cycles after load)
-    VOR(M13, M10);   
-    VLOAD(M10, nextFreq, 10);
-    VOR(M9, M2);     
-    VLOAD(M2, nextFreq, 2);
-
-    VMATCH(M3, Match); // MATCH("15",M) (at least 4 cycles after load)
-    VOR(M12, M1);   // OR(12,"14");
-    VLOAD(M1, nextFreq, 1);  // Done with "14", reload original 1
-    VOR(M13, M9);   
-    VLOAD(M9, nextFreq, 9); 
-
-    VOR(M8, M3);    //  OR(8,"15");
-    VLOAD(M3, nextFreq, 3);  // Done with "15", reload original 3
-    VOR(M11, M6);   
+    VMATCH(M0, Match);  // MATCH("14",M) (at least 4 cycles after load)
+    VMATCH(M1, Match);  // MATCH("15",M) (at least 4 cycles after load)
+    VOR(M11, M6);    
     VLOAD(M6, nextFreq, 6);
 
-    VOR(M11, M8);   
-    VLOAD(M8, nextFreq, 8);
-    VOR(M13, M12);  
-    VLOAD(M12, nextFreq, 12);
+    VMATCH(M12, Match);
+    VOR(M9, M0);        // OR(9, "14")
+    VOR(M11, M1);       // OR(11, "15")
+    VLOAD(M0, nextFreq, 0);  // reload real 0
+    VLOAD(M1, nextFreq, 1);  // reload real 1
 
-    VOR(M13, M11);  
+    VMATCH(M13, Match);
+    VOR(M12, M8);
+    VOR(M11, M7);
+    VLOAD(M7, nextFreq, 7);
+    VLOAD(M8, nextFreq, 8);
+
+    VOR(M11, M9);
+    VOR(M12, M10);
+    VLOAD(M9, nextFreq, 9); 
+    VLOAD(M10, nextFreq, 10);
+
+    VOR(M13, M11);   
     VLOAD(M11, nextFreq, 11);
+
+    VOR(M13, M12);
+    VLOAD(M12, nextFreq, 12);
 
     if (! TESTZERO(M13)) {
         count += 1;
     }
     VLOAD(M13, nextFreq, 13);
-#else
-#error NUMVECS must be one of {1, 2, 4, 8, 12, 16}
 #endif
-    // NOTE: best effort has been made so that vectors are reloaded for next use 
-    //       if maxChunk >= nextMatch, they are loaded correctly.  If not, advance freq.
-    freq = nextFreq;  // PROFILE: verify that freq and nextFreq are the same register
+
+    // NOTE: Freq is finalized and best effort has been made so that vectors are reloaded.
+    //       if maxChunk >= nextMatch, they are loaded correctly.  If not, reload freq.
+    freq = nextFreq;  // PROFILE: verify that this isn't causing a register to spill
 
     // completely done if we have already checked lastRare
     if (rarely(rare >= lastRare)) {
