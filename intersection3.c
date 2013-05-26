@@ -215,7 +215,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VMATCH(M1, Match); 
     VOR(M1, M0);
     VECTYPE X = M1;
-#elif NUMVECS >= 4
+#elif NUMVECS == 4
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
     VOR(M1, M0);
@@ -241,15 +241,18 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VOR(M3, M1);
 #elif NUMVECS == 16
     VMATCH(M0, Match);
-    VMATCH(M1, Match); 
-    VOR(M1, M0);
-    VMATCH(M2, Match);
+    VMATCH(M2, Match); 
+
+    VMATCH(M1, Match);
     VMATCH(M3, Match);
-    VOR(M3, M2);
+    VOR(M2, M0);
+    VLOAD(M0, freq, 14);   // 0 doubles as 14 
+
+    VOR(M3, M1);
+    VLOAD(M1, freq, 15);   // 1 doubles as 15
+
     VOR(M3, M1);
     // NOTE: these two load from this freq, not nextFreq
-    VLOAD(M0, freq, 14);   // 0 doubles as 14 
-    VLOAD(M1, freq, 15);   // 1 doubles as 15
 #endif
     
     const uint32_t *nextFreq = freq; // location to reload next set vectors (possibly unchanged)
