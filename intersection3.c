@@ -1,9 +1,27 @@
 #ifdef TODO
-// Make more explicitly a template file (split off)
-// Create assembly.S template also
-// Add support for different size vectors?
-// Improve TESTZERO to allow better load interleaves
-// Utilize save and load from stack to save register-register moves?
+// Make more explicitly a template file (split off, multiple includes with different params)
+
+// Change finish_scalar() to be lopsided for freq vs rare (figure out external linkage?)
+
+// Submit Intel bug and figure out workaround for more vectors.
+// Try using 13 vectors for VECNUM 16 instead of 12?
+// Try using 11 vectors for VECNUM 16 as Intel workaround?
+
+// Add higher LOOKAHEADS through 8 (test first and see if performance has plateaued)
+// Add higher numbers of (virtual) vectors: 24, 32 (performance test first)
+// For larger NUMVECS could store matches for first 16, or use TESTZERO twice (try store)
+
+// Switch "VECTYPE X = M0" to assembly compatible macro. (skip it?)
+// Add "VDECLARE" macro that can control "asm" specification (to test whether it's needed)
+
+// Improve TESTZERO to allow better load interleaves?  (Probably not needed)
+
+// Adjust search split based on number of LOOKAHEADS (only after performance testing)
+
+// Add support for different size vectors (Keep planning for, but do later)
+
+// Utilize save and load from stack to save register-register moves (low priority, unhelpful IB+) 
+// Create assembly.S template also  (No, seems possible to stick with C and macros)
 #endif // TODO
 
 #include <stdint.h>
@@ -16,7 +34,6 @@
 
 #include <immintrin.h>
 #include <smmintrin.h>
-
 
 // May help choose order of branches, but mostly comments to reader
 // NOTE: for icc, seems like these prevent use of conditional moves
@@ -45,7 +62,7 @@
 #define TESTZERO(reg) _mm_testz_si128(reg, reg)
 // #define SETALL(int32)  _mm_set1_epi32(int32)
 
-
+// Syntax examples:
 //  __asm__ __volatile__ ("psllq %0, %0" : "=x" (vec.full128b) : "x"  (vec.full128b));
 // asm volatile("movdqu %0, %%xmm0" :  : "m" (xmm_reg) : "%xmm0"  );
 
@@ -94,23 +111,35 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 #define SAFESPACE (CHUNKINTS - 1)
 #endif
 
-// NOTE: Using "asm volatile" does help keep desired ordering
+// NOTE: Using "asm volatile" required to keep desired ordering
+//       Remove to allow compiler to reschedule operations
 #define VOLATILE volatile
 
-#define VOR(dest, other) \
+// FIXME: icc 13.0.1 generates non-working nonsense for NUMVECS=16 with assigned registers
+// #define REGISTER(reg) asm(reg)
+#define REGISTER(reg)
+// FIXME: gcc 4.7 spills a register for NUMVECS=16 unless registers are assigned
+
+// FIXME: Technically incorrect, and produces bad code for icc 13.0.1
+// #define VOR(dest, other) asm VOLATILE("por %1, %0" : "=x" (dest) : "x" (other) );
+// Correct, synonymous with "+x"
+// #define VOR(dest, other) asm VOLATILE("por %1, %0" : "=x" (dest) : "x" (other), "0" (dest) );
+
+//  +x since it's read, but this confuses GCC into adding extra move unless registers assigned
+#define VOR(dest, other)                                      \
     asm VOLATILE("por %1, %0" : "+x" (dest) : "x" (other) );
 
 #define VLOAD(dest, ptr, offset)                                        \
-    asm VOLATILE("movdqu %c2(%1), %0" : "+x" (dest) : "g" (ptr), "i" (offset * sizeof(VECTYPE)) );
+    asm VOLATILE("movdqu %c2(%1), %0" : "=x" (dest) : "g" (ptr), "i" (offset * sizeof(VECTYPE)) );
 
 #define VSETALL(dest, int32)                                            \
-    asm VOLATILE("movd %1, %0; pshufd $0, %0, %0" : "+x" (dest) : "g" (int32) ) 
+    asm VOLATILE("movd %1, %0; pshufd $0, %0, %0" : "=x" (dest) : "g" (int32) ) 
 
 // #define VMATCH(dest, other) dest = _mm_cmpeq_epi32(dest, other)
 #define VMATCH(dest, other)                                   \
     asm VOLATILE("pcmpeqd %1, %0" : "+x" (dest) : "x" (other) )
 
-// NOTE: doesn't seem needed, can just use "dest = src"
+// NOTE: doesn't seem needed, can just use "dest = src"?
 // #define VMOVE(dest, src) asm VOLATILE("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
 size_t search_chunks(const uint32_t *freq, size_t lenFreq,
@@ -142,40 +171,40 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         maxChunk = freq[CHUNKINTS - 1];
     }
 
-    register VECTYPE M0 asm("xmm0");
+    register VECTYPE M0 REGISTER("xmm0");
     VLOAD(M0, freq, 0); 
 #if NUMVECS > 1 
-    register VECTYPE M1 asm("xmm1");
+    register VECTYPE M1 REGISTER("xmm1");
     VLOAD(M1, freq, 1); 
 #if NUMVECS > 2 
-    register VECTYPE M2 asm("xmm2");
+    register VECTYPE M2 REGISTER("xmm2");
     VLOAD(M2, freq, 2); 
-    register VECTYPE M3 asm("xmm3");
+    register VECTYPE M3 REGISTER("xmm3");
     VLOAD(M3, freq,  3); 
 #if NUMVECS > 4 
-    register VECTYPE M4 asm("xmm4");
+    register VECTYPE M4 REGISTER("xmm4");
     VLOAD(M4, freq, 4); 
-    register VECTYPE M5 asm("xmm5");
+    register VECTYPE M5 REGISTER("xmm5");
     VLOAD(M5, freq, 5); 
-    register VECTYPE M6 asm("xmm6");
+    register VECTYPE M6 REGISTER("xmm6");
     VLOAD(M6, freq, 6); 
-    register VECTYPE M7 asm("xmm7");
+    register VECTYPE M7 REGISTER("xmm7");
     VLOAD(M7, freq, 7); 
 #if NUMVECS > 8
-    register VECTYPE M8 asm("xmm8");
+    register VECTYPE M8 REGISTER("xmm8");
     VLOAD(M8, freq, 8); 
-    register VECTYPE M9 asm("xmm9");
+    register VECTYPE M9 REGISTER("xmm9");
     VLOAD(M9, freq, 9); 
-    register VECTYPE M10 asm("xmm10");
+    register VECTYPE M10 REGISTER("xmm10");
     VLOAD(M10, freq, 10); 
-    register VECTYPE M11 asm("xmm11");
+    register VECTYPE M11 REGISTER("xmm11");
     VLOAD(M11, freq, 11); 
 #if NUMVECS > 12  // must be 16
-    register VECTYPE M12 asm("xmm12");
+    register VECTYPE M12 REGISTER("xmm12");
     VLOAD(M12, freq, 12); 
-    register VECTYPE M13 asm("xmm13");
+    register VECTYPE M13 REGISTER("xmm13");
     VLOAD(M13, freq, 13);
-    //    register VECTYPE M14 asm("xmm14") = {0,0};   // Potential workaround that breaks icc
+    //    register VECTYPE M14 REGISTER("xmm14") = {0,0};   // Potential workaround that breaks icc
     // NOTE: M14 and M15 will be simulated 
 #endif // 12
 #endif // 8
@@ -197,7 +226,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     IACA_START;
 #endif
 
-    register VECTYPE Match asm("xmm15");
+    register VECTYPE Match REGISTER("xmm15");
  CHECK_NEXT_RARE:
     VSETALL(Match, nextMatch);
     ASSERT(maxChunk >= nextMatch);
@@ -209,35 +238,46 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
 #if NUMVECS == 1
     VMATCH(M0, Match);  
+
     VECTYPE X = M0;
 #elif NUMVECS == 2
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
+
     VOR(M1, M0);
     VECTYPE X = M1;
 #elif NUMVECS == 4
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
+
     VOR(M1, M0);
     VMATCH(M2, Match);
     VMATCH(M3, Match);
+
     VOR(M3, M2);
+
     VOR(M3, M1);
 #elif NUMVECS == 8
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
+
     VOR(M1, M0);
     VMATCH(M2, Match);
     VMATCH(M3, Match);
+
     VOR(M3, M2);
+
     VOR(M3, M1);
 #elif NUMVECS == 12
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
+
     VOR(M1, M0);
     VMATCH(M2, Match);
     VMATCH(M3, Match);
+
     VOR(M3, M2);
+
     VOR(M3, M1);
 #elif NUMVECS == 16
     VMATCH(M0, Match);
@@ -399,6 +439,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VMATCH(M4, Match);
     VMATCH(M5, Match);
     VLOAD(M2, nextFreq, 2);
+    // WORKAROUND: Load 2 as "12" to help icc (maybe swap 12/13 for clarity)
 
     VMATCH(M6, Match); 
     VMATCH(M7, Match);
