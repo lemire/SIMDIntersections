@@ -3,6 +3,8 @@
 
 // Change finish_scalar() to be lopsided for freq vs rare (figure out external linkage?)
 
+// Use MM0-MM7 for LOOKAHEADS to avoid register pressure on general registers
+
 // Submit Intel bug and figure out workaround for more vectors.
 // Try using 13 vectors for VECNUM 16 instead of 12?
 // Try using 11 vectors for VECNUM 16 as Intel workaround?
@@ -96,13 +98,13 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
     return count; // NOTREACHED
 }
 
-#if ! defined(LOOKAHEAD) || LOOKAHEAD > 4
-#error LOOKAHEAD must be defined and one of {0,1,2,3,4}
+#if ! defined(LOOKAHEAD) || LOOKAHEAD > 8
+#error LOOKAHEAD must be defined and one of {0,1,2,3,4,5,6,7,8}
 #endif
 
-#if ! (NUMVECS == 1 || NUMVECS == 2 || NUMVECS == 4 ||  \
-       NUMVECS == 8 || NUMVECS == 12 || NUMVECS == 16)
-#error NUMVECS must be one of {1, 2, 4, 8, 12, 16}
+#if ! (NUMVECS == 1 || NUMVECS == 2 || NUMVECS == 4 ||  NUMVECS == 8  \
+       || NUMVECS == 12 || NUMVECS == 16 || NUMVECS == 24 || NUMVECS == 32)
+#error NUMVECS must be one of {1, 2, 4, 8, 12, 16, 24, 32}
 #endif
 
 #if LOOKAHEAD > 0
@@ -115,17 +117,24 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 //       Remove to allow compiler to reschedule operations
 #define VOLATILE volatile
 
-// FIXME: icc 13.0.1 generates non-working nonsense for NUMVECS=16 with assigned registers
-// #define REGISTER(reg) asm(reg)
-#define REGISTER(reg)
+// FIXME: icc 13.0.1 generates non-working nonsense for NUMVECS=16 if there are 15 assigned registers
+
+// FIXME: icc generates bad code for NUMVECS=16 with assigned registers
 // FIXME: gcc 4.7 spills a register for NUMVECS=16 unless registers are assigned
+// FIXME: gcc generates extra moves unless registers are assigned
+
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+#define REGISTER(reg)
+#else
+#define REGISTER(reg) asm(reg)
+#endif
 
 // FIXME: Technically incorrect, and produces bad code for icc 13.0.1
 // #define VOR(dest, other) asm VOLATILE("por %1, %0" : "=x" (dest) : "x" (other) );
 // Correct, synonymous with "+x"
 // #define VOR(dest, other) asm VOLATILE("por %1, %0" : "=x" (dest) : "x" (other), "0" (dest) );
 
-//  +x since it's read, but this confuses GCC into adding extra move unless registers assigned
+//  +x since it's read, but this confuses GCC into adding extra moves unless registers assigned
 #define VOR(dest, other)                                      \
     asm VOLATILE("por %1, %0" : "+x" (dest) : "x" (other) );
 
@@ -199,19 +208,17 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VLOAD(M10, freq, 10); 
     register VECTYPE M11 REGISTER("xmm11");
     VLOAD(M11, freq, 11); 
-#if NUMVECS > 12  // must be 16
+#if NUMVECS > 12  
     register VECTYPE M12 REGISTER("xmm12");
     VLOAD(M12, freq, 12); 
-    register VECTYPE M13 REGISTER("xmm13");
-    VLOAD(M13, freq, 13);
-    //    register VECTYPE M14 REGISTER("xmm14") = {0,0};   // Potential workaround that breaks icc
-    // NOTE: M14 and M15 will be simulated 
-#endif // 12
-#endif // 8
-#endif // 4
-#endif // 2
-#endif // 1
+    // NOTE: further vectors are reloaded
+#endif // > 12 
+#endif // > 8
+#endif // > 4
+#endif // > 2
+#endif // > 1
         
+    // FUTURE: pack two of these into each reg64?
 #if (LOOKAHEAD >= 2)
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
 #if (LOOKAHEAD >= 3)
@@ -222,10 +229,23 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 #endif // 3
 #endif // 2
 
+
+#if (LOOKAHEAD >= 5)
+    uint32_t maxChunk5 = freq[5 * CHUNKINTS - 1]; 
+#if (LOOKAHEAD >= 6)
+    uint32_t maxChunk6 = freq[6 * CHUNKINTS - 1]; 
+#if (LOOKAHEAD >= 7)
+    uint32_t maxChunk7 = freq[7 * CHUNKINTS - 1]; 
+#if (LOOKAHEAD >= 8)
+    uint32_t maxChunk8 = freq[8 * CHUNKINTS - 1]; 
+#endif // 8
+#endif // 7
+#endif // 6
+#endif // 5
+
 #ifdef IACA
     IACA_START;
 #endif
-
     register VECTYPE Match REGISTER("xmm15");
  CHECK_NEXT_RARE:
     VSETALL(Match, nextMatch);
@@ -237,15 +257,16 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     // NOTE: Four cycles until nextMatch is loaded for LOOKAHEAD comparisons
 
 #if NUMVECS == 1
+    register VECTYPE X REGISTER("xmm14");
     VMATCH(M0, Match);  
-
-    VECTYPE X = M0;
+    X = M0;
 #elif NUMVECS == 2
+    register VECTYPE X REGISTER("xmm14");
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
 
     VOR(M1, M0);
-    VECTYPE X = M1;
+    X = M1
 #elif NUMVECS == 4
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
@@ -257,7 +278,9 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VOR(M3, M2);
 
     VOR(M3, M1);
-#elif NUMVECS == 8
+    X = M3;
+#elif NUMVECS == 8 || NUMVECS == 12 
+    register VECTYPE X REGISTER("xmm14");
     VMATCH(M0, Match);
     VMATCH(M1, Match); 
 
@@ -268,31 +291,25 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VOR(M3, M2);
 
     VOR(M3, M1);
-#elif NUMVECS == 12
-    VMATCH(M0, Match);
-    VMATCH(M1, Match); 
-
-    VOR(M1, M0);
-    VMATCH(M2, Match);
-    VMATCH(M3, Match);
-
-    VOR(M3, M2);
-
-    VOR(M3, M1);
-#elif NUMVECS == 16
+    X = M3;
+#elif NUMVECS >= 16
+    register VECTYPE X REGISTER("xmm14");
     VMATCH(M0, Match);
     VMATCH(M2, Match); 
+    VLOAD(X, freq, 15);    // X acts as 15
 
     VMATCH(M1, Match);
     VMATCH(M3, Match);
     VOR(M2, M0);
-    VLOAD(M0, freq, 14);   // 0 doubles as 14 
+    // NOTE: M0, M1, M2 continue loading from this freq instead of reloading for nextFreq
+    VLOAD(M0, freq, 13);   // 0 doubles as 13 
 
+    VMATCH(M4, Match);
+    VMATCH(M5, Match);
     VOR(M3, M1);
-    VLOAD(M1, freq, 15);   // 1 doubles as 15
+    VLOAD(M1, freq, 14);   // 1 doubles as 14
 
-    VOR(M3, M1);
-    // NOTE: these two load from this freq, not nextFreq
+    VOR(M3, M2);
 #endif
     
     const uint32_t *nextFreq = freq; // location to reload next set vectors (possibly unchanged)
@@ -329,7 +346,39 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     nextFreq += jump;
 #endif // LOOKAHEAD >= 4
 
-    // CAUTION: No vector reloads before here (waiting on LOOKAHEAD to calculate nextFreq)
+#if (LOOKAHEAD >= 5)
+    jump = 0;
+    if (rarely(nextMatch > maxChunk5)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    nextFreq += jump;
+#endif // LOOKAHEAD >= 5
+
+#if (LOOKAHEAD >= 6)
+    jump = 0;
+    if (rarely(nextMatch > maxChunk6)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    nextFreq += jump;
+#endif // LOOKAHEAD >= 6
+
+#if (LOOKAHEAD >= 7)
+    jump = 0;
+    if (rarely(nextMatch > maxChunk7)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    nextFreq += jump;
+#endif // LOOKAHEAD >= 7
+
+#if (LOOKAHEAD >= 8)
+    jump = 0;
+    if (rarely(nextMatch > maxChunk8)) { // PROFILE: verify cmov
+        jump = CHUNKINTS;  
+    }        
+    nextFreq += jump;
+#endif // LOOKAHEAD >= 8
+
+    // CAUTION: No nextFreq reloads before here (waiting on LOOKAHEAD to calculate nextFreq)
 
     // NOTE: nextFreq is needed to reload vectors below but 
     //       maxChunks aren't needed until the next iteration
@@ -345,6 +394,22 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 #if (LOOKAHEAD >= 4)
     maxChunk4 = nextFreq[4 * CHUNKINTS - 1]; 
 #endif // 4
+
+#if (LOOKAHEAD >= 5)
+    maxChunk5 = nextFreq[5 * CHUNKINTS - 1]; 
+#endif // 5
+
+#if (LOOKAHEAD >= 6)
+    maxChunk6 = nextFreq[6 * CHUNKINTS - 1]; 
+#endif // 6
+
+#if (LOOKAHEAD >= 7)
+    maxChunk7 = nextFreq[7 * CHUNKINTS - 1]; 
+#endif // 7
+
+#if (LOOKAHEAD >= 8)
+    maxChunk8 = nextFreq[8 * CHUNKINTS - 1]; 
+#endif // 8
 
 
 #if NUMVECS == 1
@@ -396,7 +461,6 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 #elif NUMVECS == 12
     VMATCH(M4, Match);
     VMATCH(M5, Match); 
-    VECTYPE X3 = M3;
     VLOAD(M0, nextFreq, 0);
     VLOAD(M1, nextFreq, 1);
 
@@ -413,13 +477,13 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 
     VMATCH(M10, Match);
     VMATCH(M11, Match);
-    VOR(X3, M5);
+    VOR(X, M5);
     VLOAD(M5, nextFreq, 5);
     VLOAD(M6, nextFreq, 6);
 
     VOR(M9, M8);
     VOR(M11, M10);
-    VOR(X3, M7);
+    VOR(X, M7);
     VLOAD(M7, nextFreq, 7);
     VLOAD(M8, nextFreq, 8);
 
@@ -427,67 +491,63 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VLOAD(M9, nextFreq, 9);
     VLOAD(M10, nextFreq, 10);
 
-    VOR(X3, M11);
+    VOR(X, M11);
     VLOAD(M7, nextFreq, 7);
     VLOAD(M10, nextFreq, 10);
 
     VLOAD(M11, nextFreq, 11);
-    if (! TESTZERO(X3)) {
+    if (! TESTZERO(X)) {
         count += 1;             // PROFILE: verify cmov
     }
 #elif NUMVECS == 16
-    VMATCH(M4, Match);
-    VMATCH(M5, Match);
     VLOAD(M2, nextFreq, 2);
-    // WORKAROUND: Load 2 as "12" to help icc (maybe swap 12/13 for clarity)
 
-    VMATCH(M6, Match); 
+    VMATCH(M6, Match);
     VMATCH(M7, Match);
     VOR(M5, M4);
     VLOAD(M4, nextFreq, 4);
 
     VMATCH(M8, Match);
     VMATCH(M9, Match);
-    VOR(M7, M3);
-    VLOAD(M3, nextFreq, 3);
+    VOR(M7, M6);
+    VLOAD(M6, nextFreq, 6);
 
     VMATCH(M10, Match);
     VMATCH(M11, Match);
-    VOR(M9, M5);    
-    VLOAD(M5, nextFreq, 5);
+    VOR(M9, M8);
+    VLOAD(M8, nextFreq, 8);
 
-    VMATCH(M0, Match);  // MATCH("14",M) (at least 4 cycles after load)
-    VMATCH(M1, Match);  // MATCH("15",M) (at least 4 cycles after load)
-    VOR(M11, M6);    
-    VLOAD(M6, nextFreq, 6);
+    VOR(X, M0);   // OR("15", "13")
+    VOR(M3, M1);  // OR(0|1|2|3, "14")
+    VOR(M7, M5);
+    VLOAD(M0, nextFreq, 0);  
+    VLOAD(M1, nextFreq, 1);
 
     VMATCH(M12, Match);
-    VOR(M9, M0);        // OR(9, "14")
-    VOR(M11, M1);       // OR(11, "15")
-    VLOAD(M0, nextFreq, 0);  // reload real 0
-    VLOAD(M1, nextFreq, 1);  // reload real 1
+    VOR(M11, M2); // OR(11, "15")
+    VOR(M7, M3);
+    VLOAD(M5, nextFreq, 3);
+    VLOAD(M6, nextFreq, 5);
 
-    VMATCH(M13, Match);
-    VOR(M12, M8);
-    VOR(M11, M7);
+    VOR(X, M7);
+    VOR(M9, M8);
+    VOR(M11, M10);
     VLOAD(M7, nextFreq, 7);
     VLOAD(M8, nextFreq, 8);
 
-    VOR(M11, M9);
-    VOR(M12, M10);
-    VLOAD(M9, nextFreq, 9); 
+    VOR(X, M9);
+    VOR(M12, M11);
+    VLOAD(M9, nextFreq, 9);
     VLOAD(M10, nextFreq, 10);
 
-    VOR(M13, M11);   
+    VOR(X, M12);
     VLOAD(M11, nextFreq, 11);
-
-    VOR(M13, M12);
     VLOAD(M12, nextFreq, 12);
 
-    if (! TESTZERO(M13)) {
+    if (! TESTZERO(X)) {
         count += 1;
     }
-    VLOAD(M13, nextFreq, 13);
+#elif NUMVECS == 24
 #endif
 
     // NOTE: Freq is finalized and best effort has been made so that vectors are reloaded.
@@ -510,12 +570,12 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
         goto CHECK_NEXT_RARE; // preload worked and vectors are ready
     } 
 
+
 #ifdef IACA
-    IACA_END;
+        IACA_END;
 #endif
 
     goto RELOAD_FREQ;  // need to scan farther along in freq 
-
        
     
  FINISH_SCALAR:
