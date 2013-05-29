@@ -9,11 +9,8 @@
 // Add higher numbers of (virtual) vectors: 24, 32 (performance test first)
 
 // Switch "VECTYPE X = M0" to assembly compatible macro. (skip it?)
-// Add "VDECLARE" macro that can control "asm" specification (to test whether it's needed)
 
 // Improve TESTZERO to allow better load interleaves?  (Probably not needed)
-
-// Interleave checks and reloads of MAXCHUNK for speed and clarity
 
 // Adjust search split based on number of LOOKAHEADS (only after performance testing)
 
@@ -211,8 +208,9 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
 #endif // > 4
 #endif // > 2
 #endif // > 1
+
+// FUTURE: use MM0-MM7 for extra storage space beyond spill point (more than 6?)
         
-    // FUTURE: pack two of these into each reg64?
 #if (LOOKAHEAD >= 2)
     uint32_t maxChunk2 = freq[2 * CHUNKINTS - 1]; 
 #if (LOOKAHEAD >= 3)
@@ -248,6 +246,8 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     }
     // NOTE: safe to leave nextMatch set to *rare on last iteration
     // NOTE: Four cycles until nextMatch is loaded for LOOKAHEAD comparisons
+
+    COMPILER_BARRIER;
 
 #if NUMVECS == 1
     register VECTYPE X REGISTER("xmm14");
@@ -293,7 +293,7 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VMATCH(M1, Match);
     VMATCH(M3, Match);
     VOR(M2, M0);
-    // NOTE: M0, M1, M2 continue loading from this freq instead of reloading for nextFreq
+    // NOTE: M0, M1, M2 continue loading from "this" freq instead of reloading for nextFreq
     VLOAD(M0, freq, 13);   // 0 doubles as 13 
 
     VMATCH(M4, Match);
@@ -304,6 +304,8 @@ size_t search_chunks(const uint32_t *freq, size_t lenFreq,
     VOR(M3, M2);
     VLOAD(M2, freq, 15);   // 2 doubles as 15
 #endif
+
+    COMPILER_BARRIER;
 
     // PROFILE: faster to swap nextFreq calculations and first half of match?
     const uint32_t *nextFreq = freq; // location to reload next set vectors (possibly unchanged)
