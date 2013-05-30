@@ -1,0 +1,94 @@
+
+1234    2222 3333 4444 5555 6666
+
+abcd    bbbb cccc dddd eeee ffff
+
+// low gear:  1 rare compared with 1-20 freq (reshuffle if > 3)
+//            5 per A if nextA0 not shared with A01
+//            partial advance for freq (by ones? by twos? any divisor?)
+//            Target 2:1 to 20:1 ratios
+// No LOOKAHEADS --- use different algorithm if expected
+
+// Goal:  consume all of rare in each pass.  advance freq as appropriate for next.
+
+A(rare);
+NUMVECS scales B(freq);
+
+could share nextAA with AA1?
+pshufd nextAA -> M1, M2, M3, M4;
+pshufd nextAB -> ...
+
+
+if maxA < B[0]  no match possible, A++;   // assymetric, A is rare
+        
+reload maxA;
+    
+if maxB  < A[0]  no match possible, B++;  // non-branching cmov
+// Fine grained:  check max for each vector of B, partial increment
+// if (maxDivisor < A[0]) B += DIVISOR
+
+reload maxB;
+// no looping
+
+load nextA;
+
+cmpeq M1,vecB0;
+cmpeq M2,vecB0;
+cmpeq M3,vecB0;
+cmpeq M4,vecB0;
+
+cmpeq M5,vecB0;
+cmpeq M6,vecB0;
+cmpeq M7,vecB0;
+cmpeq M8,vecB0;
+
+load vecB0;
+
+might need to pshufd M1, M2, M3, M4 again;
+// unless 1 rare vector and <= 2 freq
+// 
+
+maybe load nextA here if sharing M1;
+
+or results; 
+
+cmpeq M1,vecB1;
+cmpeq M2,vecB1;
+cmpeq M3,vecB1;
+cmpeq M4,vecB1;
+load vecB1;
+
+or results; 
+
+...NUMVECS
+
+movmsk, popcnt, cmov add to count;
+
+repeat
+
+
+
+
+1 2 3 4  5  6  7  8   
+
+4 3 2 1
+
+2 4 6 8 10 12 14 16 
+
+A0 < A1 < A2 < A3
+B0 < B1 < B2 < B3
+
+
+
+Realms:
+
+Expect multiple matches within chunk
+Expect match within chunk
+Expect match within lookahead
+Surprised by matches
+
+Match vs Switch
+Average run to switch
+Matches per switch
+Percent matches
+Length ratio
