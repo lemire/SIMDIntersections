@@ -13,9 +13,12 @@
 #define usually(x)    __builtin_expect((x),1)
 #define likely(x)     __builtin_expect((x),1)
 #define often(x)      __builtin_expect((x),1)
+#define expect(x)     __builtin_expect((x),1)
+#define expected(x)   __builtin_expect((x),1)
 #define sometimes(x)  __builtin_expect((x),0)
 #define unlikely(x)   __builtin_expect((x),0)
 #define rarely(x)     __builtin_expect((x),0)
+#define unexpected(x) __builtin_expect((x),0)
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,20 +64,12 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
     return count; // NOTREACHED
 }
 
-#if ! defined(LOOKAHEAD) || LOOKAHEAD > 8
-#error LOOKAHEAD must be defined and one of {0,1,2,3,4,5,6,7,8}
+
+#if (NUMVECS < 2 || NUMVECS > 32)
+#error "NUMVECS must be defined anqd between 2 and 32"
 #endif
 
-#if ! (NUMVECS == 1 || NUMVECS == 2 || NUMVECS == 4 ||  NUMVECS == 8  \
-       || NUMVECS == 12 || NUMVECS == 16 || NUMVECS == 24 || NUMVECS == 32)
-#error NUMVECS must be one of {1, 2, 4, 8, 12, 16, 24, 32}
-#endif
-
-#if LOOKAHEAD > 0
-#define SAFESPACE (LOOKAHEAD * CHUNKINTS - 1)
-#else 
 #define SAFESPACE (CHUNKINTS - 1)
-#endif
 
 #define TESTZERO(reg) _mm_testz_si128(reg, reg)
 
@@ -85,7 +80,8 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 // #define REGISTER(reg) 
 #define REGISTER(reg) asm(reg)
 
-#define VOR(dest, other)                                      \
+
+#define VOR(dest, other)                                        \
     asm VOLATILE("por %1, %0" : "+x" (dest) : "x" (other) );
 
 #define VLOAD(dest, ptr, offset)                                        \
@@ -94,16 +90,18 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 #define VSETALL(dest, int32)                                            \
     asm VOLATILE("movd %1, %0; pshufd $0, %0, %0" : "=x" (dest) : "g" (int32) ) 
 
-#define VMATCH(dest, other)                                   \
+#define VMATCH(dest, other)                                     \
     asm VOLATILE("pcmpeqd %1, %0" : "+x" (dest) : "x" (other) )
 
 // NOTE: doesn't seem needed, can just use "dest = src"?
 // #define VMOVE(dest, src) asm VOLATILE("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
+
+
 #define NUMVECS 8
 
 size_t search_tight(const uint32_t *freq, size_t lenFreq,
-                    const uint32_t *rare, size_t lenRare) {
+                    const uint32_t *rare, size_t lenRare)  {
 
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0) {
@@ -115,7 +113,7 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
     const uint32_t *stopFreq = lastFreq - SAFESPACE;
     
     // skip straight to scalar if not enough room to load vectors
-    if (rarely(freq >= stopFreq)) {
+    if (rarely(freq >= stopFreq) || rarely(rare >= stopRare)) {
         goto FINISH_SCALAR;
     }
 
@@ -129,236 +127,128 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
     register VECTYPE Rare REGISTER("xmm5");
     register VECTYPE NextFreq REGISTER("xmm6");
     register VECTYPE NextRare REGISTER("xmm7");
-    // FUTURE: could add NextRare1, NextRare2, NextRare3, NextRare4
+    // FUTURE: could add Rare/NextRare1, Rare/NextRare2, Rare/NextRare3, NextRare4
 
     register VECTYPE Match REGISTER("xmm15");
 
-
-    uint32_t minFreq; 
-    uint32_t minRare;
-
-    Freq = NextFreq;
-    Rare = NextRare;
-
-    // Calculate next vectors
-    // PROFILE: verify branch-free conditional moves
-
-    // NOTE: reload unaligned proceeding as far as we can
-    // FUTURE: Use VECTYPE and add granularity control with RAREGRANULARITY1
-
-#if ! RAREADVANCE1 && ! RAREADVANCE2
-#error Must define at least one of these
-#endif
-
-#if RAREADVANCE1
-    minFreq = freq[0];
-
-    if (rare[0] < minFreq) { 
-        rare += 1;
-    }
-    if (rare[1] < minFreq) { 
-        rare += 1;
-    }
-    if (rare[2] < minFreq) { 
-        rare += 1;
-    }
-    if (rare[3] < minFreq) { 
-        rare += 1;
-    }
-    // NOTE: use newly calculated rare[0] for greater advance
-#endif // RAREADVANCE1
-
-    minRare = rare[0]; 
-
-    // FUTURE: control granularity with FREQADVANCE
-    if (freq[VECLEN - 1] < minRare) {
-        freq += VECLEN;
-    }
-    if (freq[2 * VECLEN - 1] < minRare) {
-        freq += VECLEN;
-    }
-    if (freq[3 * VECLEN - 1] < minRare) {
-        freq += VECLEN;
-    }
-    if (freq[4 * VECLEN - 1] < minRare) {
-        freq += VECLEN;
-    }
-
-
-    // Profile: verify conditional moves are used
-#if RAREADVANCE2
-    minFreq = freq[0];
-
-#if RAREADVANCE2 == 1
-    if (rare[0] < minFreq) { 
-        rare += RAREADVANCE2;
-    }
-#endif // 1
-
-#if RAREADVANCE2 == 1 || RAREADVANCE2 == 2
-    if (rare[1] < minFreq) { 
-        rare += RAREADVANCE2;
-    }
-#endif // 2
-
-#if RAREADVANCE2 == 1
-    if (rare[2] < minFreq) { 
-        rare += RAREADVANCE2;
-    }
-#endif // 1
-
-#if RAREADVANCE2 == 1 || RAREADVANCE2 == 2 || RAREADVANCE2 == 4
-    if (rare[3] < minFreq) { 
-        rare += RAREADVANCE2;
-    }
-#endif // 1 || 2 || 4
-
-#endif // RAREADVANCE2
-
-    VLOAD(NextFreq, freq, 0);  
+    VLOAD(NextFreq, freq, 0);
     VLOAD(NextRare, rare, 0);
-
-
-    // FUTURE: choose among these with NUMVECS
-
-    Source = Freq;
-    VLOAD(Freq, freq, 1);  // load freq[1]
-
-    VSHUF(Match, Source, 0);  // F0
-
-    VSHUF(F1, Source, 1);
-    VMATCH(Match, Rare);      // F0
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    // VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 2);  // load freq[2]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 3);  // load freq[3]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 4);  // load freq[4]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 5);  // load freq[5]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 6);  // load freq[6]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    Source = Freq;
-    VLOAD(Freq, freq, 7);  // load freq[7]
-
-    VSHUF(F0, Source, 0);
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VSHUF(F1, Source, 1);
-    VMATCH(F0, Rare);
-    VOR(Match, F3);
-
-    VSHUF(F2, Source, 2);
-    VMATCH(F1, Rare);
-    VOR(Match, F0);
-
-    VSHUF(F3, Source, 3);
-    VMATCH(F2, Rare);
-    VOR(Match, F1);
-
-    //  -------------
-
-    VMATCH(F3, Rare);
-    VOR(Match, F2);
-
-    VOR(Match, F3);
     
-    matchBits = _mm_movemask_ps((m128) Match);     // FIXME: cast to correct float VECTYPE
-    passCount = _mm_popcnt_u32(matchBits);
-    count += passCount;
+    uint32_t lastPass = 0;  // Next pass is tested but current pass is always completed
+    uint32_t nextRare;
+    uint32_t nextFreq;
+ 
+    // FUTURE: have separate FREQVECS and RAREVECS
+   
+    while (! lastPass) {
+        Freq = NextFreq;
+        Rare = NextRare;
 
+        // Calculate what to do next AFTER we check current freq against current rare
+        uint32_t maxFreq = freq[NUMVECS * VECLEN - 1];  // highest from multiple freq vectors
+        uint32_t maxRare = rare[VECLEN - 1];            // highest from single rare vector
+    
+        uint32_t advance;
+    
+        // NOTE: if clause should be flow controlled, else clause should be branchless
+        if (expected(maxFreq > maxRare)) {  // but if all of Rare was already checked
+            nextRare = rare + VECLEN;           // jump to the next full vector
+        } else {                            // otherwise consider individually and RELOAD UNALIGNED
+            nextRare = rare;
+            if (maxFreq > rare[0]) { 
+                nextRare += 1;   // PROFILE: cmov
+            }
+
+            if (maxFreq > rare[1]) { 
+                nextRare += 1;   // PROFILE: cmov
+            }
+
+            if (maxFreq > rare[2]) { 
+                nextRare += 1;   // PROFILE: cmov
+            }
+
+            COMPILE_TIME_ASSERT(VECLEN == 4);  // FUTURE: generalize for VECTYPE
+        }
+
+        // PROFILE:  is it beneficial to start the real work at this point?
+        Source = Freq;
+        VLOAD(Freq, freq, 1);  // load freq[1]
+
+        VSHUF(Match, Source, 0);  
+
+        VSHUF(F1, Source, 1);
+        VMATCH(Match, Rare);      
+
+        VSHUF(F2, Source, 2);
+        VMATCH(F1, Rare);
+        // VOR(Match, F0);
+
+        VSHUF(F3, Source, 3);
+        VMATCH(F2, Rare);
+        VOR(Match, F1);
+
+        // Jump over the loads if this is going to be the final pass
+        if (expected(nextRare < stopRare) && expected(nextFreq < stopFreq)) {
+#define GRANULAR_ADVANCE(vecnum)                                        \
+            if (NUMVECS > vecnum && vecnum % GRANULARITY == 0) {        \
+                if (freq[vecnum * VECLEN - 1] < nextRare[0]) {          \
+                    nextFreq += GRANULARITY * VECLEN;                   \
+                }                                                       \
+            }                                                           \
+        
+            // PROFILE: verify conditional moves are used
+            // GRANULAR_ADVANCE(1) ... GRANULAR_ADVANCE(16)
+            REPEAT_ADD(GRANULAR_ADVANCE, 16, 1, 1);
+        
+#undef GRANULAR_ADVANCE
+        
+            // PROFILE: are these two always ready for next pass?
+            VLOAD(NextFreq, nextFreq, 0);  
+            VLOAD(NextRare, nextRare, 0);
+        } else {
+            lastPass = 1;
+        }
+    
+#define CHECK_VECTOR(vecnum)                    \
+        if (NUMVECS > vecnum) {                 \
+            Source = Freq;                      \
+            VLOAD(Freq, freq, vecnum);          \
+                                                \
+            VSHUF(F0, Source, 0);               \
+            VMATCH(F3, Rare);                   \
+            VOR(Match, F2);                     \
+                                                \
+            VSHUF(F1, Source, 1);               \
+            VMATCH(F0, Rare);                   \
+            VOR(Match, F3);                     \
+                                                \
+            VSHUF(F2, Source, 2);               \
+            VMATCH(F1, Rare);                   \
+            VOR(Match, F0);                     \
+                                                \
+            VSHUF(F3, Source, 3);               \
+            VMATCH(F2, Rare);                   \
+            VOR(Match, F1);                     \
+        }
+
+        // CHECK_VECTOR(2) ... CHECK_VECTOR(32)
+        REPEAT_ADD(CHECK_VECTOR, 30, 2, 1);
+
+#undef CHECK_VECTOR(vecnum)
+
+        VMATCH(F3, Rare);
+        VOR(Match, F2);
+
+        VOR(Match, F3);
+
+        freq = nextFreq;
+        rare = nextRare;
+    
+        matchBits = _mm_movemask_ps((m128) Match);     // FIXME: cast to correct float VECTYPE
+        passCount = _mm_popcnt_u32(matchBits);
+        count += passCount;
+    }
+
+ FINISH_SCALAR:
+    return count; // plus scalar
+}
