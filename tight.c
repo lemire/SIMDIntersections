@@ -97,7 +97,6 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 // #define VMOVE(dest, src) asm VOLATILE("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
 
-
 #define NUMVECS 8
 
 size_t search_tight(const uint32_t *freq, size_t lenFreq,
@@ -121,12 +120,18 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
     register VECTYPE F1 REGISTER("xmm1");
     register VECTYPE F2 REGISTER("xmm2");
     register VECTYPE F3 REGISTER("xmm3");
+#if VECLEN == 8
+    register VECTYPE F4 REGISTER("xmm4");
+    register VECTYPE F5 REGISTER("xmm5");
+    register VECTYPE F6 REGISTER("xmm6");
+    register VECTYPE F7 REGISTER("xmm7");
+#endif
 
+    register VECTYPE Freq REGISTER("xmm8");
+    register VECTYPE NextFreq REGISTER("xmm9");
 
-    register VECTYPE Freq REGISTER("xmm4");
-    register VECTYPE Rare REGISTER("xmm5");
-    register VECTYPE NextFreq REGISTER("xmm6");
-    register VECTYPE NextRare REGISTER("xmm7");
+    register VECTYPE Rare REGISTER("xmm10");
+    register VECTYPE NextRare REGISTER("xmm11");
     // FUTURE: could add Rare/NextRare1, Rare/NextRare2, Rare/NextRare3, NextRare4
 
     register VECTYPE Match REGISTER("xmm15");
@@ -134,7 +139,7 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
     VLOAD(NextFreq, freq, 0);
     VLOAD(NextRare, rare, 0);
     
-    uint32_t lastPass = 0;  // Next pass is tested but current pass is always completed
+    uint32_t lastPass = 0;  // current pass is always completed
     uint32_t nextRare;
     uint32_t nextFreq;
  
@@ -151,7 +156,7 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
         uint32_t advance;
     
         // NOTE: if clause should be flow controlled, else clause should be branchless
-        if (expected(maxFreq > maxRare)) {  // but if all of Rare was already checked
+        if (expected(maxFreq > maxRare)) {  // if all of Rare was already checked
             nextRare = rare + VECLEN;           // jump to the next full vector
         } else {                            // otherwise consider individually and RELOAD UNALIGNED
             nextRare = rare;
@@ -170,23 +175,6 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
             COMPILE_TIME_ASSERT(VECLEN == 4);  // FUTURE: generalize for VECTYPE
         }
 
-        // PROFILE:  is it beneficial to start the real work at this point?
-        Source = Freq;
-        VLOAD(Freq, freq, 1);  // load freq[1]
-
-        VSHUF(Match, Source, 0);  
-
-        VSHUF(F1, Source, 1);
-        VMATCH(Match, Rare);      
-
-        VSHUF(F2, Source, 2);
-        VMATCH(F1, Rare);
-        // VOR(Match, F0);
-
-        VSHUF(F3, Source, 3);
-        VMATCH(F2, Rare);
-        VOR(Match, F1);
-
         // Jump over the loads if this is going to be the final pass
         if (expected(nextRare < stopRare) && expected(nextFreq < stopFreq)) {
 #define GRANULAR_ADVANCE(vecnum)                                        \
@@ -198,48 +186,78 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
         
             // PROFILE: verify conditional moves are used
             // GRANULAR_ADVANCE(1) ... GRANULAR_ADVANCE(16)
-            REPEAT_ADD(GRANULAR_ADVANCE, 16, 1, 1);
+            REPEAT_ADDING_ONE(GRANULAR_ADVANCE, 15, 1);
         
 #undef GRANULAR_ADVANCE
-        
-            // PROFILE: are these two always ready for next pass?
-            VLOAD(NextFreq, nextFreq, 0);  
-            VLOAD(NextRare, nextRare, 0);
         } else {
+            VLOAD(NextFreq, nextFreq, 0);
             lastPass = 1;
         }
-    
-#define CHECK_VECTOR(vecnum)                    \
-        if (NUMVECS > vecnum) {                 \
-            Source = Freq;                      \
-            VLOAD(Freq, freq, vecnum);          \
-                                                \
-            VSHUF(F0, Source, 0);               \
-            VMATCH(F3, Rare);                   \
-            VOR(Match, F2);                     \
-                                                \
-            VSHUF(F1, Source, 1);               \
-            VMATCH(F0, Rare);                   \
-            VOR(Match, F3);                     \
-                                                \
-            VSHUF(F2, Source, 2);               \
-            VMATCH(F1, Rare);                   \
-            VOR(Match, F0);                     \
-                                                \
-            VSHUF(F3, Source, 3);               \
-            VMATCH(F2, Rare);                   \
-            VOR(Match, F1);                     \
-        }
 
-        // CHECK_VECTOR(2) ... CHECK_VECTOR(32)
-        REPEAT_ADD(CHECK_VECTOR, 30, 2, 1);
+        Source = Freq;
+        VLOAD(Freq, freq, 1);  // load freq[1]
 
-#undef CHECK_VECTOR(vecnum)
+#define CYCLE_RARE(num) CYCLE_RARE_ ## VECLEN(num)
 
-        VMATCH(F3, Rare);
-        VOR(Match, F2);
+#define CYCLE_RARE_4(num)                       \
+        if (num + 1 < NUMRARE) {                \
+            VLOAD(NextRare, rare, num + 1);     \
+        } else if (! lastPass) {                \
+            VLOAD(NextRare, nextRare, 0);       \
+        }                                       \
+                                                \
+        VSHUF(F0, Source, 0);                   \
+                                                \
+        VSHUF(F1, Source, 1);                   \
+        VMATCH(F0, Rare ## num);                \
+                                                \
+        VSHUF(F2, Source, 2);                   \
+        VMATCH(F1, Rare ## num);                \
+        VOR(Match ## num, F0);                  \
+                                                \
+        VSHUF(F3, Source, 3);                   \
+        VMATCH(F2, Rare ## num);                \
+        VOR(Match ## num, F1);                  \
+                                                \
+        VMATCH(F3, Rare ## num);                \
+        VOR(Match ## num, F2);                  \
+                                                \
+        VOR(Match # num, F3);                                   
 
-        VOR(Match, F3);
+#define CYCLE_RARE_8(num)                       \
+        CYCLE_RARE_4(num);                      \
+                                                \
+        VSHUF(F4, Source, 4);                   \
+                                                \
+        VSHUF(F5, Source, 5);                   \
+        VMATCH(F4, Rare ## num);                \
+                                                \
+        VSHUF(F6, Source, 6);                   \
+        VMATCH(F5, Rare ## num);                \
+        VOR(Match ## num, F4);                  \
+                                                \
+        VSHUF(F7, Source, 7);                   \
+        VMATCH(F6, Rare ## num);                \
+        VOR(Match ## num, F5);                  \
+                                                \
+        VMATCH(F7, Rare ## num);                \
+        VOR(Match ## num, F6);                  \
+                                                \
+        VOR(Match # num, F7);                                   
+
+
+#define CHECK_VECTOR(vecnum)                            \
+        Source = Freq;                                  \
+        VLOAD(Freq, freq, vecnum);                      \
+        REPEAT_ADDING_ONE(CYCLE_RARE, NUMRARE, 0);      \
+
+        // CHECK_VECTOR(0) ... CHECK_VECTOR(31)
+        REPEAT_ADDING_ONE(CHECK_VECTOR, NUMFREQ, 0);
+
+#undef CYCLE_RARE
+#undef CYCLE_RARE_4
+#undef CYCLE_RARE_8
+#undef CHECK_VECTOR
 
         freq = nextFreq;
         rare = nextRare;
@@ -252,3 +270,4 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
  FINISH_SCALAR:
     return count; // plus scalar
 }
+
