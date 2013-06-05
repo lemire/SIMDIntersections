@@ -103,9 +103,10 @@ size_t finish_scalar(const uint32_t *A, size_t lenA,
 // NOTE: doesn't seem needed, can just use "dest = src"?
 // #define VMOVE(dest, src) asm VOLATILE("movdqa %1, %0" : "=x" (dest) : "x" (src) );
 
+#define FUNC(name) name ## _R ## NUMRARE ## _F ## NUMFREQ
 
-size_t search_tight(const uint32_t *freq, size_t lenFreq,
-                    const uint32_t *rare, size_t lenRare)  {
+size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
+                          const uint32_t *rare, size_t lenRare)  {
 
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0) {
@@ -130,11 +131,12 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
 
     register VECTYPE Rare REGISTER("xmm5");
     register VECTYPE Freq REGISTER("xmm6");
+
     register VECTYPE NextRare REGISTER("xmm7");
     register VECTYPE NextFreq REGISTER("xmm8");
 
-    VLOAD(Freq, freq, 0);
-    VLOAD(Rare, rare, 0);
+    VLOAD(NextFreq, freq, 0);
+    VLOAD(NextRare, rare, 0);
     
     uint32_t lastPass = 0;  // current pass is always completed
     uint32_t nextRare;
@@ -158,7 +160,7 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
                     int advance = 0;                                    \
                     uint32_t minRare = rare[num];                       \
                     if (maxFreq > minRare) {                            \
-                        advance = GRANRARE * VECLEN;                    \
+                        advance = GRANRARE;                             \
                     }                                                   \
                     nextRare += advance;                                \
                 }                                                           
@@ -173,8 +175,19 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
                 REPEAT_INCREMENT(ADVANCE_RARE_BY_INTS, times, 0, GRANRARE);
             }
         
-        // CHECK: make sure no reads extend beyond legal area
-        uint32_t minRare = nextRare[0];
+        if (unexpected(nextRare >= stopRare)) {
+            lastPass = 1;
+            // FIXME: choose a safe suitable minRare here
+        } else {
+            minRare = nextRare[0];
+        }
+
+#if EARLYCYCLES > 0
+        COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
+        // CHECK_VECTOR(0) ... CHECK_VECTOR(EARLYCYCLES-1)
+        REPEAT_ADDING_ONE(CHECK_VECTOR, EARLYCYCLES, 0);
+#endif
+
 
 #define ADVANCE_FREQ_BY_VECS(num)  {                                    \
             int advance = 0;                                            \
@@ -184,42 +197,47 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
             nextFreq += advance;                                        \
         }                                                                   
 
-        const uint32_t times = (NUMFREQ / GRANFREQ);
+        // NOTE: LOOKAHEAD tries to skip over more of freq than was checked
+        const uint32_t times = (NUMFREQ / GRANFREQ) + LOOKAHEAD;
         // PROFILE: verify that conditional moves are used
         REPEAT_INCREMENT(ADVANCE_FREQ_BY_VECS, times, GRANFREQ, GRANFREQ);
 
-        // FIXME: separate NextFreq from TempFreq, NextRare from TempRare
-        if (nextFreq >= stopFreq || nextRare >= stopRare) {
+        // NOTE: NextFreq and NextRare will be loaded in last pass of macros below
+        if (unexpected(nextFreq >= stopFreq)) {
             lastPass = 1;
-        } else {
-            VLOAD(NextFreq, nextFreq, 0);               
-            VLOAD(NextRare, nextRare, 0);       
-        } 
+        }
 
-#define CYCLE_RARE(num)                                            \
-        Rare = NextRare;                                           \
-        if (num + 1 < NUMRARE) {                                   \
-            VLOAD(NextRare, rare, num + 1);                        \
-        }                                                          \
-        CYCLE_RARE_ ## VECLEN (num);                                \
-        int bits = _mm_movemask_ps((VECFLOAT) Match);              \
+#define CYCLE_RARE_VECLEN CYCLE_RARE_ ## VECLEN
+
+        // PROFILE: check that 'if' clauses are static and optimized out        
+#define CYCLE_RARE(rarenum, freqnum)                                \
+        Rare = NextRare;                                            \
+        if (rarenum + 1 < NUMRARE) {                                \
+            VLOAD(NextRare, rare, num + 1);                         \
+        } else if (freqnum + 1 < NUMFREQ) {                         \
+            VLOAD(NextRare, rare, 0);                               \
+        } else if (! lastPass) {                                    \
+            VLOAD(NextRare, nextRare, 0);                           \
+        }                                                           \
+        CYCLE_RARE_VECLEN(rarenum);                                 \
+        int bits = _mm_movemask_ps((VECFLOAT) Match);               \
         matchBits |= bits << num
 
 #define CYCLE_RARE_4(num)                       \
         VSHUF(F0, Freq, 0);                     \
                                                 \
         VSHUF(F1, Freq, 1);                     \
-        VMATCH(F0, Rare ## num);                \
+        VMATCH(F0, Rare);                       \
                                                 \
         VSHUF(F2, Freq, 2);                     \
-        VMATCH(F1, Rare ## num);                \
+        VMATCH(F1, Rare);                       \
         VOR(Match, F0);                         \
                                                 \
         VSHUF(F3, Freq, 3);                     \
-        VMATCH(F2, Rare ## num);                \
+        VMATCH(F2, Rare);                       \
         VOR(Match, F1);                         \
                                                 \
-        VMATCH(F3, Rare ## num);                \
+        VMATCH(F3, Rare);                       \
         VOR(Match, F2);                         \
                                                 \
         VOR(Match, F3);                                   
@@ -229,20 +247,23 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
         CYCLE_RARE_4(num);                      
 
 
-#define CHECK_VECTOR(num)                               \
-        Freq = NextFreq;                                \
-        if (num + 1 < NUMFREQ) {                        \
-            VLOAD(NextFreq, freq, num);                 \
-        }                                               \
-        REPEAT_ADDING_ONE(CYCLE_RARE, NUMRARE, 0);      \
+#define CHECK_VECTOR(freqnum)                                    \
+        Freq = NextFreq;                                         \
+        if (freqnum + 1 < NUMFREQ) {                             \
+            VLOAD(NextFreq, freq, freqnum);                      \
+        } else if (! lastPass) {                                 \
+            VLOAD(NextFreq, nextFreq, 0);                        \
+        }                                                        \
+        REPEAT_ADDING_ONE(CYCLE_RARE, NUMRARE, 0, freqnum);      \
 
+
+#if EARLYCYCLES > 0
+        // CHECK_VECTOR(EARLYCYCLES) ... CHECK_VECTOR(NUMFREQ-1)
+        REPEAT_ADDING_ONE(CHECK_VECTOR, NUMFREQ - EARLYCYCLES, EARLYCYCLES);
+#else
         // CHECK_VECTOR(0) ... CHECK_VECTOR(NUMFREQ-1)
         REPEAT_ADDING_ONE(CHECK_VECTOR, NUMFREQ, 0);
-
-#undef CYCLE_RARE
-#undef CYCLE_RARE_4
-#undef CYCLE_RARE_8
-#undef CHECK_VECTOR
+#endif
 
         freq = nextFreq;
         rare = nextRare;
@@ -253,5 +274,11 @@ size_t search_tight(const uint32_t *freq, size_t lenFreq,
 
  FINISH_SCALAR:
     return count; // plus scalar
+
+#undef CYCLE_RARE
+#undef CYCLE_RARE_VECLEN
+#undef CYCLE_RARE_4
+#undef CYCLE_RARE_8
+#undef CHECK_VECTOR
 }
 
