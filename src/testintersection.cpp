@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
         cout << "\t";
         cout.flush();
         for(auto algo : myschemes) {
-            if (safe)
+            if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
             for (size_t k = 0; k < 2 * howmany; k += 2) {
                 size_t correctanswer = classicalintersectioncardinality(
                         &data[k][0], data[k].size(), &data[k + 1][0],

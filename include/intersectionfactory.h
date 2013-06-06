@@ -21,6 +21,7 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
     schemes[ "danhybrid" ] =  danielshybridintersectioncardinality;
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
+    schemes[ "widevectorleo" ] =  leowidevector_cardinality_intersect;
     schemes[ "danscalar" ] =  intersectioncardinality;
     schemes[ "galloping" ] =  frogintersectioncardinality;
     schemes[ "1sgalloping" ] =  onesidedgallopingintersectioncardinality;
@@ -36,8 +37,16 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     return schemes;
 }
 
+std::set<std::string> initializebuggy() {
+    std::set<std::string> schemes;
+    schemes.insert("widevectorleo");//makes some assumptions
+    return schemes;
+}
 
 std::map<std::string,cardinalityintersectionfunction> schemes = initializefactory();
+
+std::set<std::string> buggyschemes = initializebuggy();
+
 
 std::map<std::string,cardinalityintersectionfunctionpart> initializefactorypart() {
     std::map<std::string,cardinalityintersectionfunctionpart> partschemes;
@@ -57,6 +66,7 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"danhybrid",danielshybridintersectioncardinality},
 	{	"widevector", widevector_cardinality_intersect},
+    {   "widevectorleo", leowidevector_cardinality_intersect},
 	{	"danscalar", intersectioncardinality},
 	{	"galloping",frogintersectioncardinality},
 	{	"1sgalloping", onesidedgallopingintersectioncardinality},
@@ -71,7 +81,7 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
     {   "danfarfinemedium", danfarfine_count_medium}
 };
 
-
+std::set<std::string> buggyschemes = {"widevectorleo"};
 
 std::map<std::string,cardinalityintersectionfunctionpart> partschemes = {
 	{	"schlegel",partitioned::cardinality_intersect_partitioned},

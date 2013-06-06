@@ -229,6 +229,93 @@ static size_t faster_cardinality_intersect_vector16(const uint16_t *A,
     return count;
 }
 
+
+/**
+ * From Schlegel et al., Fast Sorted-Set Intersection using SIMD Instructions
+ *
+ * Optimized by D. Lemire on May 3rd 2013
+ */
+static size_t faster2_cardinality_intersect_vector16(const uint16_t *A,
+        const uint16_t *B, const size_t s_a, const size_t s_b/*, uint16_t *C*/) {
+    size_t count = 0;
+    size_t i_a = 0, i_b = 0;
+
+    const size_t st_a = (s_a / 8) * 8;
+    const size_t st_b = (s_b / 8) * 8;
+    __m128i v_a, v_b;
+    if ((i_a < st_a) and (i_b < st_b)) {
+        v_a = _mm_loadu_si128((__m128i *) &A[i_a]);
+        v_b = _mm_loadu_si128((__m128i *) &B[i_b]);
+        while ((A[i_a] == 0) or (B[i_b] == 0)) {
+            const __m128i res_v = _mm_cmpestrm(v_b, 8, v_a, 8,
+                    _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_BIT_MASK);
+            const int r = _mm_extract_epi32(res_v, 0);
+            //__m128i p = _mm_shuffle_epi8(v_a, shuffle_mask16[r]);
+            //_mm_storeu_si128((__m128i *) &C[count], p);
+            count += _mm_popcnt_u32(r);
+            const uint16_t a_max = A[i_a + 7];
+            const uint16_t b_max = B[i_b + 7];
+            if (a_max <= b_max) {
+                i_a += 8;
+                if (i_a == st_a)
+                    break;
+                v_a = _mm_loadu_si128((__m128i *) &A[i_a]);
+
+            }
+            if (b_max <= a_max) {
+                i_b += 8;
+                if (i_b == st_b)
+                    break;
+                v_b = _mm_loadu_si128((__m128i *) &B[i_b]);
+
+            }
+
+        }
+        if ((i_a < st_a) and (i_b < st_b))
+            while (true) {
+                const __m128i res_v = _mm_cmpistrm(v_b, v_a,
+                        _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_BIT_MASK);
+                const int r = _mm_extract_epi32(res_v, 0);
+                //__m128i p = _mm_shuffle_epi8(v_a, shuffle_mask16[r]);
+                //_mm_storeu_si128((__m128i *) &C[count], p);
+                count += _mm_popcnt_u32(r);
+                const uint16_t a_max = A[i_a + 7];
+                const uint16_t b_max = B[i_b + 7];
+                if (a_max <= b_max) {
+                    i_a += 8;
+                    if (i_a == st_a)
+                        break;
+                    v_a = _mm_loadu_si128((__m128i *) &A[i_a]);
+
+                }
+                if (b_max <= a_max) {
+                    i_b += 8;
+                    if (i_b == st_b)
+                        break;
+                    v_b = _mm_loadu_si128((__m128i *) &B[i_b]);
+
+                }
+            }
+    }
+    // intersect the tail using scalar intersection
+    while (i_a < s_a && i_b < s_b) {
+        if (A[i_a] < B[i_b]) {
+            i_a++;
+        } else if (B[i_b] < A[i_a]) {
+            i_b++;
+        } else {
+            count++;
+            i_a++;
+            i_b++;
+        }
+    }
+
+    return count;
+}
+
+
+
+
 /**
  * Strictly for testing/debugging purposes.
  */
