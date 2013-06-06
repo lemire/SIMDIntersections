@@ -4,25 +4,12 @@
  *
  * (c) Daniel Lemire, http://lemire.me/en/
  */
-#include <unistd.h>
-
 #include "intersectionfactory.h"
-
 #include "common.h"
 #include "timer.h"
 #include "synthetic.h"
+#include "util.h"
 
-vector<string> split(const string& str, const string& del) {
-    vector < string > tokens;
-    size_t lastPos = str.find_first_not_of(del, 0);
-    size_t pos = str.find_first_of(del, lastPos);
-    while (string::npos != pos || string::npos != lastPos) {
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        lastPos = str.find_first_not_of(del, pos);
-        pos = str.find_first_of(del, lastPos);
-    }
-    return tokens;
-}
 
 void printusage() {
     cout << " Try ./testintersection -r 40" << endl;

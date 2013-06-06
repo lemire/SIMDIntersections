@@ -17,12 +17,27 @@
  * Intel does not really support C++11 so we have to do something ugly like this:
  */
 
+
+std::map<std::string,cardinalityintersectionfunction> realschemes = {
+    {   "widevector", widevector_intersect},
+    {   "danscalar", danscalarintersection},
+    {   "textbook", classicalintersection}
+};
+
+std::map<std::string,intersectionfunction> initializerealfactory() {
+    std::map<std::string,cardinalityintersectionfunction> schemes;
+    schemes[ "widevector" ] =  widevector_intersect;
+    schemes[ "danscalar" ] =  danscalarintersection;
+    schemes[ "textbook" ] =  classicalintersection;
+    return schemes;
+}
+
 std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
     schemes[ "danhybrid" ] =  danielshybridintersectioncardinality;
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_cardinality_intersect;
-    schemes[ "danscalar" ] =  intersectioncardinality;
+    schemes[ "danscalar" ] =  danscalarintersectioncardinality;
     schemes[ "galloping" ] =  frogintersectioncardinality;
     schemes[ "1sgalloping" ] =  onesidedgallopingintersectioncardinality;
     schemes[ "textbook" ] =  classicalintersectioncardinality;
@@ -44,6 +59,7 @@ std::set<std::string> initializebuggy() {
 }
 
 std::map<std::string,cardinalityintersectionfunction> schemes = initializefactory();
+std::map<std::string,intersectionfunction> realschemes = realinitializefactory();
 
 std::set<std::string> buggyschemes = initializebuggy();
 
@@ -63,11 +79,20 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 /**
  * This is the proper way to do it:
  */
+
+
+std::map<std::string,intersectionfunction> realschemes = {
+    {   "widevector", widevector_intersect},
+    {   "danscalar", danscalarintersection},
+    {   "textbook", classicalintersection}
+};
+
+
 std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"danhybrid",danielshybridintersectioncardinality},
 	{	"widevector", widevector_cardinality_intersect},
     {   "widevectorleo", leowidevector_cardinality_intersect},
-	{	"danscalar", intersectioncardinality},
+	{	"danscalar", danscalarintersectioncardinality},
 	{	"galloping",frogintersectioncardinality},
 	{	"1sgalloping", onesidedgallopingintersectioncardinality},
 	{	"textbook", classicalintersectioncardinality},
