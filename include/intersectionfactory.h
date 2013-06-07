@@ -20,6 +20,7 @@
 
 std::map<std::string,cardinalityintersectionfunction> realschemes = {
     {   "widevector", widevector_intersect},
+    {   "widevectorleo",  leowidevector_intersect},
     {   "danscalar", danscalarintersection},
     {   "textbook", classicalintersection}
 };
@@ -83,6 +84,7 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 std::map<std::string,intersectionfunction> realschemes = {
     {   "widevector", widevector_intersect},
+    {   "widevectorleo",     leowidevector_intersect},
     {   "danscalar", danscalarintersection},
     {   "textbook", classicalintersection}
 };
