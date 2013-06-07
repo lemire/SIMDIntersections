@@ -21,16 +21,22 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
+    schemes[ "@hybriddan" ] =  danielshybridintersection;
+
     schemes[ "widevector" ] =  widevector_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_intersect;
-    schemes[ "natedanaltmedium" ] =  natedanalt_medium;
-    schemes[ "danscalar" ] =  danscalarintersection;
-    schemes[ "textbook" ] =  classicalintersection;
-    schemes[ "textbook2" ] =  highlyscalablewordpresscom::intersect_scalar;
+
+    schemes[ "natemediumdanalt" ] =  natedanalt_medium;
+    schemes[ "natemediumdanfar" ] = danfar_medium;
+
+//    schemes[ "scalardan" ] =  danscalarintersection;
+ //   schemes[ "scalartextbook" ] =  classicalintersection;
+ //   schemes[ "scalartextbook2" ] =  highlyscalablewordpresscom::intersect_scalar;
+    schemes[ "scalarnate" ] =  nate_scalar;
+    schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
+
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
-    schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
-    schemes[ "danhybrid" ] =  danielshybridintersection;
-    schemes[ "1sgalloping" ] =  onesidedgallopingintersection;
+    schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
 
     return schemes;
 }
@@ -38,21 +44,26 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 
 std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
-    schemes[ "danhybrid" ] =  danielshybridintersectioncardinality;
+    schemes[ "@hybriddan" ] =  danielshybridintersectioncardinality;
+
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_cardinality_intersect;
-    schemes[ "danscalar" ] =  danscalarintersectioncardinality;
-    schemes[ "galloping" ] =  frogintersectioncardinality;
-    schemes[ "1sgalloping" ] =  onesidedgallopingintersectioncardinality;
-    schemes[ "textbook" ] =  classicalintersectioncardinality;
-    schemes[ "textbook2" ] =  highlyscalablewordpresscom::cardinality_intersect_scalar;
+
+   // schemes[ "scalardan" ] =  danscalarintersectioncardinality;
+    schemes[ "scalargalloping" ] =  frogintersectioncardinality;
+    schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersectioncardinality;
+   // schemes[ "scalartextbook" ] =  classicalintersectioncardinality;
+  //  schemes[ "scalartextbook2" ] =  highlyscalablewordpresscom::cardinality_intersect_scalar;
+    schemes[ "scalarnate" ] =  nate_count_scalar;
+
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::cardinality_intersect_SIMD;
-    schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_cardinality_intersect_SIMD;
+    schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_cardinality_intersect_SIMD;
+
     schemes[ "natemedium" ] =  nate_count_medium;
-    schemes[ "natedanmedium" ] =  natedan_count_medium;
-    schemes[ "natedanaltmedium" ] =  natedanalt_count_medium;
-    schemes[ "danfarmedium" ] =  danfar_count_medium;
-    schemes[ "danfarfinemedium" ] =  danfarfine_count_medium;
+    schemes[ "natemediumdan" ] =  natedan_count_medium;
+    schemes[ "natemediumdanalt" ] =  natedanalt_count_medium;
+    schemes[ "natemediumdanfar" ] =  danfar_count_medium;
+    schemes[ "natemediumfarfine" ] =  danfarfine_count_medium;
     return schemes;
 }
 
@@ -86,35 +97,47 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
-    {   "danhybrid",danielshybridintersection},
-    {   "1sgalloping", onesidedgallopingintersection},
+    {   "@hybriddan",danielshybridintersection},
+
+    {   "scalar1sgalloping", onesidedgallopingintersection},
+//    {   "scalardan", danscalarintersection},
+    {   "scalarnate", nate_scalar},
+  //  {   "scalartextbook", classicalintersection},
+   // {   "scalartextbook2", highlyscalablewordpresscom::intersect_scalar},
+
     {   "widevector", widevector_intersect},
     {   "widevectorleo",     leowidevector_intersect},
-    {   "natedanaltmedium", natedanalt_medium},
-    {   "danscalar", danscalarintersection},
-    {   "textbook", classicalintersection},
-    {   "textbook2", highlyscalablewordpresscom::intersect_scalar},
+
+    {   "natemediumdanalt", natedanalt_medium},
+    {   "natemediumdanfar", danfar_medium},
+
+
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
-    {   "danhssimd", highlyscalablewordpresscom::dan_intersect_SIMD}
+    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD}
 };
 
 
 std::map<std::string,cardinalityintersectionfunction> schemes = {
-	{	"danhybrid",danielshybridintersectioncardinality},
+	{	"@hybriddan",danielshybridintersectioncardinality},
+
 	{	"widevector", widevector_cardinality_intersect},
     {   "widevectorleo", leowidevector_cardinality_intersect},
-	{	"danscalar", danscalarintersectioncardinality},
-	{	"galloping",frogintersectioncardinality},
-	{	"1sgalloping", onesidedgallopingintersectioncardinality},
-	{	"textbook", classicalintersectioncardinality},
-	{	"textbook2", highlyscalablewordpresscom::cardinality_intersect_scalar},
+
+	{	"scalargalloping",frogintersectioncardinality},
+	{	"scalar1sgalloping", onesidedgallopingintersectioncardinality},
+//	{	"scalartextbook", classicalintersectioncardinality},
+//	{	"scalartextbook2", highlyscalablewordpresscom::cardinality_intersect_scalar},
+//	{   "scalardan", danscalarintersectioncardinality},
+    {   "scalarnate", nate_count_scalar},
+
 	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
-	{	"danhssimd", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
+	{	"hssimddan", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
+
 	{	"natemedium", nate_count_medium},
-	{	"natedanmedium", natedan_count_medium},
-	{   "natedanaltmedium", natedanalt_count_medium},
-        {   "danfarmedium", danfar_count_medium},
-        {   "danfarfinemedium", danfarfine_count_medium}
+	{	"natemediumdan", natedan_count_medium},
+	{   "natemediumdanalt", natedanalt_count_medium},
+        {   "natemediumdanfar", danfar_count_medium},
+        {   "natemediumdanfinefar", danfarfine_count_medium}
 };
 
 std::set<std::string> buggyschemes = {"widevectorleo"};

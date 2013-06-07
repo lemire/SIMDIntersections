@@ -13,10 +13,10 @@ size_t danielshybridintersectioncardinality(const uint32_t * set1,
     if ((10 * length1 <= length2) or (10 * length2 <= length1)) {
         if ((200 * length1 < length2) or (200 * length2 < length1)) {
             if (length1 < length2)
-                return onesidedgallopingintersectioncardinality(set1, length1,
+                return danfar_count_medium(set1, length1,
                         set2, length2);
             else
-                return onesidedgallopingintersectioncardinality(set2, length2,
+                return danfar_count_medium(set2, length2,
                         set1, length1);
         } else {
             if (length1 < length2)
@@ -33,10 +33,10 @@ size_t danielshybridintersection(const uint32_t * set1,
     if ((10 * length1 <= length2) or (10 * length2 <= length1)) {
         if ((200 * length1 < length2) or (200 * length2 < length1)) {
             if (length1 < length2)
-                return onesidedgallopingintersection(set1, length1,
+                return danfar_medium(set1, length1,
                         set2, length2,out);
             else
-                return onesidedgallopingintersection(set2, length2,
+                return danfar_medium(set2, length2,
                         set1, length1,out);
         } else {
             if (length1 < length2)
