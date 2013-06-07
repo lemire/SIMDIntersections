@@ -1,16 +1,13 @@
 /*
  * Algorithm 3:  1:1 2:1 3:1 5:1 10:1 20:1 40:1 80:1 200:1 500:1 1000:1
-100%             xx  xx   xx ...
-80%               xx  xx   xx ...
-60%
-20%
-10%
-5%
-1%
+ 100%             xx  xx   xx ...
+ 80%               xx  xx   xx ...
+ 60%
+ 20%
+ 10%
+ 5%
+ 1%
  */
-
-
-
 
 #include "common.h"
 #include "intersectionfactory.h"
@@ -18,29 +15,40 @@
 #include "synthetic.h"
 #include "util.h"
 
-
-
 void printusage() {
-    cout << " Try ./getmatrix -s somescheme" << endl;
-    cout << " Use the -s flag to specify  some scheme, choose from: "
-            << endl;
+    cout << " Try ./getmatrix -s scalarnate" << endl;
+    cout << " Use the -s flag to specify  some scheme, choose from: " << endl;
     for(string x : allRealNames()) cout <<" "<< x << endl;
+    cout
+            << " The -M flag allows you to specific the range in bits (default 31)."
+            << endl;
+    cout
+            << " The -S flag allows you to specific the log. of the minimal array size (default 10)."
+            << endl;
 }
 
 int main(int argc, char **argv) {
     size_t howmany = 0;
     size_t loop = 10;
-    uint32_t S = 12;
+    uint32_t S = 10;
     string name;
     intersectionfunction myscheme = NULL;
+    uint32_t MaxBit = 31;
     int c;
-    while ((c = getopt(argc, argv, "ns:m:S:l:r:h")) != -1)
+    while ((c = getopt(argc, argv, "ns:m:M:S:l:r:h")) != -1)
         switch (c) {
         case 'h':
             printusage();
             return 0;
         case 'S':
             S = atoi(optarg);
+            break;
+        case 'M':
+            MaxBit = atoi(optarg);
+            if (MaxBit < 1) {
+                printusage();
+                return -1;
+            }
             break;
         case 'm':
             howmany = atoi(optarg);
@@ -52,14 +60,13 @@ int main(int argc, char **argv) {
         case 's':
             name = optarg;
             if (realschemes.find(name) == realschemes.end()) {
-                            cerr << " Warning!!! Warning: unrecognized: " << name
-                                    << endl;
-                            printusage();
-                            return -1;
+                cerr << " Warning!!! Warning: unrecognized: " << name << endl;
+                printusage();
+                return -1;
 
-             } else {
+            } else {
 
-                 myscheme = realschemes.find(name)->second;
+                myscheme = realschemes.find(name)->second;
             }
             break;
         case 'l':
@@ -73,21 +80,30 @@ int main(int argc, char **argv) {
             abort();
         }
     if (howmany == 0) {
-            howmany = 5;
+        howmany = 5;
     }
-    uint32_t MaxBit = 31;
-    cout<<"# speed in mis"<<endl;
-    cout<<"# columns are size ratios"<<endl;
-    cout<<"# rows are intersection ratios"<<endl;
+    const uint32_t minlength = 1U << S;
+    cout << "########### Intersection benchmark ###########" << endl;
+
+    cout << "# speeds in mis" << endl;
+    cout << "# columns are size ratios" << endl;
+    cout << "# rows are intersection ratios" << endl;
+    cout << "# average gaps in bits for smallest array: " << std::setprecision(
+            3) << log(1 + (1U << MaxBit) * 1.0 / minlength) << " (use -S and -M flag to change)"<< endl;
+    vector<float> intersectionsratios = { 1.00, 0.80, 0.60, 0.20, 0.10, 0.05,
+            0.01 };
+    vector < uint32_t > sizeratios = {1, 2, 3, 5, 10, 20,40,80,200,500,1000};
+    cout<<"# average gaps in bits for last largest array: "<<std::setprecision(3)<<log(
+             1 + (1U << MaxBit) * 1.0 / (sizeratios.back()*minlength))<<endl;
+    cout << "#############################################" << endl << endl;
 
     cout<< name << "\t";
-    const uint32_t minlength = 1U << S;
     ClusteredDataGenerator cdg;
     WallClockTimer z;
     size_t bogus = 0;
-    vector<float> intersectionsratios = {1.00, 0.80, 0.60, 0.20, 0.10, 0.05, 0.01};
-    vector<uint32_t> sizeratios = {1, 2, 3, 5, 10, 20,40,80,200,500,1000};
-    for(float sr :  sizeratios) {
+
+
+    for(uint32_t sr :  sizeratios) {
         cout<<"1:"<<sr << "\t";
     }
     cout<<endl;
