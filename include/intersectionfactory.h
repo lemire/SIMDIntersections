@@ -26,6 +26,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "natedanaltmedium" ] =  natedanalt_medium;
     schemes[ "danscalar" ] =  danscalarintersection;
     schemes[ "textbook" ] =  classicalintersection;
+    schemes[ "textbook2" ] =  highlyscalablewordpresscom::intersect_scalar;
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
     return schemes;
@@ -87,6 +88,7 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "natedanaltmedium", natedanalt_medium},
     {   "danscalar", danscalarintersection},
     {   "textbook", classicalintersection},
+    {   "textbook2", highlyscalablewordpresscom::intersect_scalar},
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
     {   "danhssimd", highlyscalablewordpresscom::dan_intersect_SIMD}
 };

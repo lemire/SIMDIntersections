@@ -32,8 +32,32 @@ size_t cardinality_intersect_scalar(const uint32_t *A, const size_t s_a,
 
 /**
  * Taken almost verbatim from http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
+ * (just for comparison)
  */
-static __m128i shuffle_mask[16] = {
+size_t intersect_scalar(const uint32_t *A, const size_t s_a,
+        const uint32_t *B, const size_t s_b, uint32_t * out) {
+    const uint32_t * const initout (out);
+    size_t i_a = 0, i_b = 0;
+
+    while (i_a < s_a && i_b < s_b) {
+        if (A[i_a] < B[i_b]) {
+            i_a++;
+        } else if (B[i_b] < A[i_a]) {
+            i_b++;
+        } else {
+            *out++ = B[i_b];
+            i_a++;
+            i_b++;
+        }
+    }
+    return out - initout;
+}
+
+
+/**
+ * Taken almost verbatim from http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
+ */
+const static __m128i shuffle_mask[16] = {
         _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
         _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,3,2,1,0),
         _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,7,6,5,4),
