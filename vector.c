@@ -1,3 +1,5 @@
+// FUTURE: slightly better us use PACK rather than << and |=?
+
 // PROFILE: check that 'if' clauses are static and optimized out        
 #define CHECK_INNER_VECLEN CHECK_INNER_VECLEN_ ## VECLEN
 #define CHECK_INNER(rarenum, freqnum)                   \
@@ -110,6 +112,12 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
         uint32_t maxFreq = freq[NUMFREQ * VECLEN - 1];  
         uint32_t maxRare = rare[NUMRARE * VECLEN - 1];  
 
+
+// FUTURE: add a NONBRANCHING option that always inches both freq and rare
+//         rare[0-X] >= maxFreq; freq[0-Y] > newMinRare
+//         or vice versa?  which is better?
+
+
         if (expected(maxFreq >= maxRare)) {  
             nextRare = rare + NUMRARE * VECLEN;    
             int newRareMin = nextRare[0];
@@ -142,6 +150,9 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
         if (unexpected(nextRare >= stopRare) || 
             unexpected(nextFreq >= stopFreq)) {
             lastPass = 1;
+        } else {
+            // FUTURE: preload maxFreq and maxRare?
+            //         if so, need to load for first pass in header
         }
 
 #if EARLYCYCLES > 0
