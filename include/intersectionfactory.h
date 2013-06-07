@@ -26,15 +26,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "natedanaltmedium" ] =  natedanalt_medium;
     schemes[ "danscalar" ] =  danscalarintersection;
     schemes[ "textbook" ] =  classicalintersection;
-    return schemes;
-}
-
-
-std::map<std::string,intersectionfunction> realinitializefactory() {
-    std::map<std::string,cardinalityintersectionfunction> schemes;
-    schemes[ "widevector" ] =  widevector_intersect;
-    schemes[ "danscalar" ] =  danscalarintersection;
-    schemes[ "textbook" ] =  classicalintersection;
+    schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
+    schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
     return schemes;
 }
 
@@ -49,7 +42,7 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     schemes[ "textbook" ] =  classicalintersectioncardinality;
     schemes[ "textbook2" ] =  highlyscalablewordpresscom::cardinality_intersect_scalar;
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::cardinality_intersect_SIMD;
-    schemes[ "danhssimd" ] =  highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD;
+    schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_cardinality_intersect_SIMD;
     schemes[ "natemedium" ] =  nate_count_medium;
     schemes[ "natedanmedium" ] =  natedan_count_medium;
     schemes[ "natedanaltmedium" ] =  natedanalt_count_medium;
@@ -92,7 +85,9 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "widevectorleo",     leowidevector_intersect},
     {   "natedanaltmedium", natedanalt_medium},
     {   "danscalar", danscalarintersection},
-    {   "textbook", classicalintersection}
+    {   "textbook", classicalintersection},
+    {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
+    {   "danhssimd", highlyscalablewordpresscom::dan_intersect_SIMD}
 };
 
 
@@ -106,7 +101,7 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"textbook", classicalintersectioncardinality},
 	{	"textbook2", highlyscalablewordpresscom::cardinality_intersect_scalar},
 	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
-	{	"danhssimd", highlyscalablewordpresscom::opti2_cardinality_intersect_SIMD},
+	{	"danhssimd", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
 	{	"natemedium", nate_count_medium},
 	{	"natedanmedium", natedan_count_medium},
 	{   "natedanaltmedium", natedanalt_count_medium},

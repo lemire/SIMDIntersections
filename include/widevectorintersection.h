@@ -290,8 +290,7 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
 
 /**
  * Variation by Leonid Boytsov. Very clever way of computing
- * the cardinality, but it is unclear how you would actually
- * compute the intersection fast.
+ * the cardinality.
  */
 size_t leowidevector_cardinality_intersect(const uint32_t *A, const size_t s_a,
         const uint32_t *B, const size_t s_b) {
