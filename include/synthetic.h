@@ -10,6 +10,9 @@
 
 #include "common.h"
 #include "mersenne.h"
+#include "union.h"
+#include "intersection.h"
+#include "stlutil.h"
 
 using namespace std;
 
@@ -34,6 +37,11 @@ public:
     UniformDataGenerator(uint32_t seed = time(NULL)) :
         rand(seed) {
     }
+
+    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
+        return generateUniform( N, Max);
+    }
+
     /**
      * fill the vector with N numbers uniformly picked from  from 0 to Max, not including Max
      * if it is not possible, an exception is thrown
@@ -126,6 +134,9 @@ public:
             fillClustered(begin + N / 2, end, Min + cut, Max);
         }
     }
+    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
+        return generateClustered( N, Max);
+    }
 
     // Max value is excluded from range
     vector<uint32_t> generateClustered(uint32_t N, uint32_t Max) {
@@ -200,5 +211,44 @@ vector<uint32_t> generateZipfianArray32(uint32_t N, double power,
         ans[k] = zipf.nextInt();
     return ans;
 }
+
+
+
+
+
+
+/**
+ * Generate a pair of arrays. One small, one larger.
+ *
+ *  minlength: length of the smallest of the two arrays
+ *  Max is the largest possible value
+ *  sizeratio * minlength : length of the largest of the two arrays
+ *  intersectionratio * minlength : length of the intersection
+ */
+template <class generator>
+pair<vector<uint32_t>,vector<uint32_t> > getPair(generator gen, size_t minlength,size_t Max, float sizeratio, float intersectionratio) {
+    if(sizeratio < 1) throw runtime_error("sizeratio should be larger or equal to 1");
+    if(intersectionratio < 0) throw runtime_error("intersectionratio should be positive");
+    if(intersectionratio > 1) throw runtime_error("intersectionratio cannot be larger than 1");
+    const size_t maxlenth = round(minlength * sizeratio);
+    if(maxlenth > Max)  throw runtime_error("I can't generate an array so large in such a small range.");
+    if(maxlenth < minlength) throw runtime_error("something went wrong, possibly an overflow.");
+    vector<uint32_t> smallest = gen.generate(minlength,Max);
+    vector<uint32_t> largest = gen.generate(maxlenth,Max);
+    const size_t intersize = round (minlength * intersectionratio);
+    vector<uint32_t> intersection = intersect(smallest,largest);
+    if(intersection.size() > intersize) {// must prune
+        throw runtime_error("I don't know how handle too large an intersection");
+    } else if(intersize > intersection.size() )  {// must add
+        size_t toadd = intersize - intersection.size();
+        vector<uint32_t > diff = difference(largest,smallest);
+        if(diff.size() < toadd) throw runtime_error("requested intersection too large");
+        vector<uint32_t> removed = removeRandom(diff,toadd);
+        largest = unite(largest,removed);
+        smallest = unite(smallest,removed);
+    }
+    return pair<vector<uint32_t>,vector<uint32_t> >(smallest,largest);
+}
+
 
 #endif /* SYNTHETIC_H_ */

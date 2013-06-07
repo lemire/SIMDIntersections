@@ -49,4 +49,20 @@ vector<string> split(const string& str, const string& del) {
     }
     return tokens;
 }
+
+
+//Fisher-Yates shuffle
+template<class iter>
+iter shuffleFY(iter begin, iter end, size_t N) {
+   size_t M = distance(begin, end);
+   while (N--) {
+       iter r = begin;
+       advance(r, rand() % M);
+       swap(*begin, *r);
+       begin++;
+       M--;
+   }
+   return begin;
+}
+
 #endif /* UTIL_H_ */

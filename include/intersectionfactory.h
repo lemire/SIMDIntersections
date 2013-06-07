@@ -97,6 +97,8 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "scalarnate", nate_scalar},
 
     {   "widevector", widevector_intersect},
+    {   "widevector2", widevector2_intersect},
+
     {   "widevectorleo",     leowidevector_intersect},
 
     {   "natemediumdanalt", natedanalt_medium},
