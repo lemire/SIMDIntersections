@@ -18,14 +18,19 @@
  */
 
 
-std::map<std::string,cardinalityintersectionfunction> realschemes = {
-    {   "widevector", widevector_intersect},
-    {   "widevectorleo",  leowidevector_intersect},
-    {   "danscalar", danscalarintersection},
-    {   "textbook", classicalintersection}
-};
 
-std::map<std::string,intersectionfunction> initializerealfactory() {
+std::map<std::string,intersectionfunction> realinitializefactory() {
+    std::map<std::string,cardinalityintersectionfunction> schemes;
+    schemes[ "widevector" ] =  widevector_intersect;
+    schemes[ "widevectorleo" ] =  leowidevector_intersect;
+    schemes[ "natedanaltmedium" ] =  natedanalt_medium;
+    schemes[ "danscalar" ] =  danscalarintersection;
+    schemes[ "textbook" ] =  classicalintersection;
+    return schemes;
+}
+
+
+std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
     schemes[ "widevector" ] =  widevector_intersect;
     schemes[ "danscalar" ] =  danscalarintersection;
@@ -85,6 +90,7 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 std::map<std::string,intersectionfunction> realschemes = {
     {   "widevector", widevector_intersect},
     {   "widevectorleo",     leowidevector_intersect},
+    {   "natedanaltmedium", natedanalt_medium},
     {   "danscalar", danscalarintersection},
     {   "textbook", classicalintersection}
 };
