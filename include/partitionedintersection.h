@@ -235,8 +235,8 @@ static size_t faster_cardinality_intersect_vector16(const uint16_t *A,
  *
  * Optimized by D. Lemire on May 3rd 2013
  */
-static size_t faster2_cardinality_intersect_vector16(const uint16_t *A,
-        const uint16_t *B, const size_t s_a, const size_t s_b/*, uint16_t *C*/) {
+/*static size_t faster2_cardinality_intersect_vector16(const uint16_t *A,
+        const uint16_t *B, const size_t s_a, const size_t s_b) {
     size_t count = 0;
     size_t i_a = 0, i_b = 0;
 
@@ -312,7 +312,7 @@ static size_t faster2_cardinality_intersect_vector16(const uint16_t *A,
 
     return count;
 }
-
+*/
 
 
 
