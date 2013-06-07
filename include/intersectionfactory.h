@@ -24,7 +24,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "@hybriddan" ] =  danielshybridintersection;
 
     schemes[ "widevector" ] =  widevector_intersect;
-    schemes[ "widevectorleo" ] =  leowidevector_intersect;
+    schemes[ "widevector2" ] =  widevector2_intersect;
+     schemes[ "widevectorleo" ] =  leowidevector_intersect;
 
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;

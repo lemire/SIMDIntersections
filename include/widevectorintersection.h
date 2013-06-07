@@ -511,8 +511,8 @@ size_t leowidevector_intersect(const uint32_t *A, const size_t s_a,
         while (true) {
             if (A[i_a + BlockSize - 1] < B[i_b] + 65536 and
                 B[i_b + BlockSize - 1] < A[i_a] + 65536 ) {
-                    const __m128i bva =__fpack_epu32( v_a, v_aa );
-                    const __m128i bvb =__fpack_epu32( v_b, v_bb );
+                    const __m128i bva =__pack_epu32( v_a, v_aa );
+                    const __m128i bvb =__pack_epu32( v_b, v_bb );
                     const __m128i res_v = _mm_cmpistrm(
                             bva,
                             bvb,
