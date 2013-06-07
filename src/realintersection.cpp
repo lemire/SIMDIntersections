@@ -205,12 +205,12 @@ int main(int argc, char **argv) {
         for(auto algo : myschemes) {
             if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
             for (size_t k = 0; k < 2 * howmany; k += 2) {
-                vector<uint32_t> out(data[k].size());
+                vector<uint32_t> out(buffer.size());
                 size_t correctanswer = classicalintersection(
                         &data[k][0], data[k].size(), &data[k + 1][0],
                         data[k + 1].size(),&out[0]);
                 out.resize(correctanswer);
-                vector<uint32_t> out2(data[k].size());
+                vector<uint32_t> out2(buffer.size());
                 size_t thisschemesanswer = algo.second(
                         &data[k][0], data[k].size(), &data[k + 1][0],
                         data[k + 1].size(),&out2[0]);

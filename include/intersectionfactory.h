@@ -20,7 +20,7 @@
 
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
-    std::map<std::string,cardinalityintersectionfunction> schemes;
+    std::map<std::string,intersectionfunction> schemes;
     schemes[ "widevector" ] =  widevector_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_intersect;
     schemes[ "natedanaltmedium" ] =  natedanalt_medium;
@@ -29,14 +29,6 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     return schemes;
 }
 
-
-std::map<std::string,intersectionfunction> realinitializefactory() {
-    std::map<std::string,cardinalityintersectionfunction> schemes;
-    schemes[ "widevector" ] =  widevector_intersect;
-    schemes[ "danscalar" ] =  danscalarintersection;
-    schemes[ "textbook" ] =  classicalintersection;
-    return schemes;
-}
 
 std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
