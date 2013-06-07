@@ -90,9 +90,34 @@ int main(int argc, char **argv) {
     cout << "# rows are intersection ratios" << endl;
     cout << "# average gaps in bits for smallest array: " << std::setprecision(
             3) << log(1 + (1U << MaxBit) * 1.0 / minlength) << " (use -S and -M flag to change)"<< endl;
+#ifdef __INTEL_COMPILER
+    // Intel's support for C++ sucks
+    vector<float> intersectionsratios;
+    intersectionsratios.push_back(1.00);
+    intersectionsratios.push_back(0.80);
+    intersectionsratios.push_back(0.60);
+    intersectionsratios.push_back(0.20);
+    intersectionsratios.push_back(0.10);
+    intersectionsratios.push_back(0.05);
+    intersectionsratios.push_back(0.01);
+    vector < uint32_t > sizeratios;
+    sizeratios.push_back(1);
+    sizeratios.push_back(2);
+    sizeratios.push_back(3);
+    sizeratios.push_back(5);
+    sizeratios.push_back(10);
+    sizeratios.push_back(20);
+    sizeratios.push_back(40);
+    sizeratios.push_back(80);
+    sizeratios.push_back(200);
+    sizeratios.push_back(500);
+    sizeratios.push_back(1000);
+#else
+    // proper C++
     vector<float> intersectionsratios = { 1.00, 0.80, 0.60, 0.20, 0.10, 0.05,
             0.01 };
     vector < uint32_t > sizeratios = {1, 2, 3, 5, 10, 20,40,80,200,500,1000};
+#endif
     cout<<"# average gaps in bits for last largest array: "<<std::setprecision(3)<<log(
              1 + (1U << MaxBit) * 1.0 / (sizeratios.back()*minlength))<<endl;
     cout << "#############################################" << endl << endl;
