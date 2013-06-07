@@ -11,6 +11,9 @@
 
 using namespace std;
 
+/**
+ * unsatured packing.
+ */
 __attribute__((always_inline))
 inline __m128i __pack_epu32( __m128i hi, __m128i lo ) {
     const static __m128i mask =
@@ -20,8 +23,11 @@ inline __m128i __pack_epu32( __m128i hi, __m128i lo ) {
     return _mm_packus_epi32( hi, lo );
 }
 
+/**
+ * Not recommended.
+ */
 __attribute__((always_inline))
-inline __m128i __fpack_epu32( __m128i hi, __m128i lo ) {
+inline __m128i __altpack_epu32( __m128i hi, __m128i lo ) {
     //0b10101010 = 170
     __m128i bva =
             _mm_blend_epi16(hi,
