@@ -2,6 +2,8 @@
 #ifndef WIDEVECTORINTERSECTION_H_
 #define WIDEVECTORINTERSECTION_H_
 
+#include "util.h"
+
 static size_t __simd4by4(const __m128i v_a, const __m128i v_b) {
     const static uint32_t cyclic_shift = _MM_SHUFFLE(0, 3, 2, 1);
 
@@ -209,30 +211,20 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
                     and (((B[i_b] - 1) ^ A[i_a + BlockSize - 1]) >> 16 == 0)
                  ) {
                     // higher 16 bits are all equal
-                    //0b10101010 = 170
-                    __m128i bva =
-                            _mm_blend_epi16(v_a,
-                            _mm_slli_si128(v_aa, 2), 170);
-                    const __m128i shufflekey =
-                            _mm_set_epi8(15,14,11,10, 7,6,3,2,  13,12,9,8,5,4,1,0);
-                    bva = _mm_shuffle_epi8(bva,shufflekey);
-                    __m128i bvb =
-                            _mm_blend_epi16(v_b,
-                            _mm_slli_si128(v_bb, 2), 170);
-                    bvb = _mm_shuffle_epi8(bvb,shufflekey);
-                    const __m128i res_v = _mm_cmpistrm(
-                            bva,
-                            bvb,
-                            _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ANY
-                                    | _SIDD_BIT_MASK);
-                    int r = _mm_extract_epi32(res_v, 0);
-                   _mm_storeu_si128((__m128i *) out, _mm_shuffle_epi8(v_b, shuffle_mask16[r % 16]));
-                    int firstcount = _mm_popcnt_u32(r % 16);
-                    out += firstcount;
-                    r >>= 4;
-                   _mm_storeu_si128((__m128i *) out, _mm_shuffle_epi8(v_bb, shuffle_mask16[r % 16]));
-                    firstcount = _mm_popcnt_u32(r % 16);
-                    out += firstcount;
+                const __m128i bva = __fpack_epu32(v_a, v_aa);
+                const __m128i bvb = __fpack_epu32(v_b, v_bb);
+                const __m128i res_v = _mm_cmpistrm(bva, bvb,
+                        _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_BIT_MASK);
+                int r = _mm_extract_epi32(res_v, 0);
+                _mm_storeu_si128((__m128i *) out,
+                        _mm_shuffle_epi8(v_b, shuffle_mask16[r % 16]));
+                int firstcount = _mm_popcnt_u32(r % 16);
+                out += firstcount;
+                r >>= 4;
+                _mm_storeu_si128((__m128i *) out,
+                        _mm_shuffle_epi8(v_bb, shuffle_mask16[r % 16]));
+                firstcount = _mm_popcnt_u32(r % 16);
+                out += firstcount;
             } else {
                 __simd4by4(v_a, v_b, &out);
                 __simd4by4(v_a, v_bb, &out);
@@ -281,14 +273,6 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
         }
     }
     return out - initout;
-}
-
-__m128i __pack_epu32( __m128i hi, __m128i lo ) {
-    const static __m128i mask =
-        _mm_set_epi8(0,0,-1,-1,0,0,-1,-1,0,0,-1,-1,0,0,-1,-1);
-    hi = _mm_and_si128( hi, mask );
-    lo = _mm_and_si128( lo, mask );
-    return _mm_packus_epi32( hi, lo );
 }
 
 /**
@@ -527,19 +511,8 @@ size_t leowidevector_intersect(const uint32_t *A, const size_t s_a,
         while (true) {
             if (A[i_a + BlockSize - 1] < B[i_b] + 65536 and
                 B[i_b + BlockSize - 1] < A[i_a] + 65536 ) {
-                    //0b10101010 = 170
-                    // higher 16 bits are all equal
-                    //0b10101010 = 170
-                    __m128i bva =
-                            _mm_blend_epi16(v_a,
-                            _mm_slli_si128(v_aa, 2), 170);
-                    const __m128i shufflekey =
-                            _mm_set_epi8(15,14,11,10, 7,6,3,2,  13,12,9,8,5,4,1,0);
-                    bva = _mm_shuffle_epi8(bva,shufflekey);
-                    __m128i bvb =
-                            _mm_blend_epi16(v_b,
-                            _mm_slli_si128(v_bb, 2), 170);
-                    bvb = _mm_shuffle_epi8(bvb,shufflekey);
+                    const __m128i bva =__fpack_epu32( v_a, v_aa );
+                    const __m128i bvb =__fpack_epu32( v_b, v_bb );
                     const __m128i res_v = _mm_cmpistrm(
                             bva,
                             bvb,
@@ -564,20 +537,16 @@ size_t leowidevector_intersect(const uint32_t *A, const size_t s_a,
             const uint32_t a_max = A[i_a + BlockSize - 1];
             //const uint32_t b_max = B[i_b + 3];
             if (a_max <= B[i_b + BlockSize - 1]) {
-                //do {
                 i_a += BlockSize;
                 if (i_a >= st_a)
                     goto end;
-                //  } while(A[i_a + BlockSize -1] < B[i_b ]);
                 v_a = _mm_load_si128((__m128i *) &A[i_a]);
                 v_aa = _mm_load_si128((__m128i *) &A[i_a + HalfBlockSize]);
             }
             if (a_max >= B[i_b + BlockSize - 1]) {
-                //do {
                 i_b += BlockSize;
                 if (i_b >= st_b)
                     goto end;
-                //} while(B[i_b + BlockSize - 1]<A[i_a]);
                 v_b = _mm_load_si128((__m128i *) &B[i_b]);
                 v_bb = _mm_load_si128((__m128i *) &B[i_b + HalfBlockSize]);
 
