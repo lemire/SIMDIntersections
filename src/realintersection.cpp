@@ -16,7 +16,7 @@ void printusage() {
     cout << " Try ./realintersection -r 40" << endl;
     cout << " Use the -s flag to specify just some scheme, choose from: "
             << endl;
-    for(string x : allNames()) cout <<" "<< x << endl;
+    for(string x : allRealNames()) cout <<" "<< x << endl;
     cout << " Separate the schemes by a comma (e.g. -s schlegel,danscalar). "<< endl;
 }
 
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
         size_t maxsize = 0;
         for(auto x : data)
             if(x.size() > maxsize) maxsize = x.size();
-        vector<uint32_t> buffer(maxsize);
+        vector<uint32_t> buffer((maxsize+15)/16*16);
         for(auto algo : myschemes) {
             if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
             for (size_t k = 0; k < 2 * howmany; k += 2) {
@@ -216,9 +216,18 @@ int main(int argc, char **argv) {
                         data[k + 1].size(),&out2[0]);
                 out2.resize(thisschemesanswer);
                 if (out != out2) {
-                    cerr << "expecting cardinality of " << correctanswer;
-                    cerr << " got " << thisschemesanswer << " instead."
-                    << endl;
+                    if(thisschemesanswer != correctanswer) {
+                        cerr << "expecting cardinality of " << correctanswer;
+                        cerr << " got " << thisschemesanswer << "."
+                        << endl;
+                    } else {
+                        cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
+                        for(size_t jj = 0; jj < correctanswer; ++jj)
+                            if(out[jj]!= out2[jj]) {
+                                cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
+                                break;
+                            }
+                    }
                     throw runtime_error("bug");
                 }
             }

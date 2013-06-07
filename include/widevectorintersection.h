@@ -27,27 +27,35 @@ static size_t __simd4by4(const __m128i v_a, const __m128i v_b) {
 }
 
 
-
-static size_t __simd4by4(const __m128i v_a, const __m128i v_b, uint32_t * out) {
-    const static uint32_t cyclic_shift = _MM_SHUFFLE(0, 3, 2, 1);
+static void __select_and_copy(const __m128i v_a, int mask, uint32_t ** out) {
     const static __m128i shuffle_mask16[16] = {
             _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(12,13,14,15,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(8,9,10,11,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(8,9,10,11,12,13,14,15,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(4,5,6,7,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(4,5,6,7,12,13,14,15,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(4,5,6,7,8,9,10,11,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(4,5,6,7,8,9,10,11,12,13,14,15,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,12,13,14,15,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,8,9,10,11,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,8,9,10,11,12,13,14,15,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,4,5,6,7,-127,-127,-127,-127,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,4,5,6,7,12,13,14,15,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,4,5,6,7,8,9,10,11,-127,-127,-127,-127),
-            _mm_set_epi8(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,7,6,5,4),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,7,6,5,4,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,11,10,9,8),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,11,10,9,8,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,11,10,9,8,7,6,5,4),
+            _mm_set_epi8(-127,-127,-127,-127,11,10,9,8,7,6,5,4,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,15,14,13,12),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,15,14,13,12,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,15,14,13,12,7,6,5,4),
+            _mm_set_epi8(-127,-127,-127,-127,15,14,13,12,7,6,5,4,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,-127,-127,-127,-127,15,14,13,12,11,10,9,8),
+            _mm_set_epi8(-127,-127,-127,-127,15,14,13,12,11,10,9,8,3,2,1,0),
+            _mm_set_epi8(-127,-127,-127,-127,15,14,13,12,11,10,9,8,7,6,5,4),
+            _mm_set_epi8(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0),
             };
+    __m128i p = _mm_shuffle_epi8(v_a, shuffle_mask16[mask]);
+   _mm_storeu_si128((__m128i *) *out, p);
+
+    for(int k = 0 ; k <_mm_popcnt_u32(mask);++k)
+        std::cout<<(* out)[k]<<" ";
+}
+
+static size_t __simd4by4(const __m128i v_a, const __m128i v_b, uint32_t ** out) {
+    // in C, out would be a pointer to a pointer, but a reference is less icky
+    const static uint32_t cyclic_shift = _MM_SHUFFLE(0, 3, 2, 1);
     __m128i cycledv_b;
     __m128i cmp_mask1, cmp_mask2, cmp_mask3, cmp_mask4;
     __m128i cmp_mask;
@@ -65,10 +73,9 @@ static size_t __simd4by4(const __m128i v_a, const __m128i v_b, uint32_t * out) {
     cmp_mask = _mm_or_si128(cmp_mask, cmp_mask4);
     // convert the 128-bit mask to the 4-bit mask
     mask = _mm_movemask_ps((__m128 ) cmp_mask);
-    __m128i p = _mm_shuffle_epi8(v_a, shuffle_mask16[mask]);
-    _mm_storeu_si128((__m128i *) out, p);
+    __select_and_copy(v_a, mask,  out);
     size_t answer = _mm_popcnt_u32(mask);
-    out += answer;  // a number of elements is a weight of the mask
+    (*out) += answer;
     return answer;
 }
 
@@ -209,30 +216,88 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
 
         while (true) {
             if ((((A[i_a] - 1) ^ B[i_b + BlockSize - 1]) >> 16 == 0)
-                    and (((B[i_b] - 1) ^ A[i_a + BlockSize - 1]) >> 16 == 0)) {
+                    and (((B[i_b] - 1) ^ A[i_a + BlockSize - 1]) >> 16 == 0)
+            and false       ) {
 
 
                     // higher 16 bits are all equal
                     //0b10101010 = 170
-                    const __m128i bva = _mm_blend_epi16(v_a,
+                    __m128i bva =
+                            _mm_blend_epi16(v_a,
                             _mm_slli_si128(v_aa, 2), 170);
-                    const __m128i bvb = _mm_blend_epi16(v_b,
+                    const __m128i shufflekey =
+                            _mm_set_epi8(15,14,11,10, 7,6,3,2,  13,12,9,8,5,4,1,0);
+                    bva = _mm_shuffle_epi8(bva,shufflekey);
+                    __m128i bvb =
+                            _mm_blend_epi16(v_b,
                             _mm_slli_si128(v_bb, 2), 170);
+                    bvb = _mm_shuffle_epi8(bvb,shufflekey);
                     const __m128i res_v = _mm_cmpistrm(
                             bva,
                             bvb,
                             _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ANY
                                     | _SIDD_BIT_MASK);
 
-                    const int r = _mm_extract_epi32(res_v, 0);
+                    int r = _mm_extract_epi32(res_v, 0);
+
+                    std::cout<<"got mask "<<r<<" given ";
+                    for(size_t k = 0; k<8;++k)
+                          std::cout<<_mm_extract_epi16(v_a,k)<<" ";
+                    for(size_t k = 0; k<8;++k)
+                                                  std::cout<<_mm_extract_epi16(v_aa,k)<<" ";
+
+                    std::cout << std::endl;
+                for (size_t k = 0; k < 8; ++k)
+                    std::cout << _mm_extract_epi16(v_b, k) << " ";
+                for(size_t k = 0; k<8;++k)
+                std::cout<<_mm_extract_epi16(v_bb,k)<<" ";
+                std::cout << std::endl;
+
+
+                std::cout<<"this gave ";
+                for(size_t k = 0; k<8;++k)
+                       std::cout<<_mm_extract_epi16(bva,k)<<" ";
+
+                std::cout<<" and  ";
+                for(size_t k = 0; k<8;++k)
+                       std::cout<<_mm_extract_epi16(bvb,k)<<" ";
+                std::cout << std::endl;
+                std::cout<<" number of matches: "<<_mm_popcnt_u32(r )<<", index = "<< count<<" : ";
+
+                    __select_and_copy(v_b, r % 16,  &out);
+                    int firstcount = _mm_popcnt_u32(r % 16);
+                    for(size_t k = 0; k<firstcount;++k)
+                        std::cout<<out[k]<<" ";
+
+                    out += firstcount;
+                    count += firstcount;
+                    r >>= 4;
+                    __select_and_copy(v_bb, r % 16,  &out);
+                    firstcount = _mm_popcnt_u32(r % 16);
+                    for(size_t k = 0; k<firstcount;++k)
+                                            std::cout<<out[k]<<" ";
+                    std::cout << std::endl;
+
+                    out += firstcount;
+                    count += firstcount;
                     //__m128i p = _mm_shuffle_epi8(v_a, shuffle_mask16[r]);
                     //_mm_storeu_si128((__m128i *) &C[count], p);
-                    count += _mm_popcnt_u32(r);
+                    //count += _mm_popcnt_u32(r);
+
+
+
+                      //  for(size_t k = 0; k<4;++k)
+                        //    std::cout<<out[k]<<" ";
+                       // std::cout<<"from ";
             } else {
-                count += __simd4by4(v_a, v_b, out);
-                count += __simd4by4(v_a, v_bb, out);
-                count += __simd4by4(v_aa, v_b, out);
-                count += __simd4by4(v_aa, v_bb, out);
+                std::cout<<"simd4by4 "<<count<<std::endl;
+                count+= __simd4by4(v_a, v_b, &out);
+                count+= __simd4by4(v_a, v_bb, &out);
+                count+= __simd4by4(v_aa, v_b, &out);
+                count+= __simd4by4(v_aa, v_bb, &out);
+                std::cout<<"final card "<<count<<" "<<out[-1]<<std::endl;
+
+
             }
 
             const uint32_t a_max = A[i_a + BlockSize - 1];
@@ -261,6 +326,8 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
 
     }
     end:
+    size_t lastcount = count;
+    std::cout<<"last value was  "<<out[count-1]<< " current is "<<out[count]<<" count = "<<count<<std::endl;
 
     // intersect the tail using scalar intersection
     while (i_a < s_a && i_b < s_b) {
@@ -269,11 +336,18 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
         } else if (B[i_b] < A[i_a]) {
             i_b++;
         } else {
-            count++;
+            std::cout<<"at "<<count<< " storing "<<A[i_a]<<std::endl;
+
+            out[count++] = A[i_a];
             i_a++;
             i_b++;
         }
     }
+    std::cout<<"last value was  "<<out[lastcount]<<" count = "<<lastcount<<std::endl;
+    std::cout<<"last 20"<<std::endl;
+        for(int c = 1;c<=20;++c) {
+            std::cout<<"  "<<out[count-c]<<" "<<(count-c)<<std::endl;
+        }
 
     return count;
 }

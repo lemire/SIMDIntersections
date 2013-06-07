@@ -128,6 +128,16 @@ std::vector<std::string> allNames() {
     }
     return ans;
 }
+/**
+ * Convenience function
+ */
+std::vector<std::string> allRealNames() {
+    std::vector < std::string > ans;
+    for (auto i = realschemes.begin(); i != realschemes.end(); ++i) {
+        ans.push_back(i->first);
+    }
+    return ans;
+}
 
 
 #endif /* INTERSECTIONFACTORY_H_ */
