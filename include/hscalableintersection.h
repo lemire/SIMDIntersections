@@ -78,6 +78,7 @@ const static __m128i shuffle_mask[16] = {
  // precomputed dictionary
 
 
+
 /*int getBit(int value, int position) {
     return ((value & (1 << position)) >> position);
 }*/

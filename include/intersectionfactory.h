@@ -106,6 +106,7 @@ std::map<std::string,intersectionfunction> realschemes = {
    // {   "scalartextbook2", highlyscalablewordpresscom::intersect_scalar},
 
     {   "widevector", widevector_intersect},
+    {   "widevector2", widevector2_intersect},
     {   "widevectorleo",     leowidevector_intersect},
 
     {   "natemediumdanalt", natedanalt_medium},
@@ -113,7 +114,7 @@ std::map<std::string,intersectionfunction> realschemes = {
 
 
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
-    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD}
+    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD},
 };
 
 
