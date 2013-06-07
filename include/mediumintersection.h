@@ -2,6 +2,8 @@
 #ifndef MEDIUMINTERSECTION_H_
 #define MEDIUMINTERSECTION_H_
 
+#include "util.h"
+
 #define VEC __m128i
 #define VECLEN (sizeof(VEC)/sizeof(uint32_t))
 #define VECMAX (VECLEN - 1)
@@ -497,24 +499,32 @@ size_t danfar_medium(const uint32_t *rare, const size_t lenRare,
         }
         vec Q0,Q1,Q2,Q3;
         if(freq[veclen * 7 + vecmax] < matchRare  ) {
-                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 12), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 13), Match));
-                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 14), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 15), Match));
+            Q0 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 8), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 9), Match));
+            Q1 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 10), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 11), Match));
 
-                Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 8), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 9), Match));
-                Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 10), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 11), Match));
+            Q2 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 12), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 13), Match));
+            Q3 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 14), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 15), Match));
         } else {
-                Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 4), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 5), Match));
-                Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 6), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 7), Match));
-                Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 0), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 1), Match));
-                Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 2), Match),
-                                _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 3), Match));
+            Q0 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 4), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 5), Match));
+            Q1 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 6), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 7), Match));
+            Q2 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 0), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 1), Match));
+            Q3 = _mm_or_si128(
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 2), Match),
+                    _mm_cmpeq_epi32(_mm_load_si128((vec *) freq + 3), Match));
         }
         const vec F0 = _mm_or_si128(_mm_or_si128(Q0, Q1),_mm_or_si128(Q2, Q3));
         if (_mm_testz_si128(F0, F0)) {
@@ -595,8 +605,5 @@ size_t danfarfine_count_medium(const uint32_t *rare, const size_t lenRare,
     FINISH_SCALAR: return count + nate_count_scalar(freq,
             stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
-
-
-
 
 #endif /* MEDIUMINTERSECTION_H_ */

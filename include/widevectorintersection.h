@@ -206,7 +206,8 @@ size_t widevector_intersect(const uint32_t *A, const size_t s_a,
         v_bb = _mm_load_si128((__m128i *) &B[i_b + HalfBlockSize]);
 
         while (true) {
-            if ((((A[i_a] - 1) ^ B[i_b + BlockSize - 1]) >> 16 == 0)
+            if (
+                    (((A[i_a] - 1) ^ B[i_b + BlockSize - 1]) >> 16 == 0)
                     and (((B[i_b] - 1) ^ A[i_a + BlockSize - 1]) >> 16 == 0)
                  ) {
                     // higher 16 bits are all equal

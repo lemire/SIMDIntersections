@@ -24,15 +24,11 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "@hybriddan" ] =  danielshybridintersection;
 
     schemes[ "widevector" ] =  widevector_intersect;
-    schemes[ "widevector2" ] =  widevector2_intersect;
      schemes[ "widevectorleo" ] =  leowidevector_intersect;
 
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;
 
-//    schemes[ "scalardan" ] =  danscalarintersection;
- //   schemes[ "scalartextbook" ] =  classicalintersection;
- //   schemes[ "scalartextbook2" ] =  highlyscalablewordpresscom::intersect_scalar;
     schemes[ "scalarnate" ] =  nate_scalar;
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
 
@@ -50,11 +46,8 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_cardinality_intersect;
 
-   // schemes[ "scalardan" ] =  danscalarintersectioncardinality;
     schemes[ "scalargalloping" ] =  frogintersectioncardinality;
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersectioncardinality;
-   // schemes[ "scalartextbook" ] =  classicalintersectioncardinality;
-  //  schemes[ "scalartextbook2" ] =  highlyscalablewordpresscom::cardinality_intersect_scalar;
     schemes[ "scalarnate" ] =  nate_count_scalar;
 
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::cardinality_intersect_SIMD;
@@ -101,13 +94,9 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "@hybriddan",danielshybridintersection},
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
-//    {   "scalardan", danscalarintersection},
     {   "scalarnate", nate_scalar},
-  //  {   "scalartextbook", classicalintersection},
-   // {   "scalartextbook2", highlyscalablewordpresscom::intersect_scalar},
 
     {   "widevector", widevector_intersect},
-    {   "widevector2", widevector2_intersect},
     {   "widevectorleo",     leowidevector_intersect},
 
     {   "natemediumdanalt", natedanalt_medium},
@@ -127,9 +116,6 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 
 	{	"scalargalloping",frogintersectioncardinality},
 	{	"scalar1sgalloping", onesidedgallopingintersectioncardinality},
-//	{	"scalartextbook", classicalintersectioncardinality},
-//	{	"scalartextbook2", highlyscalablewordpresscom::cardinality_intersect_scalar},
-//	{   "scalardan", danscalarintersectioncardinality},
     {   "scalarnate", nate_count_scalar},
 
 	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
