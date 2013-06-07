@@ -44,9 +44,6 @@ const static __m128i shuffle_mask16[16] = {
         _mm_set_epi8(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0),
         };
 
-//__attribute__((always_inline))
-//static void __select_and_copy(const __m128i v_a, int mask, uint32_t ** out) {
-//}
 
 static size_t __simd4by4(const __m128i v_a, const __m128i v_b, uint32_t ** out) {
     const static uint32_t cyclic_shift = _MM_SHUFFLE(0, 3, 2, 1);

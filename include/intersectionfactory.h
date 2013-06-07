@@ -29,6 +29,9 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "textbook2" ] =  highlyscalablewordpresscom::intersect_scalar;
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "danhssimd" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
+    schemes[ "danhybrid" ] =  danielshybridintersection;
+    schemes[ "1sgalloping" ] =  onesidedgallopingintersection;
+
     return schemes;
 }
 
@@ -83,6 +86,8 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
+    {   "danhybrid",danielshybridintersection},
+    {   "1sgalloping", onesidedgallopingintersection},
     {   "widevector", widevector_intersect},
     {   "widevectorleo",     leowidevector_intersect},
     {   "natedanaltmedium", natedanalt_medium},
