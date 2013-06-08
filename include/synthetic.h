@@ -233,20 +233,19 @@ pair<vector<uint32_t>,vector<uint32_t> > getPair(generator gen, size_t minlength
     const size_t maxlenth = round(minlength * sizeratio);
     if(maxlenth > Max)  throw runtime_error("I can't generate an array so large in such a small range.");
     if(maxlenth < minlength) throw runtime_error("something went wrong, possibly an overflow.");
-    vector<uint32_t> smallest = gen.generate(minlength,Max);
-    vector<uint32_t> largest = gen.generate(maxlenth,Max);
+    // we basically assume that, if we do nothing, intersections are very small
     const size_t intersize = round (minlength * intersectionratio);
+
+    vector<uint32_t> inter = gen.generate(intersize,Max);
+    vector<uint32_t> smallest =  unite(gen.generate(minlength-inter.size(),Max),inter);
+    vector<uint32_t> largest = unite(gen.generate(maxlenth-inter.size(),Max),inter);
     vector<uint32_t> intersection = intersect(smallest,largest);
-    if(intersection.size() > intersize) {// must prune
-        throw runtime_error("I don't know how handle too large an intersection");
-    } else if(intersize > intersection.size() )  {// must add
-        size_t toadd = intersize - intersection.size();
-        vector<uint32_t > diff = difference(largest,smallest);
-        if(diff.size() < toadd) throw runtime_error("requested intersection too large");
-        vector<uint32_t> removed = removeRandom(diff,toadd);
-        largest = unite(largest,removed);
-        smallest = unite(smallest,removed);
-    }
+
+    if(abs(intersection.size() * 1.0 /smallest.size() - intersectionratio) > 0.05)
+        throw runtime_error("Bad intersection ratio. Fix me.");
+
+    if(abs(largest.size() * 1.0 /smallest.size() - sizeratio) > 0.05)
+        throw runtime_error("Bad size ratio. Fix me.");
     return pair<vector<uint32_t>,vector<uint32_t> >(smallest,largest);
 }
 

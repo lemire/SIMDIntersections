@@ -29,6 +29,22 @@ vector<uint32_t> removeRandom(vector<uint32_t> & x, size_t N) {
     return ans;
 }
 
+vector<uint32_t> getRandom(const vector<uint32_t> & x, size_t N) {
+    vector<uint32_t> copy(x);
+    auto i = shuffleFY(copy.begin(),copy.end(),N);
+    vector<uint32_t > ans (copy.begin(),i);
+    return ans;
+}
+
+/**
+ * Like getRandom except that the provided vector is modified.
+ */
+vector<uint32_t> grabRandom(vector<uint32_t> & x, size_t N) {
+    auto i = shuffleFY(x.begin(),x.end(),N);
+    vector<uint32_t > ans (x.begin(),i);
+    return ans;
+}
+
 
 vector<uint32_t> difference(const vector<uint32_t> &x, const vector<uint32_t> &y) {
     vector<uint32_t> answer(x.size());
