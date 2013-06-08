@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
              1 + (1U << MaxBit) * 1.0 / (sizeratios.back()*minlength))<<endl;
     cout << "#############################################" << endl << endl;
 
-    cout<< name << "\t";
+    cout<< name << endl << "\t\t";
     ClusteredDataGenerator cdg;
     WallClockTimer z;
     size_t bogus = 0;
