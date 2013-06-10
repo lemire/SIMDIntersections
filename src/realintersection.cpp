@@ -220,6 +220,9 @@ int main(int argc, char **argv) {
                         cerr << "expecting cardinality of " << correctanswer;
                         cerr << " got " << thisschemesanswer << "."
                         << endl;
+                        if(correctanswer < 10)
+                            for(uint32_t x : out)
+                                cerr<<x<<endl;
                     } else {
                         cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
                         for(size_t jj = 0; jj < correctanswer; ++jj)

@@ -91,6 +91,8 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
+
+        {"branchless",branchlessintersection},
     {   "@hybriddan",danielshybridintersection},
 
     {   "scalar1sgalloping", onesidedgallopingintersection},

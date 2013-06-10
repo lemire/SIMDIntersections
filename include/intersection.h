@@ -174,4 +174,59 @@ size_t classicalintersection(const uint32_t * set1,
 }
 
 
+/**
+ * Failed attempt at reproducing the good results of the branchless scheme
+ * from Fast Sorted-Set Intersection using SIMD Instructions
+ */
+size_t branchlessintersection(const uint32_t * set1, const size_t length1,
+        const uint32_t * set2, const size_t length2, uint32_t * out) {
+    if ((0 == length1) or (0 == length2))
+        return 0;
+    const uint32_t * const initout(out);
+    const uint32_t * const finalset1(set1 + length1);
+    const uint32_t * const finalset2(set2 + length2);
+    // preliminary loop
+    if (*set1 == *set2) {
+        do {
+            *out++ = *set1;
+            ++set1;
+            ++set2;
+            if (set1 == finalset1 or set2 == finalset2)
+                return (out - initout);
+        } while (*set1 == *set2);
+    }
+
+    const unsigned int N = 4;
+
+    // main loop
+    while ((set1 + N < finalset1) && (set2 + N < finalset2)) {
+        for (unsigned int k = 0; k < N; ++k) {
+            // this is branchless...
+            set1 = (*set1 <= *set2) ? set1 + 1 : set1;
+            set2 = (*set2 < *set1) ? set2 + 1 : set2;
+            *out = *set1;
+            out = (*set1 == *set2) ? out + 1 : out;
+        }
+
+    }
+    // final processing
+    if (*set1 == *set2) {
+        ++set1;
+        ++set2;
+    }
+
+    while (set1 < finalset1 && set2 < finalset2) {
+        if (*set1 < *set2) {
+            ++set1;
+        } else if (*set1 > *set2) {
+            ++set2;
+        } else {
+            *out++ = *set1;
+            ++set1;
+            ++set2;
+        }
+    }
+
+    return (out - initout);
+}
 #endif /* INTERSECTION_H_ */
