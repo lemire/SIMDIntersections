@@ -149,6 +149,8 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
 #ifndef NOMAXRARE
         uint32_t maxRare = rare[NUMRARE * VECLEN - 1];  // highest from rare vector(s)
         // NOTE: if clause should be flow controlled; else clause should be branchless
+
+        // FIXME: can be >= instead of >?
         if (expected(maxFreq > maxRare)) {  // if all of Rare was already checked
             nextRare = rare + NUMRARE * VECLEN;         // jump to the next set of rare
         } else 

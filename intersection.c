@@ -190,7 +190,7 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         M1 = _mm_load_si128((VECTYPE *) freq + 1);
 
         M4 = _mm_cmpeq_epi32(M4, Match);
-        M5 = _mm_cmpeq_epi32(M5, Match);
+        M5 = _mm_cmpeq_epi32(M5, Match); 
         Q2 = _mm_or_si128(M4, M5);
         M2 = _mm_load_si128((VECTYPE *) freq + 2);
         M3 = _mm_load_si128((VECTYPE *) freq + 3);

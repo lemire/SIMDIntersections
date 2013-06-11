@@ -92,3 +92,98 @@ Average run to switch
 Matches per switch
 Percent matches
 Length ratio
+
+#define ADVANCE_FREQ_BY_VECS(num)  {                                    \
+            int advance = 0;                                            \
+            if (freq[num * VECLEN - 1] < minRare) {                     \
+                advance = GRANFREQ * VECLEN;                            \
+            }                                                           \
+            nextFreq += advance;                                        \
+        }                                                                   
+
+#define ADVANCE_RARE_BY_INTS(num) {                                     \
+                int advance = 0;                                        \
+                uint32_t minRare = rare[num];                           \
+                if (maxFreq > minRare) {                                \
+                    advance = GRANRARE * VECLEN;                        \
+                }                                                       \
+                nextRare += advance;                                    \
+            }                                                           
+
+#define CYCLE_RARE(rarenum, freqnum)                                \
+        Rare = NextRare;                                            \
+        if (rarenum + 1 < NUMRARE) {                                \
+            VLOAD(NextRare, rare, num + 1);                         \
+        } else if (freqnum + 1 < NUMFREQ) {                         \
+            VLOAD(NextRare, rare, 0);                               \
+        } else if (! lastPass) {                                    \
+            VLOAD(NextRare, nextRare, 0);                           \
+        }                                                           \
+        VSHUF(F0, Freq, 0);                     \
+                                                \
+        VSHUF(F1, Freq, 1);                     \
+        VMATCH(F0, Rare ## num);                \
+                                                \
+        VSHUF(F2, Freq, 2);                     \
+        VMATCH(F1, Rare ## num);                \
+        VOR(Match, F0);                         \
+                                                \
+        VSHUF(F3, Freq, 3);                     \
+        VMATCH(F2, Rare ## num);                \
+        VOR(Match, F1);                         \
+                                                \
+        VMATCH(F3, Rare ## num);                \
+        VOR(Match, F2);                         \
+                                                \
+        VOR(Match, F3);                                   \
+        int bits = _mm_movemask_ps((VECFLOAT) Match);              \
+        matchBits |= bits << num
+
+
+#define CHECK_VECTOR(num)                               \
+        Freq = NextFreq;                                \
+        if (num + 1 < NUMFREQ) {                        \
+            VLOAD(NextFreq, freq, num);                 \
+        }                                               \
+        REPEAT_ADDING_ONE(CYCLE_RARE, NUMRARE, 0);      \
+
+
+while (! lastPass) {
+    uint32_t maxFreq = freq[NUMFREQ * VECLEN - 1];  // highest from freq vectors(s)
+    uint32_t maxRare = rare[NUMRARE * VECLEN - 1];  // highest from rare vector(s)
+    
+    if (expected(maxFreq > maxRare)) {  // if all of Rare was already checked
+        nextRare = rare + NUMRARE * VECLEN;         // jump to the next set of rare
+    } else  {         // consider individually and reload (possibly unaligned)
+        nextRare = rare;
+        const uint32_t times = (NUMRARE * VECLEN / GRANRARE) - 1;
+        REPEAT_INCREMENT(ADVANCE_RARE_BY_INTS, times, 0, GRANRARE);
+    }
+        
+    // CHECK: make sure no reads extend beyond legal area
+    uint32_t minRare = nextRare[0];
+
+    const uint32_t times = (NUMFREQ / GRANFREQ);
+
+    REPEAT_INCREMENT(ADVANCE_FREQ_BY_VECS, times, GRANFREQ, GRANFREQ);
+
+    // FIXME: separate NextFreq from TempFreq, NextRare from TempRare
+    if (nextFreq >= stopFreq || nextRare >= stopRare) {
+        lastPass = 1;
+    } else {
+        VLOAD(NextFreq, nextFreq, 0);               
+        VLOAD(NextRare, nextRare, 0);       
+    } 
+
+    // CHECK_VECTOR(0) ... CHECK_VECTOR(NUMFREQ-1)
+    REPEAT_ADDING_ONE(CHECK_VECTOR, NUMFREQ, 0);
+
+    freq = nextFreq;
+    rare = nextRare;
+
+    count += _mm_popcnt_u64(matchBits);
+ }
+
+FINISH_SCALAR:
+return count; // plus scalar
+

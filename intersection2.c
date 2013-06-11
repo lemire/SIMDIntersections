@@ -157,11 +157,15 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         maxChunk2 = freq[2 * CHUNKINTS - 1]; 
 #endif // MAXCHUNK >= 2
 
+        COMPILER_BARRIER;
+
         M2 = _mm_cmpeq_epi32(M2, Match);
         M3 = _mm_cmpeq_epi32(M3, Match);
         Q1 = _mm_or_si128(M2, M3);
         M0 = _mm_load_si128((VECTYPE *) freq + 0);
         M1 = _mm_load_si128((VECTYPE *) freq + 1);
+
+        COMPILER_BARRIER;
 
         M4 = _mm_cmpeq_epi32(M4, Match);
         M5 = _mm_cmpeq_epi32(M5, Match); 
@@ -169,17 +173,23 @@ size_t search_chunks(const uint32_t *freq, const size_t lenFreq,
         M2 = _mm_load_si128((VECTYPE *) freq + 2);
         M3 = _mm_load_si128((VECTYPE *) freq + 3);
 
+        COMPILER_BARRIER;
+
         M6 = _mm_cmpeq_epi32(M6, Match);
         M7 = _mm_cmpeq_epi32(M7, Match);
         Q3 = _mm_or_si128(M6, M7);
         M4 = _mm_load_si128((VECTYPE *) freq + 4);
         M5 = _mm_load_si128((VECTYPE *) freq + 5);
 
+        COMPILER_BARRIER;
+
         S0 = _mm_or_si128(Q0, Q1);
         S1 = _mm_or_si128(Q2, Q3);
         F0 = _mm_or_si128(S0, S1);
         M6 = _mm_load_si128((VECTYPE *) freq + 6);
         M7 = _mm_load_si128((VECTYPE *) freq + 7);
+
+        COMPILER_BARRIER;
 
         if (! _mm_testz_si128(F0, F0)) {
             count += 1;             // PROFILE: verify cmov
