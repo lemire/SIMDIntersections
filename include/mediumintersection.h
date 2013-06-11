@@ -70,6 +70,41 @@ size_t nate_scalar(const uint32_t *A, const size_t lenA,
 }
 
 
+/**
+ * Version of nate_scalar modified by D. Lemire
+ * to have no goto.
+ */
+size_t nate_scalarwithoutgoto(const uint32_t *A, const size_t lenA,
+        const uint32_t *B, const size_t lenB, uint32_t * out) {
+    const uint32_t * const initout(out);
+    if (lenA == 0 || lenB == 0)
+        return 0;
+
+    const uint32_t *endA = A + lenA;
+    const uint32_t *endB = B + lenB;
+
+    while (1) {
+        while (*A < *B) {
+            if (++A == endA)
+                return (out - initout);
+        }
+        while (*A > *B) {
+            if (++B == endB)
+                return (out - initout);
+        }
+        if (*A == *B) {
+            *out++ = *A;
+            if (++A == endA || ++B == endB)
+                return (out - initout);
+        } else {
+            if (++A == endA)
+                            return (out - initout);
+        }
+    }
+
+    return (out - initout); // NOTREACHED
+}
+
 
 size_t nate_count_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq) {
