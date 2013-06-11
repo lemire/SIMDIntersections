@@ -23,6 +23,7 @@
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
     schemes[ "branchless" ] = branchlessintersection;
+    schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
     schemes[ "scalarbranchless" ] = scalar_branchless;
     schemes[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
     schemes[ "@hybriddan" ] =  danielshybridintersection;
@@ -95,7 +96,8 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
-    {"branchless",branchlessintersection},
+    {"branchless", branchlessintersection},
+    {"scalarbranchlesscached", scalar_branchless_cached},
     {"scalarbranchless", scalar_branchless},
     {"scalarbranchlessunrolled", scalar_branchless_unrolled},
     {   "@hybriddan",danielshybridintersection},

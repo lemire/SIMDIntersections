@@ -24,6 +24,46 @@ size_t scalar_branchless(const uint32_t *A, size_t lenA,
     return count; 
 }
 
+size_t scalar_branchless_cached(const uint32_t *A, size_t lenA, 
+                                const uint32_t *B, size_t lenB,
+                                uint32_t *Match) {
+
+    const uint32_t *initMatch = Match;
+    const uint32_t *endA = A + lenA;
+    const uint32_t *endB = B + lenB;
+
+    uint32_t thisA = A[0];
+    uint32_t thisB = B[0];
+
+    while (A < endA && B < endB) {
+        uint32_t nextA = A[1];
+        uint32_t nextB = B[1];
+
+        uint32_t oldA = thisA;
+        uint32_t oldB = thisB;
+
+        int m = (oldB == oldA) ? 1 : 0;  // advance Match only if equal
+        int a = (oldB >= oldA) ? 1 : 0;  // advance A if match or B ahead
+        int b = (oldB <= oldA) ? 1 : 0;  // advance B if match or B behind
+
+        thisA = (oldB >= oldA) ? nextA : thisA;  // advance A if match or B ahead
+        thisB = (oldB <= oldA) ? nextB : thisB;  // advance B if match or B behind
+
+        *Match = *A;   // write the result regardless of match
+        Match += m;    // but will be rewritten unless advanced
+        A += a;        
+        B += b;        
+
+    }
+
+    size_t count = Match - initMatch; 
+    return count; 
+}
+
+// CMP A, B
+// if (==) thisA = 
+
+
 #define BRANCHLESSMATCH() {                     \
         int m = (*B == *A) ? 1 : 0;             \
         int a = (*B >= *A) ? 1 : 0;             \
@@ -66,7 +106,6 @@ size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
 }
 
 #undef BRANCHLESSMATCH
-#undef MIN
 
 
 #if INTEL_DISASSEMBLY
