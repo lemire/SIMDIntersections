@@ -24,7 +24,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
     schemes[ "branchless" ] = branchlessintersection;
     schemes[ "scalarbranchless" ] = scalar_branchless;
-    schemed[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
+    schemes[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
     schemes[ "@hybriddan" ] =  danielshybridintersection;
 
     schemes[ "widevector" ] =  widevector_intersect;
