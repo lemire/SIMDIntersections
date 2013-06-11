@@ -99,12 +99,9 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
-<<<<<<< HEAD
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
-=======
     {"scalardanbranchless",branchlessintersection},
->>>>>>> 2ff8ee85e16c8f6893bee0af8bf156a1c4c15eb1
     {"scalarbranchless", scalar_branchless},
     {"scalarbranchlessunrolled", scalar_branchless_unrolled},
     {   "@hybriddan",danielshybridintersection},

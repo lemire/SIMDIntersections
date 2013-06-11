@@ -80,7 +80,6 @@ size_t scalar_branchless(const uint32_t *A, size_t lenA,
     return count;
 }
 
-<<<<<<< HEAD
 size_t scalar_branchless_cached(const uint32_t *A, size_t lenA, 
                                 const uint32_t *B, size_t lenB,
                                 uint32_t *Match) {
