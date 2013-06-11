@@ -24,6 +24,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
     schemes[ "branchless" ] = branchlessintersection;
     schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
+    schemes[ "scalardanbranchless" ] = branchlessintersection;
     schemes[ "scalarbranchless" ] = scalar_branchless;
     schemes[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
     schemes[ "@hybriddan" ] =  danielshybridintersection;
@@ -35,6 +36,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "natemediumdanfar" ] = danfar_medium;
 
     schemes[ "scalarnate" ] =  nate_scalar;
+    schemes[ "scalarnatewg" ] =  nate_scalarwithoutgoto;
+
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
 
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
@@ -96,14 +99,19 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
+<<<<<<< HEAD
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
+=======
+    {"scalardanbranchless",branchlessintersection},
+>>>>>>> 2ff8ee85e16c8f6893bee0af8bf156a1c4c15eb1
     {"scalarbranchless", scalar_branchless},
     {"scalarbranchlessunrolled", scalar_branchless_unrolled},
     {   "@hybriddan",danielshybridintersection},
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
     {   "scalarnate", nate_scalar},
+    {   "scalarnatewg",  nate_scalarwithoutgoto},
 
     {   "widevector", widevector_intersect},
     {   "widevector2", widevector2_intersect},
