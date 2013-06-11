@@ -10,7 +10,9 @@
  * from Fast Sorted-Set Intersection using SIMD Instructions
  * originally by D. Lemire but combined with a design by N. Kurz.
  */
+#ifndef __INTEL_COMPILER
 __attribute__((optimize("unroll-loops"))) // this helps a lot with GCC
+#endif
 size_t branchlessintersection(const uint32_t * set1, const size_t length1,
         const uint32_t * set2, const size_t length2, uint32_t * out) {
     if ((0 == length1) or (0 == length2))
