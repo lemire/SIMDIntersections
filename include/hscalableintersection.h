@@ -6,6 +6,8 @@
 #ifndef HSCALABLEINTERSECTION_H_
 #define HSCALABLEINTERSECTION_H_
 
+#include "common.h"
+
 namespace highlyscalablewordpresscom {
 /**
  * Taken almost verbatim from http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/

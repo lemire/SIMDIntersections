@@ -6,6 +6,8 @@
 #ifndef PARTITIONEDINTERSECTION_H_
 #define PARTITIONEDINTERSECTION_H_
 
+#include "common.h"
+
 namespace partitioned {
 
 /**
