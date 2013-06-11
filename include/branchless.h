@@ -1,7 +1,61 @@
+
+#ifndef BRANCHLESS_H_
+#define BRANCHLESS_H_
+
 #include <stdint.h>
 #include <stddef.h>
 
-size_t scalar_branchless(const uint32_t *A, size_t lenA, 
+/**
+ * Failed (?) attempt at reproducing the good results of the branchless scheme
+ * from Fast Sorted-Set Intersection using SIMD Instructions
+ * originally by D. Lemire but combined with a design by N. Kurz.
+ */
+__attribute__((optimize("unroll-loops"))) // this helps a lot with GCC
+size_t branchlessintersection(const uint32_t * set1, const size_t length1,
+        const uint32_t * set2, const size_t length2, uint32_t * out) {
+    if ((0 == length1) or (0 == length2))
+        return 0;
+    const uint32_t * const initout(out);
+    const uint32_t * const finalset1(set1 + length1);
+    const uint32_t * const finalset2(set2 + length2);
+
+    const unsigned int N = 4;
+
+    // main loop
+    while ((set1 +N <= finalset1) && (set2 +N <= finalset2)) {
+#ifdef __INTEL_COMPILER
+#pragma unroll(4)
+#endif
+        for (unsigned int k = 0; k < N; ++k) {
+            // this is branchless... (in theory, maybe not in practice)
+            const uint32_t a = *set1;
+            const uint32_t b = *set2;
+            *out = a;
+            out = (a == b) ? out + 1 : out;
+            set1 = (a <= b) ? set1 + 1 : set1;
+            set2 = (b <= a) ? set2 + 1 : set2;
+        }
+
+    }
+    while ((set1  < finalset1) && (set2 < finalset2)) {
+            // this is branchless... (in theory, maybe not in practice)
+            *out = *set1;
+            const uint32_t a = *set1;
+            const uint32_t b = *set2;
+            out = (a == b) ? out + 1 : out;
+            set1 = (a <= b) ? set1 + 1 : set1;
+            set2 = (b <= a) ? set2 + 1 : set2;
+
+    }
+
+    return (out - initout);
+}
+
+
+/**
+ * Branchless approach by N. Kurz.
+ */
+size_t scalar_branchless(const uint32_t *A, size_t lenA,
                          const uint32_t *B, size_t lenB,
                          uint32_t *Match) {
 
@@ -16,14 +70,15 @@ size_t scalar_branchless(const uint32_t *A, size_t lenA,
 
         *Match = *A;   // write the result regardless of match
         Match += m;    // but will be rewritten unless advanced
-        A += a;        
-        B += b;        
+        A += a;
+        B += b;
     }
 
-    size_t count = Match - initMatch; 
-    return count; 
+    size_t count = Match - initMatch;
+    return count;
 }
 
+// use in function below
 #define BRANCHLESSMATCH() {                     \
         int m = (*B == *A) ? 1 : 0;             \
         int a = (*B >= *A) ? 1 : 0;             \
@@ -34,12 +89,16 @@ size_t scalar_branchless(const uint32_t *A, size_t lenA,
         B += b;                                 \
     }
 
-size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA, 
+
+/**
+ * Unrolled branchless approach by N. Kurz.
+ */
+size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
                                   const uint32_t *B, size_t lenB,
                                   uint32_t *Match) {
 
     const size_t UNROLLED = 4;
-    
+
     const uint32_t *initMatch = Match;
     const uint32_t *endA = A + lenA;
     const uint32_t *endB = B + lenB;
@@ -56,13 +115,13 @@ size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
         }
     }
 
-    // Finish remainder without overstepping 
+    // Finish remainder without overstepping
     while (A < endA && B < endB) {
         BRANCHLESSMATCH();
     }
 
-    size_t count = Match - initMatch; 
-    return count; 
+    size_t count = Match - initMatch;
+    return count;
 }
 
 #undef BRANCHLESSMATCH
@@ -71,7 +130,7 @@ size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
 
 #if INTEL_DISASSEMBLY
   15:   mov    (%rdx),%r11d  # r11 = *B
-  18:   mov    $0x1,%r8d     # r8 = 1 
+  18:   mov    $0x1,%r8d     # r8 = 1
   1e:   mov    (%rdi),%eax   # eax = *A
   20:   cmp    %eax,%r11d    # *B <=> *A
   23:   mov    $0x0,%r11d    # r11 = 0
@@ -87,3 +146,4 @@ size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
 #endif
 
 
+#endif
