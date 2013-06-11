@@ -11,6 +11,7 @@
 #include "hybridintersection.h"
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
+#include "branchless.h"
 
 #ifdef __INTEL_COMPILER
 /**
@@ -91,8 +92,9 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
-
-        {"branchless",branchlessintersection},
+    {"branchless",branchlessintersection},
+    {"scalarbranchless", scalar_branchless},
+    {"scalarbranchlessunrolled", scalar_branchless_unrolled},
     {   "@hybriddan",danielshybridintersection},
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
