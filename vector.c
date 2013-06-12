@@ -168,6 +168,8 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
         freq = nextFreq;
         rare = nextRare;
 
+        // FUTURE: write actual output
+
         Uint64_t passCount = _mm_popcnt_u64(matchBits);
         count += passCount;
     }
