@@ -233,22 +233,21 @@ size_t scalar_branchless_unrolled(const uint32_t *A, size_t lenA,
 #undef BRANCHLESSMATCH
 
 
-#if INTEL_DISASSEMBLY
-  15:   mov    (%rdx),%r11d  # r11 = *B
-  18:   mov    $0x1,%r8d     # r8 = 1
-  1e:   mov    (%rdi),%eax   # eax = *A
-  20:   cmp    %eax,%r11d    # *B <=> *A
-  23:   mov    $0x0,%r11d    # r11 = 0
-  29:   cmove  %r8,%r11      # if *B == *A r11 = 1
-  2d:   mov    %eax,(%r9)    # *output = *A
-  30:   lea    (%r9,%r11,4),%r9  # output += 4 * r11
-  34:   mov    $0x0,%r11d    # r11 = 0
-  3a:   cmovae %r8,%r11      # if *B >= *A r11 = 1
-  3e:   lea    (%rdi,%r11,4),%rdi  # A += 4 * r11
-  42:   mov    $0x0,%r11d    # r11 = 0
-  48:   cmovbe %r8,%r11      # if *B <= *A r11 = 1
-  4c:   lea    (%rdx,%r11,4),%rdx  # B += 4 * r11
-#endif
+// Intel disassembly for branchless
+//  15:   mov    (%rdx),%r11d  # r11 = *B
+//  18:   mov    $0x1,%r8d     # r8 = 1
+//  1e:   mov    (%rdi),%eax   # eax = *A
+//  20:   cmp    %eax,%r11d    # *B <=> *A
+//  23:   mov    $0x0,%r11d    # r11 = 0
+//  29:   cmove  %r8,%r11      # if *B == *A r11 = 1
+//  2d:   mov    %eax,(%r9)    # *output = *A
+//  30:   lea    (%r9,%r11,4),%r9  # output += 4 * r11
+//  34:   mov    $0x0,%r11d    # r11 = 0
+//  3a:   cmovae %r8,%r11      # if *B >= *A r11 = 1
+//  3e:   lea    (%rdi,%r11,4),%rdi  # A += 4 * r11
+//  42:   mov    $0x0,%r11d    # r11 = 0
+//  48:   cmovbe %r8,%r11      # if *B <= *A r11 = 1
+//  4c:   lea    (%rdx,%r11,4),%rdx  # B += 4 * r11
 
 
 #endif
