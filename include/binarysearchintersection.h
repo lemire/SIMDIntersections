@@ -19,8 +19,8 @@
  * @param min
  * @return
  */
-static size_t __BSadvanceUntil(const uint32_t * array, const size_t pos,
-        const size_t length, const size_t min) {
+static size_t __BSadvanceUntil(const uint32_t *array, const size_t pos,
+                               const size_t length, const size_t min) {
     size_t lower = pos + 1;
     if (lower == length || array[lower] >= min) {
         return lower;
@@ -49,8 +49,8 @@ static size_t __BSadvanceUntil(const uint32_t * array, const size_t pos,
 /**
  * Based on binary search.
  */
-size_t BSintersectioncardinality(const uint32_t * set1, const size_t length1,
-        const uint32_t * set2, const size_t length2) {
+size_t BSintersectioncardinality(const uint32_t *set1, const size_t length1,
+                                 const uint32_t *set2, const size_t length2) {
     if ((0 == length1) or (0 == length2))
         return 0;
     size_t answer = 0;
@@ -80,8 +80,8 @@ size_t BSintersectioncardinality(const uint32_t * set1, const size_t length1,
 
 }
 
-static size_t __FixedBSadvanceUntil(const uint32_t * array,
-        const size_t length, const size_t min) {
+static size_t __FixedBSadvanceUntil(const uint32_t *array,
+                                    const size_t length, const size_t min) {
     size_t lower = 0;
     size_t upper = length - 1;
     if (array[upper] < min) {
@@ -106,8 +106,8 @@ static size_t __FixedBSadvanceUntil(const uint32_t * array,
 /**
  * Based on binary search.
  */
-size_t FixedBSintersectioncardinality(const uint32_t * set1,
-        const size_t length1, const uint32_t * set2, const size_t length2) {
+size_t FixedBSintersectioncardinality(const uint32_t *set1,
+                                      const size_t length1, const uint32_t *set2, const size_t length2) {
     if ((0 == length1) or (0 == length2))
         return 0;
     size_t answer = 0;

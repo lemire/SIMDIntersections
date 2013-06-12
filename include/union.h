@@ -2,8 +2,8 @@
 #define UNION_H_
 #include "common.h"
 
-size_t unite(const uint32_t * set1, const size_t length1,
-        const uint32_t * set2, const size_t length2, uint32_t * out) {
+size_t unite(const uint32_t *set1, const size_t length1,
+             const uint32_t *set2, const size_t length2, uint32_t *out) {
     size_t pos = 0;
     size_t k1 = 0, k2 = 0;
     if (0 == length1) {
@@ -50,6 +50,6 @@ size_t unite(const uint32_t * set1, const size_t length1,
         }
     }
     return pos;
-    }
+}
 
 #endif /* UNION_H_ */

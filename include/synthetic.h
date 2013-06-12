@@ -19,14 +19,15 @@ using namespace std;
 using namespace std::tr1;
 
 vector<uint32_t> generateArray(uint32_t N, const uint32_t mask = 0xFFFFFFFFU) {
-    vector < uint32_t > ans(N);
+    vector <uint32_t> ans(N);
     for (size_t k = 0; k < N; ++k)
         ans[k] = rand() & mask;
     return ans;
 }
 
-vector<uint32_t> generateArray32(uint32_t N, const uint32_t mask = 0xFFFFFFFFU) {
-    vector < uint32_t > ans(N);
+vector<uint32_t> generateArray32(uint32_t N,
+                                 const uint32_t mask = 0xFFFFFFFFU) {
+    vector <uint32_t> ans(N);
     for (size_t k = 0; k < N; ++k)
         ans[k] = rand() & mask;
     return ans;
@@ -39,7 +40,7 @@ public:
     }
 
     vector<uint32_t> generate(uint32_t N, uint32_t Max) {
-        return generateUniform( N, Max);
+        return generateUniform(N, Max);
     }
 
     /**
@@ -49,18 +50,18 @@ public:
     vector<uint32_t> generateUniform(uint32_t N, uint32_t Max) {
         if (Max < N)
             throw runtime_error(
-                    "can't generate enough distinct elements in small interval");
-        vector < uint32_t > ans;
+                "can't generate enough distinct elements in small interval");
+        vector <uint32_t> ans;
         if (N == 0)
             return ans; // nothing to do
         ans.reserve(N);
         assert(Max >= 1);
 
         if (2 * N > Max) {
-            unordered_set < uint32_t > s;
+            unordered_set <uint32_t> s;
             while (s.size() < Max - N)
                 s.insert(rand.getValue(Max - 1));
-            vector < uint32_t > tmp(s.begin(), s.end());
+            vector <uint32_t> tmp(s.begin(), s.end());
             s.clear();
             sort(tmp.begin(), tmp.end());
             tmp.push_back(Max);
@@ -75,7 +76,7 @@ public:
             }
             assert(c == ans.size());
         } else {
-            unordered_set < uint32_t > s;
+            unordered_set <uint32_t> s;
             while (s.size() < N)
                 s.insert(rand.getValue(Max - 1));
             ans.assign(s.begin(), s.end());
@@ -99,7 +100,7 @@ public:
     // Max value is excluded from range
     template<class iterator>
     void fillUniform(iterator begin, iterator end, uint32_t Min, uint32_t Max) {
-        vector < uint32_t > v = unidg.generateUniform(end - begin, Max - Min);
+        vector <uint32_t> v = unidg.generateUniform(end - begin, Max - Min);
         for (size_t k = 0; k < v.size(); ++k)
             *(begin + k) = Min + v[k];
     }
@@ -135,12 +136,12 @@ public:
         }
     }
     vector<uint32_t> generate(uint32_t N, uint32_t Max) {
-        return generateClustered( N, Max);
+        return generateClustered(N, Max);
     }
 
     // Max value is excluded from range
     vector<uint32_t> generateClustered(uint32_t N, uint32_t Max) {
-        vector < uint32_t > ans(N);
+        vector <uint32_t> ans(N);
         fillClustered(ans.begin(), ans.end(), 0, Max);
         return ans;
     }
@@ -181,7 +182,7 @@ public:
     }
 
     ZipfianGenerator(int _items, double _zipfianconstant,
-            uint32_t seed = time(NULL)) :
+                     uint32_t seed = time(NULL)) :
         n(_items), zetan(0), theta(_zipfianconstant), proba(n), rand(seed) {
         init(_items, _zipfianconstant);
     }
@@ -202,8 +203,8 @@ public:
 };
 
 vector<uint32_t> generateZipfianArray32(uint32_t N, double power,
-        const uint32_t mask = 0xFFFFFFFFU) {
-    vector < uint32_t > ans(N);
+                                        const uint32_t mask = 0xFFFFFFFFU) {
+    vector <uint32_t> ans(N);
     ZipfianGenerator zipf;
     const uint32_t MAXVALUE = 1U << 22;
     zipf.init(mask > MAXVALUE - 1 ? MAXVALUE : mask + 1, power);
@@ -226,27 +227,35 @@ vector<uint32_t> generateZipfianArray32(uint32_t N, double power,
  *  intersectionratio * minlength : length of the intersection
  */
 template <class generator>
-pair<vector<uint32_t>,vector<uint32_t> > getPair(generator gen, size_t minlength,size_t Max, float sizeratio, float intersectionratio) {
-    if(sizeratio < 1) throw runtime_error("sizeratio should be larger or equal to 1");
-    if(intersectionratio < 0) throw runtime_error("intersectionratio should be positive");
-    if(intersectionratio > 1) throw runtime_error("intersectionratio cannot be larger than 1");
+pair<vector<uint32_t>, vector<uint32_t>> getPair(generator gen,
+size_t minlength, size_t Max, float sizeratio, float intersectionratio) {
+    if (sizeratio < 1) throw
+        runtime_error("sizeratio should be larger or equal to 1");
+    if (intersectionratio < 0) throw
+        runtime_error("intersectionratio should be positive");
+    if (intersectionratio > 1) throw
+        runtime_error("intersectionratio cannot be larger than 1");
     const size_t maxlenth = round(minlength * sizeratio);
-    if(maxlenth > Max)  throw runtime_error("I can't generate an array so large in such a small range.");
-    if(maxlenth < minlength) throw runtime_error("something went wrong, possibly an overflow.");
+    if (maxlenth > Max)  throw
+        runtime_error("I can't generate an array so large in such a small range.");
+    if (maxlenth < minlength) throw
+        runtime_error("something went wrong, possibly an overflow.");
     // we basically assume that, if we do nothing, intersections are very small
-    const size_t intersize = round (minlength * intersectionratio);
+    const size_t intersize = round(minlength * intersectionratio);
 
-    vector<uint32_t> inter = gen.generate(intersize,Max);
-    vector<uint32_t> smallest =  unite(gen.generate(minlength-inter.size(),Max),inter);
-    vector<uint32_t> largest = unite(gen.generate(maxlenth-inter.size(),Max),inter);
-    vector<uint32_t> intersection = intersect(smallest,largest);
+    vector<uint32_t> inter = gen.generate(intersize, Max);
+    vector<uint32_t> smallest =  unite(gen.generate(minlength - inter.size(), Max),
+                                       inter);
+    vector<uint32_t> largest = unite(gen.generate(maxlenth - inter.size(), Max),
+                                     inter);
+    vector<uint32_t> intersection = intersect(smallest, largest);
 
-    if(abs(intersection.size() * 1.0 /smallest.size() - intersectionratio) > 0.05)
+    if (abs(intersection.size() * 1.0 / smallest.size() - intersectionratio) > 0.05)
         throw runtime_error("Bad intersection ratio. Fix me.");
 
-    if(abs(largest.size() * 1.0 /smallest.size() - sizeratio) > 0.05)
+    if (abs(largest.size() * 1.0 / smallest.size() - sizeratio) > 0.05)
         throw runtime_error("Bad size ratio. Fix me.");
-    return pair<vector<uint32_t>,vector<uint32_t> >(smallest,largest);
+    return pair<vector<uint32_t>, vector<uint32_t>>(smallest, largest);
 }
 
 

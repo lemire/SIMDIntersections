@@ -19,8 +19,8 @@
  * If none can be found, return array.length.
  * From code by O. Kaser.
  */
-static size_t __frogadvanceUntil(const uint32_t * array, const size_t pos,
-        const size_t length, const size_t min) {
+static size_t __frogadvanceUntil(const uint32_t *array, const size_t pos,
+                                 const size_t length, const size_t min) {
     size_t lower = pos + 1;
 
     // special handling for a possibly common sequential case
@@ -65,8 +65,8 @@ static size_t __frogadvanceUntil(const uint32_t * array, const size_t pos,
 /**
  * based on galloping
  */
-size_t frogintersectioncardinality(const uint32_t * set1, const size_t length1,
-        const uint32_t * set2, const size_t length2) {
+size_t frogintersectioncardinality(const uint32_t *set1, const size_t length1,
+                                   const uint32_t *set2, const size_t length2) {
     if ((0 == length1) or (0 == length2))
         return 0;
     size_t answer = 0;
@@ -99,8 +99,8 @@ size_t frogintersectioncardinality(const uint32_t * set1, const size_t length1,
 /**
  * assumes that smalllength < largelength
  */
-size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
-        const size_t smalllength, const uint32_t * largeset,
+size_t onesidedgallopingintersectioncardinality(const uint32_t *smallset,
+        const size_t smalllength, const uint32_t *largeset,
         const size_t largelength) {
     if (0 == smalllength)
         return 0;
@@ -112,7 +112,8 @@ size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
             if (k1 == largelength)
                 return answer;
         }
-        midpoint: if (smallset[k2] < largeset[k1]) {
+midpoint:
+        if (smallset[k2] < largeset[k1]) {
             ++k2;
             if (k2 == smalllength)
                 return answer;
@@ -135,12 +136,12 @@ size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
 /**
  * assumes that smalllength < largelength
  */
-size_t onesidedgallopingintersection(const uint32_t * smallset,
-        const size_t smalllength, const uint32_t * largeset,
-        const size_t largelength, uint32_t * out) {
+size_t onesidedgallopingintersection(const uint32_t *smallset,
+                                     const size_t smalllength, const uint32_t *largeset,
+                                     const size_t largelength, uint32_t *out) {
     if (0 == smalllength)
         return 0;
-    const uint32_t * const initout(out);
+    const uint32_t *const initout(out);
     size_t k1 = 0, k2 = 0;
     while (true) {
         if (largeset[k1] < smallset[k2]) {
@@ -148,7 +149,8 @@ size_t onesidedgallopingintersection(const uint32_t * smallset,
             if (k1 == largelength)
                 break;
         }
-        midpoint: if (smallset[k2] < largeset[k1]) {
+midpoint:
+        if (smallset[k2] < largeset[k1]) {
             ++k2;
             if (k2 == smalllength)
                 break;

@@ -17,18 +17,18 @@
 #ifndef __INTEL_COMPILER
 __attribute__((optimize("unroll-loops"))) // this helps a lot with GCC
 #endif
-size_t branchlessintersection(const uint32_t * set1, const size_t length1,
-        const uint32_t * set2, const size_t length2, uint32_t * out) {
+size_t branchlessintersection(const uint32_t *set1, const size_t length1,
+                              const uint32_t *set2, const size_t length2, uint32_t *out) {
     if ((0 == length1) or (0 == length2))
         return 0;
-    const uint32_t * const initout(out);
-    const uint32_t * const finalset1(set1 + length1);
-    const uint32_t * const finalset2(set2 + length2);
+    const uint32_t *const initout(out);
+    const uint32_t *const finalset1(set1 + length1);
+    const uint32_t *const finalset2(set2 + length2);
 
     const unsigned int N = 4;
 
     // main loop
-    while ((set1 +N <= finalset1) && (set2 +N <= finalset2)) {
+    while ((set1 + N <= finalset1) && (set2 + N <= finalset2)) {
 #ifdef __INTEL_COMPILER
 #pragma unroll(4)
 #endif
@@ -44,13 +44,13 @@ size_t branchlessintersection(const uint32_t * set1, const size_t length1,
 
     }
     while ((set1  < finalset1) && (set2 < finalset2)) {
-            // this is branchless... (in theory, maybe not in practice)
-            *out = *set1;
-            const uint32_t a = *set1;
-            const uint32_t b = *set2;
-            out = (a == b) ? out + 1 : out;
-            set1 = (a <= b) ? set1 + 1 : set1;
-            set2 = (b <= a) ? set2 + 1 : set2;
+        // this is branchless... (in theory, maybe not in practice)
+        *out = *set1;
+        const uint32_t a = *set1;
+        const uint32_t b = *set2;
+        out = (a == b) ? out + 1 : out;
+        set1 = (a <= b) ? set1 + 1 : set1;
+        set2 = (b <= a) ? set2 + 1 : set2;
 
     }
 
@@ -85,7 +85,7 @@ size_t scalar_branchless(const uint32_t *A, size_t lenA,
 }
 
 // NOTE: Proof of concept function --- reads past end of input
-size_t scalar_branchless_cached(const uint32_t *A, size_t lenA, 
+size_t scalar_branchless_cached(const uint32_t *A, size_t lenA,
                                 const uint32_t *B, size_t lenB,
                                 uint32_t *Match) {
 
@@ -97,10 +97,10 @@ size_t scalar_branchless_cached(const uint32_t *A, size_t lenA,
     uint32_t thisB = B[0];
 
     while (A < endA && B < endB) {
-        
+
 #ifdef IACA
         IACA_START;
-#endif    
+#endif
         uint32_t nextA = A[1];
         uint32_t nextB = B[1];
 
@@ -117,22 +117,22 @@ size_t scalar_branchless_cached(const uint32_t *A, size_t lenA,
         thisB = (oldB <= oldA) ? nextB : thisB;  // advance B if match or B behind
 
         Match += m;      // will be rewritten unless advanced
-        A += a;        
-        B += b;        
+        A += a;
+        B += b;
 
 #ifdef IACA
-    IACA_END;
+        IACA_END;
 #endif
 
     }
 
 
-    size_t count = Match - initMatch; 
-    return count; 
+    size_t count = Match - initMatch;
+    return count;
 }
 
 // NOTE: Proof of concept function --- reads past end of input
-size_t scalar_branchless_cached2(const uint32_t *A, size_t lenA, 
+size_t scalar_branchless_cached2(const uint32_t *A, size_t lenA,
                                  const uint32_t *B, size_t lenB,
                                  uint32_t *Match) {
 
@@ -145,7 +145,7 @@ size_t scalar_branchless_cached2(const uint32_t *A, size_t lenA,
 
     uint32_t nextA = A[1];
     uint32_t nextB = B[1];
-    
+
     while (A < endA && B < endB) {
 #ifdef IACA
         IACA_START;
@@ -166,22 +166,22 @@ size_t scalar_branchless_cached2(const uint32_t *A, size_t lenA,
         thisA = (oldB >= oldA) ? nextA : thisA;  // advance A if match or B ahead
         thisB = (oldB <= oldA) ? nextB : thisB;  // advance B if match or B behind
 
-        nextA = (oldB >= oldA) ? nextNextA : nextA; 
-        nextB = (oldB <= oldA) ? nextNextB : nextB; 
+        nextA = (oldB >= oldA) ? nextNextA : nextA;
+        nextB = (oldB <= oldA) ? nextNextB : nextB;
 
         Match += m;    // Match will be rewritten unless advanced
-        A += a;        
-        B += b;        
+        A += a;
+        B += b;
 
 #ifdef IACA
-    IACA_END;
+        IACA_END;
 #endif
 
     }
 
 
-    size_t count = Match - initMatch; 
-    return count; 
+    size_t count = Match - initMatch;
+    return count;
 }
 
 // use in function below

@@ -20,8 +20,8 @@
 
 
 
-std::map<std::string,intersectionfunction> realinitializefactory() {
-    std::map<std::string,intersectionfunction> schemes;
+std::map<std::string, intersectionfunction> realinitializefactory() {
+    std::map<std::string, intersectionfunction> schemes;
     schemes[ "branchless" ] = branchlessintersection;
     schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
     schemes[ "scalarbranchlesscached2" ] = scalar_branchless_cached2;
@@ -31,7 +31,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "@hybriddan" ] =  danielshybridintersection;
 
     schemes[ "widevector" ] =  widevector_intersect;
-     schemes[ "widevectorleo" ] =  leowidevector_intersect;
+    schemes[ "widevectorleo" ] =  leowidevector_intersect;
 
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;
@@ -48,8 +48,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 }
 
 
-std::map<std::string,cardinalityintersectionfunction> initializefactory() {
-    std::map<std::string,cardinalityintersectionfunction> schemes;
+std::map<std::string, cardinalityintersectionfunction> initializefactory() {
+    std::map<std::string, cardinalityintersectionfunction> schemes;
     schemes[ "@hybriddan" ] =  danielshybridintersectioncardinality;
 
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
@@ -60,7 +60,8 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     schemes[ "scalarnate" ] =  nate_count_scalar;
 
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::cardinality_intersect_SIMD;
-    schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_cardinality_intersect_SIMD;
+    schemes[ "hssimddan" ] =
+        highlyscalablewordpresscom::dan_cardinality_intersect_SIMD;
 
     schemes[ "natemedium" ] =  nate_count_medium;
     schemes[ "natemediumdan" ] =  natedan_count_medium;
@@ -76,21 +77,26 @@ std::set<std::string> initializebuggy() {
     return schemes;
 }
 
-std::map<std::string,cardinalityintersectionfunction> schemes = initializefactory();
-std::map<std::string,intersectionfunction> realschemes = realinitializefactory();
+std::map<std::string, cardinalityintersectionfunction> schemes =
+    initializefactory();
+std::map<std::string, intersectionfunction> realschemes =
+    realinitializefactory();
 
 std::set<std::string> buggyschemes = initializebuggy();
 
 
-std::map<std::string,cardinalityintersectionfunctionpart> initializefactorypart() {
-    std::map<std::string,cardinalityintersectionfunctionpart> partschemes;
+std::map<std::string, cardinalityintersectionfunctionpart>
+initializefactorypart() {
+    std::map<std::string, cardinalityintersectionfunctionpart> partschemes;
     partschemes[ "schlegel" ] = partitioned::cardinality_intersect_partitioned;
-    partschemes[ "danschlegel" ] = partitioned::faster_cardinality_intersect_partitioned;
+    partschemes[ "danschlegel" ] =
+        partitioned::faster_cardinality_intersect_partitioned;
     return partschemes;
 }
 
 
-std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initializefactorypart();
+std::map<std::string, cardinalityintersectionfunctionpart> partschemes =
+    initializefactorypart();
 
 #else
 
@@ -99,14 +105,14 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
  */
 
 
-std::map<std::string,intersectionfunction> realschemes = {
+std::map<std::string, intersectionfunction> realschemes = {
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
     {"scalarbranchlesscached2", scalar_branchless_cached2},
-    {"scalardanbranchless",branchlessintersection},
+    {"scalardanbranchless", branchlessintersection},
     {"scalarbranchless", scalar_branchless},
     {"scalarbranchlessunrolled", scalar_branchless_unrolled},
-    {   "@hybriddan",danielshybridintersection},
+    {   "@hybriddan", danielshybridintersection},
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
     {   "scalarnate", nate_scalar},
@@ -126,31 +132,31 @@ std::map<std::string,intersectionfunction> realschemes = {
 };
 
 
-std::map<std::string,cardinalityintersectionfunction> schemes = {
-	{	"@hybriddan",danielshybridintersectioncardinality},
+std::map<std::string, cardinalityintersectionfunction> schemes = {
+    {   "@hybriddan", danielshybridintersectioncardinality},
 
-	{	"widevector", widevector_cardinality_intersect},
+    {   "widevector", widevector_cardinality_intersect},
     {   "widevectorleo", leowidevector_cardinality_intersect},
 
-	{	"scalargalloping",frogintersectioncardinality},
-	{	"scalar1sgalloping", onesidedgallopingintersectioncardinality},
+    {   "scalargalloping", frogintersectioncardinality},
+    {   "scalar1sgalloping", onesidedgallopingintersectioncardinality},
     {   "scalarnate", nate_count_scalar},
 
-	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
-	{	"hssimddan", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
+    {   "hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
+    {   "hssimddan", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
 
-	{	"natemedium", nate_count_medium},
-	{	"natemediumdan", natedan_count_medium},
-	{   "natemediumdanalt", natedanalt_count_medium},
-        {   "natemediumdanfar", danfar_count_medium},
-        {   "natemediumdanfinefar", danfarfine_count_medium}
+    {   "natemedium", nate_count_medium},
+    {   "natemediumdan", natedan_count_medium},
+    {   "natemediumdanalt", natedanalt_count_medium},
+    {   "natemediumdanfar", danfar_count_medium},
+    {   "natemediumdanfinefar", danfarfine_count_medium}
 };
 
 std::set<std::string> buggyschemes = {"widevectorleo"};
 
-std::map<std::string,cardinalityintersectionfunctionpart> partschemes = {
-	{	"schlegel",partitioned::cardinality_intersect_partitioned},
-	{	"danschlegel", partitioned::faster_cardinality_intersect_partitioned}
+std::map<std::string, cardinalityintersectionfunctionpart> partschemes = {
+    {   "schlegel", partitioned::cardinality_intersect_partitioned},
+    {   "danschlegel", partitioned::faster_cardinality_intersect_partitioned}
 };
 
 #endif
@@ -159,7 +165,7 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = {
  * Convenience function
  */
 std::vector<std::string> allNames() {
-    std::vector < std::string > ans;
+    std::vector <std::string> ans;
     for (auto i = schemes.begin(); i != schemes.end(); ++i) {
         ans.push_back(i->first);
     }
@@ -172,7 +178,7 @@ std::vector<std::string> allNames() {
  * Convenience function
  */
 std::vector<std::string> allRealNames() {
-    std::vector < std::string > ans;
+    std::vector <std::string> ans;
     for (auto i = realschemes.begin(); i != realschemes.end(); ++i) {
         ans.push_back(i->first);
     }

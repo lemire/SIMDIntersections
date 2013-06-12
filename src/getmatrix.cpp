@@ -18,7 +18,7 @@
 void printusage() {
     cout << " Try ./getmatrix -s scalarnate" << endl;
     cout << " Use the -s flag to specify  some scheme, choose from: " << endl;
-    for(string x : allRealNames()) cout <<" "<< x << endl;
+    for (string x : allRealNames()) cout << " " << x << endl;
     cout
             << " The -M flag allows you to specific the range in bits (default 31)."
             << endl;
@@ -89,7 +89,8 @@ int main(int argc, char **argv) {
     cout << "# columns are size ratios" << endl;
     cout << "# rows are intersection ratios" << endl;
     cout << "# average gaps in bits for smallest array: " << std::setprecision(
-            3) << log(1 + (1U << MaxBit) * 1.0 / minlength) << " (use -S and -M flag to change)"<< endl;
+             3) << log(1 + (1U << MaxBit) * 1.0 / minlength) <<
+         " (use -S and -M flag to change)" << endl;
 #ifdef __INTEL_COMPILER
     // Intel's support for C++ sucks
     vector<float> intersectionsratios;
@@ -100,7 +101,7 @@ int main(int argc, char **argv) {
     intersectionsratios.push_back(0.10);
     intersectionsratios.push_back(0.05);
     intersectionsratios.push_back(0.01);
-    vector < uint32_t > sizeratios;
+    vector <uint32_t> sizeratios;
     sizeratios.push_back(1);
     sizeratios.push_back(2);
     sizeratios.push_back(3);
@@ -115,36 +116,38 @@ int main(int argc, char **argv) {
 #else
     // proper C++
     vector<float> intersectionsratios = { 1.00, 0.80, 0.60, 0.20, 0.10, 0.05,
-            0.01 };
-    vector < uint32_t > sizeratios = {1, 2, 3, 5, 10, 20,40,80,200,500,1000};
+                                          0.01
+                                        };
+    vector <uint32_t> sizeratios = {1, 2, 3, 5, 10, 20, 40, 80, 200, 500, 1000};
 #endif
-    cout<<"# average gaps in bits for last largest array: "<<std::setprecision(3)<<log(
-             1 + (1U << MaxBit) * 1.0 / (sizeratios.back()*minlength))<<endl;
+    cout << "# average gaps in bits for last largest array: " << std::setprecision(
+             3) << log(
+             1 + (1U << MaxBit) * 1.0 / (sizeratios.back()*minlength)) << endl;
     cout << "#############################################" << endl << endl;
 
-    cout<< name << endl << "\t\t";
+    cout << name << endl << "\t\t";
     ClusteredDataGenerator cdg;
     WallClockTimer z;
     size_t bogus = 0;
 
 
-    for(uint32_t sr :  sizeratios) {
-        cout<<"1:"<<sr << "\t";
+    for (uint32_t sr :  sizeratios) {
+        cout << "1:" << sr << "\t";
     }
-    cout<<endl;
+    cout << endl;
     size_t time = 0;
-    for(float ir : intersectionsratios) {
-        cout<< std::setprecision(3)<< (100*ir) << "%\t\t";
+    for (float ir : intersectionsratios) {
+        cout << std::setprecision(3) << (100 * ir) << "%\t\t";
         cout.flush();
-        for(uint32_t sr :  sizeratios) {
-            vector<uint32_t> buffer(round(sr*minlength + 15)/16*16);
+        for (uint32_t sr :  sizeratios) {
+            vector<uint32_t> buffer(round(sr * minlength + 15) / 16 * 16);
             vector <
-            pair<
+            pair <
             vector<uint32_t>, vector<uint32_t>
             >
             > data(howmany);
-            for(size_t k = 0; k < howmany; ++k)
-                data[k] = getPair(cdg, minlength,1U<<MaxBit, sr, ir);
+            for (size_t k = 0; k < howmany; ++k)
+                data[k] = getPair(cdg, minlength, 1U << MaxBit, sr, ir);
             size_t volume = 0;
             z.reset();
             for (size_t L = 0; L < loop; ++L) {
@@ -154,8 +157,8 @@ int main(int argc, char **argv) {
                     volume += (x.second).size();
                     bogus
                     += myscheme(&(x.first)[0],
-                            (x.first).size(), &(x.second)[0],
-                            (x.second).size(),&buffer[0]);
+                                (x.first).size(), &(x.second)[0],
+                                (x.second).size(), &buffer[0]);
                 }
 
             }
@@ -165,7 +168,7 @@ int main(int argc, char **argv) {
 
 
         }
-        cout<<endl;
+        cout << endl;
     }
 
     cout << "# bogus = " << bogus << endl;
