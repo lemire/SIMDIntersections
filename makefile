@@ -17,9 +17,6 @@ endif
 
 CXX := $(YOURCXX)
 
-
-
-
 HEADERS= $(shell ls include/*h)
 
 all:  testintersection realintersection getmatrix
@@ -36,3 +33,7 @@ getmatrix: $(HEADERS) src/getmatrix.cpp
 clean: 
 	rm -f *.o testintersection realintersection getmatrix
 
+astyle: 
+	astyle --options=astyle.conf include/*.h src/*.cpp
+
+.PHONY: all clean astyle
