@@ -9,9 +9,9 @@ ifeq ($(INTEL), 1)
 else 
     YOURCXX ?= g++-4.7
 ifeq ($(DEBUG),1)
-    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align  
+    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align  -Winline
 else
-    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -pedantic -O3 -Wall -Wextra -Wcast-align  
+    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -DNDEBUG=1 -pedantic -O3 -Wall -Wextra -Winline -Wcast-align  
 endif
 endif
 
@@ -22,12 +22,17 @@ CXX := $(YOURCXX)
 
 HEADERS= $(shell ls include/*h)
 
-all:  testintersection
+all:  testintersection realintersection getmatrix
 
 testintersection: $(HEADERS) src/testintersection.cpp  
 	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  
 
+realintersection: $(HEADERS) src/realintersection.cpp  
+	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  
 
+getmatrix: $(HEADERS) src/getmatrix.cpp  
+	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  
 
 clean: 
-	rm -f *.o testintersection
+	rm -f *.o testintersection realintersection getmatrix
+

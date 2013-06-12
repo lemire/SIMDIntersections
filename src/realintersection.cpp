@@ -4,18 +4,19 @@
  *
  * (c) Daniel Lemire, http://lemire.me/en/
  */
-#include "intersectionfactory.h"
 #include "common.h"
+#include "intersectionfactory.h"
 #include "timer.h"
 #include "synthetic.h"
 #include "util.h"
 
 
+
 void printusage() {
-    cout << " Try ./testintersection -r 40" << endl;
+    cout << " Try ./realintersection -r 40" << endl;
     cout << " Use the -s flag to specify just some scheme, choose from: "
             << endl;
-    for(string x : allNames()) cout <<" "<< x << endl;
+    for(string x : allRealNames()) cout <<" "<< x << endl;
     cout << " Separate the schemes by a comma (e.g. -s schlegel,danscalar). "<< endl;
 }
 
@@ -26,8 +27,7 @@ int main(int argc, char **argv) {
     size_t loop = 1000;
     uint32_t S = 12;
     uint32_t ratio = 1;
-    map<string, cardinalityintersectionfunction> myschemes(schemes);
-    map<string, cardinalityintersectionfunctionpart> mypartschemes(partschemes);
+    map<string, intersectionfunction> myschemes(realschemes);
     int c;
     while ((c = getopt(argc, argv, "uns:S:m:l:r:h")) != -1)
         switch (c) {
@@ -57,27 +57,20 @@ int main(int argc, char **argv) {
             break;
         case 's':
             myschemes.clear();
-            mypartschemes.clear();
             {
                 const string codecsstr(optarg);
                 const vector < string > codecslst = split(codecsstr, ",:;");
                 for (auto i = codecslst.begin(); i != codecslst.end(); ++i) {
-                    if (schemes.find(*i) == schemes.end()) {
-                        if (partschemes.find(*i) == partschemes.end()) {
+                    if (realschemes.find(*i) == realschemes.end()) {
                             cerr << " Warning!!! Warning: unrecognized: " << *i
                                     << endl;
                             printusage();
                             return -1;
-                        } else {
-                            const auto K = partschemes.find(*i);
-                            const std::string name = K->first;
-                            const cardinalityintersectionfunctionpart fn = K->second;
-                            mypartschemes[name] =  fn;
-                        }
+
                     } else {
-                        const auto K = schemes.find(*i);
+                        const auto K = realschemes.find(*i);
                         const std::string name = K->first;
-                        const cardinalityintersectionfunction fn = K->second;
+                        const intersectionfunction fn = K->second;
                         myschemes[name] =  fn;
                     }
                 }
@@ -116,9 +109,6 @@ int main(int argc, char **argv) {
     for(auto algo : myschemes) {
         cout << algo.first<< " ";
     }
-    for(auto algo : mypartschemes) {
-            cout << algo.first<< " ";
-    }
     cout << endl;
     const uint32_t N = 1U << S;
     if (!natemode)
@@ -149,7 +139,7 @@ int main(int argc, char **argv) {
     }
 
     cout
-            << "# other columns display speed in mis when computing the cardinality of the intersection"
+            << "# other columns display speed in mis when computing the intersection"
             << endl;
     for (uint32_t gap = 0; gap + S <= MaxBit; gap += 1) {
         vector < vector<uint32_t> > data;
@@ -208,19 +198,39 @@ int main(int argc, char **argv) {
         }
         cout << "\t";
         cout.flush();
+        size_t maxsize = 0;
+        for(auto x : data)
+            if(x.size() > maxsize) maxsize = x.size();
+        vector<uint32_t> buffer((maxsize+15)/16*16);
         for(auto algo : myschemes) {
             if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
             for (size_t k = 0; k < 2 * howmany; k += 2) {
-                size_t correctanswer = classicalintersectioncardinality(
+                vector<uint32_t> out(buffer.size());
+                size_t correctanswer = classicalintersection(
                         &data[k][0], data[k].size(), &data[k + 1][0],
-                        data[k + 1].size());
+                        data[k + 1].size(),&out[0]);
+                out.resize(correctanswer);
+                vector<uint32_t> out2(buffer.size());
                 size_t thisschemesanswer = algo.second(
                         &data[k][0], data[k].size(), &data[k + 1][0],
-                        data[k + 1].size());
-                if (correctanswer != thisschemesanswer) {
-                    cerr << "expecting cardinality of " << correctanswer;
-                    cerr << " got " << thisschemesanswer << " instead."
-                    << endl;
+                        data[k + 1].size(),&out2[0]);
+                out2.resize(thisschemesanswer);
+                if (out != out2) {
+                    if(thisschemesanswer != correctanswer) {
+                        cerr << "expecting cardinality of " << correctanswer;
+                        cerr << " got " << thisschemesanswer << "."
+                        << endl;
+                        if(correctanswer < 10)
+                            for(uint32_t x : out)
+                                cerr<<x<<endl;
+                    } else {
+                        cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
+                        for(size_t jj = 0; jj < correctanswer; ++jj)
+                            if(out[jj]!= out2[jj]) {
+                                cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
+                                break;
+                            }
+                    }
                     throw runtime_error("bug");
                 }
             }
@@ -234,7 +244,7 @@ int main(int argc, char **argv) {
                     bogus
                     += algo.second(&data[k][0],
                             data[k].size(), &data[k + 1][0],
-                            data[k + 1].size());
+                            data[k + 1].size(),&buffer[0]);
                 }
 
             }
@@ -243,67 +253,6 @@ int main(int argc, char **argv) {
             cout.flush();
         }
 
-        /**
-         * From Schlegel et al., Fast Sorted-Set Intersection using SIMD Instructions
-         */
-
-        vector < vector<uint16_t> > pdata(data.size());
-        assert(pdata.size() == 2 * howmany);
-        for (size_t zz = 0; zz < data.size(); ++zz) {
-            pdata[zz].resize(data[zz].size() * 4);
-            const size_t c = partitioned::partition(&data[zz][0],
-                    data[zz].size(), &pdata[zz][0], pdata[zz].size());
-            pdata[zz].resize(c);
-            vector<uint16_t> (pdata[zz]).swap(pdata[zz]);
-            assert(pdata[zz].size() == c);
-
-            if (safe) {
-                vector < uint32_t > testvec(data[zz].size());
-                size_t recovsize = partitioned::inverse_partition(&testvec[0],
-                        testvec.size(), &pdata[zz][0], pdata[zz].size());
-                if (testvec.size() != recovsize)
-                    throw std::runtime_error("bug");
-                if (testvec != data[zz])
-                    throw std::runtime_error("bug");
-            }
-
-        }
-        cout << "\t";
-        //for (uint32_t whichalgo = 0; whichalgo < HOWMANYPARTALGO; ++whichalgo) {
-        for(auto algo : mypartschemes) {
-            volume = 0;
-            if (safe)
-            for (size_t k = 0; k < 2 * howmany; k += 2) {
-                size_t correctanswer = classicalintersectioncardinality(
-                        &data[k][0], data[k].size(), &data[k + 1][0],
-                        data[k + 1].size());
-                size_t thisschemesanswer = algo.second(
-                        &pdata[k][0], &pdata[k + 1][0], pdata[k].size(),
-                        pdata[k + 1].size());
-                if (correctanswer != thisschemesanswer) {
-                    cerr << "expecting cardinality of " << correctanswer;
-                    cerr << " got " << thisschemesanswer << " instead."
-                    << endl;
-                    throw runtime_error("bug");
-                }
-
-            }
-
-            z.reset();
-
-            for (size_t k = 0; k < 2 * howmany; k += 2) {
-                volume += data[k].size();
-                volume += data[k + 1].size();
-
-                bogus += algo.second(&pdata[k][0],
-                        &pdata[k + 1][0], pdata[k].size(), pdata[k + 1].size());
-            }
-
-            time = z.split();
-            cout << std::setprecision(0) << volume * 1.0 / (time) << "\t";
-
-            cout.flush();
-        }
         cout << endl;
 
     }

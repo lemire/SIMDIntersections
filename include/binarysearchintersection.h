@@ -8,6 +8,9 @@
 #ifndef BINARYSEARCH_H_
 #define BINARYSEARCH_H_
 
+#include "common.h"
+
+
 /**
  * This is pure binary search
  * Used by BSintersectioncardinality below

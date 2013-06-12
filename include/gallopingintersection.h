@@ -131,4 +131,41 @@ size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
 
 }
 
+
+/**
+ * assumes that smalllength < largelength
+ */
+size_t onesidedgallopingintersection(const uint32_t * smallset,
+        const size_t smalllength, const uint32_t * largeset,
+        const size_t largelength, uint32_t * out) {
+    if (0 == smalllength)
+        return 0;
+    const uint32_t * const initout(out);
+    size_t k1 = 0, k2 = 0;
+    while (true) {
+        if (largeset[k1] < smallset[k2]) {
+            k1 = __frogadvanceUntil(largeset, k1, largelength, smallset[k2]);
+            if (k1 == largelength)
+                break;
+        }
+        midpoint: if (smallset[k2] < largeset[k1]) {
+            ++k2;
+            if (k2 == smalllength)
+                break;
+        } else {
+            *out++ = smallset[k2];
+            ++k2;
+            if (k2 == smalllength)
+                break;
+            k1 = __frogadvanceUntil(largeset, k1, largelength, smallset[k2]);
+            if (k1 == largelength)
+                break;
+            goto midpoint;
+        }
+    }
+    return out - initout;
+
+}
+
+
 #endif /* GALLOPINGINTERSECTION_H_ */
