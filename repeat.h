@@ -25,6 +25,7 @@
 #define _REPEAT_INCREMENT(n, inc) n + inc
 #define _REPEAT_UNCHANGED(unchanged, ignore) unchanged
 
+#define _REPEAT_0(args...)  /* empty */
 #define _REPEAT_1(macro, n, func, i, args...) macro(n, ## args) 
 #define _REPEAT_2(m, n, f, i, a...) m(n, ## a); _REPEAT_1(m, f(n, i), f, i, ## a)
 #define _REPEAT_3(m, n, f, i, a...) m(n, ## a); _REPEAT_2(m, f(n, i), f, i, ## a)
