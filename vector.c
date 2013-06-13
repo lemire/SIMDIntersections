@@ -1,21 +1,22 @@
-// FUTURE: slightly better us use PACK rather than << and |=?
+// FIXME: add defined macro requirements
 
-// PROFILE: check that 'if' clauses are static and optimized out        
+COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
+
+// PROFILE: check that static 'if' clauses are optimized out        
 #define CHECK_INNER_VECLEN CHECK_INNER_VECLEN_ ## VECLEN
-#define CHECK_INNER(rarenum, freqnum)                   \
-    Rare = NextRare;                                    \
-    if (rarenum + 1 < NUMRARE) {                        \
-        VLOAD(NextRare, rare, rarenum + 1);             \
-    } else if (freqnum + 1 < NUMFREQ) {                 \
-        VLOAD(NextRare, rare, 0);                       \
+#define CHECK_INNER(freqnum, rarenum)                   \
+    Freq = NextFreq;                                    \
+    if (freqnum + 1 < NUMFREQ) {                        \
+        VLOAD(NextFreq, freq, freqnum + 1);             \
+    } else if (rarenum + 1 < NUMRARE) {                 \
+        VLOAD(NextFreq, freq, 0);                       \
     } else if (! lastPass) {                            \
-        VLOAD(NextRare, nextRare, 0);                   \
+        VLOAD(NextFreq, nextFreq, 0);                   \
     }                                                   \
-    CHECK_INNER_VECLEN(rarenum);                        \
-    int bits = _mm_movemask_ps((VECFLOAT) Match);       \
-    matchBits |= bits << rarenum
+    CHECK_INNER_VECLEN();                               
 
-#define CHECK_INNER_VECLEN_4(num)               \
+
+#define CHECK_INNER_VECLEN_4()                  \
     VSHUF(F0, Freq, 0);                         \
                                                 \
     VSHUF(F1, Freq, 1);                         \
@@ -34,19 +35,33 @@
                                                 \
     VOR(Match, F3);                                   
 
-#define CHECK_INNER_VECLEN_8(num)               \
-    CHECK_INNER_VECLEN_4(num);                  \
-    CHECK_INNER_VECLEN_4(num);                      
+#define CHECK_INNER_VECLEN_8()                  \
+    CHECK_INNER_VECLEN_4();                     \
+    CHECK_INNER_VECLEN_4();                      
 
-#define CHECK_OUTER(freqnum)                                    \
-    Freq = NextFreq;                                            \
-    if (freqnum + 1 < NUMFREQ) {                                \
-        VLOAD(NextFreq, freq, freqnum);                         \
+// PROFILE: compare kShuffleCount[] to popcnt()
+#ifdef JUSTCOUNT
+#define HANDLE_RARE_MATCH(Match, rarenum)       \
+    count += kShuffleCount[bits]
+#else // WRITE
+#define HANDLE_RARE_MATCH(Match, rarenum)                               \
+    VSHUF(Rare, kShuffleMatch[bits]); // reorder so matches first       \
+    VSTORE(match, Rare); // store both matches and non-matches          \
+    match += kShuffleCount[bits];  // non-matches will be overwritten
+#endif
+// FUTURE: optimize for two at a time with BLEND instead of SHUF?
+
+#define CHECK_OUTER(rarenum)                                    \
+    Rare = NextRare;                                            \
+    if (rarenum + 1 < NUMRARE) {                                \
+        VLOAD(NextRare, rare, rarenum + 1);                     \
     } else if (! lastPass) {                                    \
-        VLOAD(NextFreq, nextFreq, 0);                           \
+        VLOAD(NextRare, nextRare, 0);                           \
     }                                                           \
-    REPEAT_ADDING_ONE(CHECK_INNER, NUMRARE, 0, freqnum);        \
-
+    VZERO(Match);                                               \
+    REPEAT_ADDING_ONE(CHECK_INNER, NUMFREQ, 0, rarenum);        \
+    int bits = _mm_movemask_ps((VECFLOAT) Match);               \
+    HANDLE_RARE_MATCH(Match, rarenum)
 
 // PROFILE: Compare ADVANCE_BEYOND_NEWMIN and ADVANCE_BEYOND_OLDMAX?
 #define ADVANCE_BEYOND_NEWMIN(num, granularity, array, next, newMin) {  \
@@ -68,9 +83,16 @@
 
 #define FUNC(name) name ## _R ## NUMRARE ## _F ## NUMFREQ
 
-size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
+#ifdef JUSTCOUNT
+size_t FUNC(count_vector)(const uint32_t *freq, size_t lenFreq,
                           const uint32_t *rare, size_t lenRare)  {
-
+#else // WRITE
+size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
+                          const uint32_t *rare, size_t lenRare,
+                          uint32_t *matchOut)  {
+    const uint32_t *matchOrig = matchOut;
+#endif
+    
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0) {
         return 0;
@@ -83,8 +105,8 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
     const uint32_t *stopFreq = lastFreq - FREQSPACE;
     const uint32_t *stopRare = lastRare - RARESPACE;
     
-    // skip straight to scalar if not enough room to load vectors
-    if (rarely(freq >= stopFreq) || rarely(rare >= stopRare)) {
+    // use scalar if not enough room to load vectors
+    if (rarely(freq >= stopFreq) || rare >= stopRare) {
         goto FINISH_SCALAR;
     }
 
@@ -103,21 +125,30 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
 
     VLOAD(NextFreq, freq, 0);
     VLOAD(NextRare, rare, 0);
+
+    uint32_t maxFreq = freq[NUMFREQ * VECLEN - 1];  
+    uint32_t maxRare = rare[NUMRARE * VECLEN - 1];  
     
-    uint32_t lastPass = 0;  // current pass is always completed
-    uint32_t nextRare;
-    uint32_t nextFreq;
+    uint32_t lastPass = 0;  // current pass always completed
+    uint32_t nextRare, nextFreq; // used outside loop for scalar finish
 
-    while (! lastPass) {
-        uint32_t maxFreq = freq[NUMFREQ * VECLEN - 1];  
-        uint32_t maxRare = rare[NUMRARE * VECLEN - 1];  
+    do {
+#if BRANCHLESS
+        {
+            int times = (NUMRARE / GRANRARE) + RARELOOK;
+            REPEAT_INCREMENT(ADVANCE_BEYOND_OLDMAX, times, GRANRARE, 
+                             GRANRARE, rare, nextRare, maxFreq);
+            int newRareMin = nextRare[0];
 
-
-// FUTURE: add a NONBRANCHING option that always inches both freq and rare
-//         rare[0-X] >= maxFreq; freq[0-Y] > newMinRare
-//         or vice versa?  which is better?
-
-
+#if EARLYCYCLES > 0
+            // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
+            REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+#endif 
+            times = (NUMFREQ / GRANFREQ) + FREQLOOK;
+            REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANFREQ, 
+                             GRANFREQ, freq, nextFreq, newRareMin);
+        }
+#else // if not BRANCHLESS
         if (expected(maxFreq >= maxRare)) {  
             nextRare = rare + NUMRARE * VECLEN;    
             int newRareMin = nextRare[0];
@@ -145,14 +176,15 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
             REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANRARE, 
                              GRANRARE, rare, nextRare, newFreqMin);
         }
+#endif // end not BRANCHLESS
 
-        // NOTE: NextRare and NextFreq loaded in last cycle of macros below
-        if (unexpected(nextRare >= stopRare) || 
-            unexpected(nextFreq >= stopFreq)) {
+        if (unexpected(nextRare >= stopRare || nextFreq >= stopFreq)) {
             lastPass = 1;
         } else {
-            // FUTURE: preload maxFreq and maxRare?
-            //         if so, need to load for first pass in header
+            // preload next maxFreq and maxRare
+            maxFreq = nextFreq[NUMFREQ * VECLEN - 1];  
+            maxRare = nextRare[NUMRARE * VECLEN - 1];  
+            // NextRare and NextFreq loaded in macros below
         }
 
 #if EARLYCYCLES > 0
@@ -167,12 +199,7 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
 
         freq = nextFreq;
         rare = nextRare;
-
-        // FUTURE: write actual output
-
-        Uint64_t passCount = _mm_popcnt_u64(matchBits);
-        count += passCount;
-    }
+    } while (! lastPass);
 
  FINISH_SCALAR:
     return count; // plus scalar
@@ -181,6 +208,10 @@ size_t FUNC(search_tight)(const uint32_t *freq, size_t lenFreq,
 #undef CHECK_INNER_VECLEN
 #undef CHECK_INNER_VECLEN_8
 #undef CHECK_INNER_VECLEN_4
+#undef HANDLE_RARE_MATCH
 #undef CHECK_OUTER
+#undef ADVANCE_BEYOND_NEWMIN
+#undef ADVANCE_BEYOND_OLDMAX
+#undef FUNC
 }
 
