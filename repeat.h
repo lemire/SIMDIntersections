@@ -4,8 +4,8 @@
 #define REPEAT_ADD_ONE(macro, times, start_n, macro_args... )                    \
     REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args)
 
-#define REPEAT_INCREMENT(macro, times, start_n, increment, macro_args...)                 \
-    REPEAT(macro, times, start_n, _REPEAT_INCREMENT, increment, ## macro_args)
+#define REPEAT_ADDING(macro, times, start_n, increment, macro_args...)                 \
+    REPEAT(macro, times, start_n, _REPEAT_ADDING, increment, ## macro_args)
 
 #define REPEAT_SAME_ARGS(macro, times, first_macro_arg, other_macro_args...)      \
     REPEAT(macro, times, first_macro_arg, _REPEAT_UNCHANGED, 0, ## other_macro_args)
@@ -19,11 +19,13 @@
 #define REPEAT_BLOCK(block, times)              \
     REPEAT(do block while, times, 0, _REPEAT_UNCHANGED, 0)
 
+#define REPEAT_ADD(x, y) _REPEAT_ADDING(x, y)
+
 // INTERNALS
 
-#define _REPEAT_ADD_ONE(n, ignore) _REPEAT_ADD_ONE_ ## n
-#define _REPEAT_INCREMENT(n, inc) n + inc
-#define _REPEAT_UNCHANGED(unchanged, ignore) unchanged
+#define _REPEAT_ADDING(n, inc) _REPEAT_ADD_ ## n(inc)
+#define _REPEAT_ADD_ONE(n, ignore...) _REPEAT_ADD_ONE_ ## n
+#define _REPEAT_UNCHANGED(unchanged, ignore...) unchanged
 
 #define _REPEAT_0(args...)  /* empty */
 #define _REPEAT_1(macro, n, func, i, args...) macro(n, ## args) 
@@ -92,6 +94,41 @@
 #define _REPEAT_ADD_ONE_30 31
 #define _REPEAT_ADD_ONE_31 32
 
+#define _REPEAT_ADD_0(x) x
+#define _REPEAT_ADD_1(x) _REPEAT_ADD_ONE(x)
+#define _REPEAT_ADD_2(x) _REPEAT_ADD_1(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_3(x) _REPEAT_ADD_2(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_4(x) _REPEAT_ADD_3(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_5(x) _REPEAT_ADD_4(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_6(x) _REPEAT_ADD_5(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_7(x) _REPEAT_ADD_6(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_8(x) _REPEAT_ADD_7(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_9(x) _REPEAT_ADD_8(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_10(x) _REPEAT_ADD_9(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_11(x) _REPEAT_ADD_10(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_12(x) _REPEAT_ADD_11(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_13(x) _REPEAT_ADD_12(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_14(x) _REPEAT_ADD_13(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_15(x) _REPEAT_ADD_14(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_16(x) _REPEAT_ADD_15(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_17(x) _REPEAT_ADD_16(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_18(x) _REPEAT_ADD_17(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_19(x) _REPEAT_ADD_18(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_20(x) _REPEAT_ADD_19(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_21(x) _REPEAT_ADD_20(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_22(x) _REPEAT_ADD_21(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_23(x) _REPEAT_ADD_22(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_24(x) _REPEAT_ADD_23(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_25(x) _REPEAT_ADD_24(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_26(x) _REPEAT_ADD_25(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_27(x) _REPEAT_ADD_26(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_28(x) _REPEAT_ADD_27(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_29(x) _REPEAT_ADD_28(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_30(x) _REPEAT_ADD_29(_REPEAT_ADD_ONE(x))
+#define _REPEAT_ADD_31(x) _REPEAT_ADD_30(_REPEAT_ADD_ONE(x))
+
+
+
 // FUTURE: find a more generic manner of cycling?
 // FUTURE: add cycles of different lengths
 
@@ -113,20 +150,23 @@
 
 #ifdef MAIN
 #include <stdio.h>
+#include <stdint.h>
 
 #define PRINT(x) printf("%d\n", x)
 #define NOARGS() printf("noargs\n")
-#define PASTE(x, base) paste(base ## x)
+#define PASTE(x, base) uint32_t base ## x
 
 int main() {
     REPEAT_ADD_ONE(PRINT, 32, 0);
-    REPEAT_INCREMENT(PRINT, 16, 0, 2);
+    REPEAT_ADDING(PRINT, 16, 0, 2);
     REPEAT_NOARGS(NOARGS, 5);
-    REPEAT_BLOCK({PRINT(1); PRINT(2)}, 3);
+    REPEAT_BLOCK({PRINT(1); PRINT(2);}, 3);
     REPEAT_SAME_ARGS(printf, 4, "functions OK too\n");
-    uint32_t var = 3;  REPEAT_INCREMENT(PRINT, 5, var, 3);
+//    uint32_t var = 3;  REPEAT_ADDING(PRINT, 5, var, 3);
     REPEAT_ADD_ONE(PASTE, 4, 0, var);
     REPEAT_CYCLE(PRINT, 8, 0, 4);
+
+    return 0;
 }
 
 #endif

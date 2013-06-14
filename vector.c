@@ -1,6 +1,11 @@
 // FIXME: add defined macro requirements
+// NOTE: cpp options: -C keeps comments, -CC keeps macro comments
+//       -P to inhibit line numbering, -dX might be useful
+//       -fdirectives-only to skip macro expansion
 
 COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
+
+#include "repeat.h"
 
 // PROFILE: check that static 'if' clauses are optimized out        
 #define CHECK_INNER_VECLEN CHECK_INNER_VECLEN_ ## VECLEN
@@ -59,9 +64,11 @@ COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
         VLOAD(NextRare, nextRare, 0);                           \
     }                                                           \
     VZERO(Match);                                               \
-    REPEAT_ADDING_ONE(CHECK_INNER, NUMFREQ, 0, rarenum);        \
+    REPEAT_ADD_ONE(CHECK_INNER, NUMFREQ, 0, rarenum);           \
     int bits = _mm_movemask_ps((VECFLOAT) Match);               \
     HANDLE_RARE_MATCH(Match, rarenum)
+
+// FIXME: need to re-expand REPEAT_ADD_ONE() above
 
 // PROFILE: Compare ADVANCE_BEYOND_NEWMIN and ADVANCE_BEYOND_OLDMAX?
 #define ADVANCE_BEYOND_NEWMIN(num, granularity, array, next, newMin) {  \
@@ -133,6 +140,7 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
     uint32_t nextRare, nextFreq; // used outside loop for scalar finish
 
     do {
+
 #if BRANCHLESS
         {
             int times = (NUMRARE / GRANRARE) + RARELOOK;
@@ -142,7 +150,7 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
 
 #if EARLYCYCLES > 0
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif 
             times = (NUMFREQ / GRANFREQ) + FREQLOOK;
             REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANFREQ, 
@@ -154,27 +162,29 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
             int newRareMin = nextRare[0];
 
 #if EARLYCYCLES > 0
-            COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif
 
-            int times = (NUMFREQ / GRANFREQ) + FREQLOOK;
-            REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANFREQ, 
-                             GRANFREQ, freq, nextFreq, newRareMin);
+            //            int times = (NUMFREQ / GRANFREQ) + FREQLOOK;
+#define TIMES REPEAT_ADD(NUMFREQ, FREQLOOK)
+            REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANFREQ, GRANFREQ, 
+                          GRANFREQ, freq, nextFreq, newRareMin);
+#undef TIMES
         } else {
             nextFreq = freq + NUMFREQ * VECLEN;
             int newFreqMin = nextFreq[0];
 
 #if EARLYCYCLES > 0
-            COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif
 
-            int times = (NUMRARE / GRANRARE) + RARELOOK;
-            REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANRARE, 
-                             GRANRARE, rare, nextRare, newFreqMin);
+            //            int times = (NUMRARE / GRANRARE) + RARELOOK;
+#define TIMES REPEAT_ADD(NUMFREQ, FREQLOOK)
+            REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANRARE, GRANRARE, 
+                          GRANRARE, rare, nextRare, newFreqMin);
+#undef TIMES
         }
 #endif // end not BRANCHLESS
 
@@ -188,13 +198,13 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
         }
 
 #if EARLYCYCLES > 0
-        // CHECK_OUTER(EARLYCYCLES) ... CHECK_OUTER(NUMFREQ-1)
-        // calls CHECK_INNER(0 .. NUMRARE-1) for each
-        REPEAT_ADDING_ONE(CHECK_OUTER, NUMFREQ - EARLYCYCLES, EARLYCYCLES);
+        // CHECK_OUTER(EARLYCYCLES) ... CHECK_OUTER(NUMRARE-1)
+        // calls CHECK_INNER(0 .. NUMFREQ-1) for each
+        REPEAT_ADD_ONE(CHECK_OUTER, NUMRARE - EARLYCYCLES, EARLYCYCLES);
 #else
-        // CHECK_OUTER(0) ... CHECK_OUTER(NUMFREQ-1)
-        // calls CHECK_INNER(0 .. NUMRARE-1) for each
-        REPEAT_ADDING_ONE(CHECK_OUTER, NUMFREQ, 0);
+        // CHECK_OUTER(0) ... CHECK_OUTER(NUMRARE-1)
+        // calls CHECK_INNER(0 .. FREQ-1) for each
+        REPEAT_ADD_ONE(CHECK_OUTER, NUMRARE, 0);
 #endif
 
         freq = nextFreq;
