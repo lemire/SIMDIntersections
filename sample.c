@@ -4,7 +4,7 @@
     _REPEAT_ ## times(macro, start_n, next_func, next_arg, ## macro_args)
 
 #define REPEAT_ADD_ONE(macro, times, start_n, macro_args... )                    \
-    REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args)
+    EXPAND(REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args))
 
 #define _REPEAT_ADD_ONE(n, ignore...) _REPEAT_ADD_ONE_ ## n
 
@@ -49,6 +49,8 @@
 #define REPEAT_EXPAND(args...) args
 
 #define REPEAT_ADD_ONE_INNER REPEAT_DEFER(_REPEAT_ADD_ONE_INNER)
+#define _REPEAT_ADD_ONE_INNER(args...) REPEAT(args)
+//    REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args)
 #define _REPEAT_ADD_ONE_INNER(args...) REPEAT_ADD_ONE(args)
 
 #define REPEAT_ADD_ONE_INNER2 REPEAT_DEFER(_REPEAT_ADD_ONE_INNER2)
