@@ -45,9 +45,8 @@
 #define _REPEAT_EXPAND(args...) args
 #define REPEAT_EXPAND(args...) _REPEAT_EXPAND(_REPEAT_EXPAND(_REPEAT_EXPAND(args)))
 
-
-#define REPEAT_EMPTY()
-#define REPEAT_DEFER(token) token REPEAT_EMPTY()
+#define _REPEAT_EMPTY()
+#define REPEAT_DEFER(token) token _REPEAT_EMPTY()
 
 #define REPEAT_ADD_ONE_X REPEAT_DEFER(_REPEAT_ADD_ONE_X)
 #define _REPEAT_ADD_ONE_X(args...) REPEAT_ADD_ONE(args)
