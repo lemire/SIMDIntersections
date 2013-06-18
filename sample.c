@@ -1,10 +1,8 @@
-#define EXPAND(args...) args
-
 #define REPEAT(macro, times, start_n, next_func, next_arg, macro_args...) \
     _REPEAT_ ## times(macro, start_n, next_func, next_arg, ## macro_args)
 
-#define REPEAT_ADD_ONE(macro, times, start_n, macro_args... )                    \
-    EXPAND(REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args))
+#define REPEAT_ADD_ONE(macro, times, start_n, macro_args... )           \
+    REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args)
 
 #define _REPEAT_ADD_ONE(n, ignore...) _REPEAT_ADD_ONE_ ## n
 
@@ -44,23 +42,24 @@
 #define _REPEAT_ADD_9(x) _REPEAT_ADD_8(_REPEAT_ADD_ONE(x))
 #define _REPEAT_ADD_10(x) _REPEAT_ADD_9(_REPEAT_ADD_ONE(x))
 
+#define _REPEAT_EXPAND(args...) args
+#define REPEAT_EXPAND(args...) _REPEAT_EXPAND(_REPEAT_EXPAND(_REPEAT_EXPAND(args)))
+
+
 #define REPEAT_EMPTY()
 #define REPEAT_DEFER(token) token REPEAT_EMPTY()
-#define REPEAT_EXPAND(args...) args
 
-#define REPEAT_ADD_ONE_INNER REPEAT_DEFER(_REPEAT_ADD_ONE_INNER)
-#define _REPEAT_ADD_ONE_INNER(args...) REPEAT(args)
-//    REPEAT(macro, times, start_n, _REPEAT_ADD_ONE, 0, ## macro_args)
-#define _REPEAT_ADD_ONE_INNER(args...) REPEAT_ADD_ONE(args)
+#define REPEAT_ADD_ONE_X REPEAT_DEFER(_REPEAT_ADD_ONE_X)
+#define _REPEAT_ADD_ONE_X(args...) REPEAT_ADD_ONE(args)
 
-#define REPEAT_ADD_ONE_INNER2 REPEAT_DEFER(_REPEAT_ADD_ONE_INNER2)
-#define _REPEAT_ADD_ONE_INNER2(args...) REPEAT_ADD_ONE(args)
+#define REPEAT_ADD_ONE_XX REPEAT_DEFER(_REPEAT_ADD_ONE_XX)
+#define _REPEAT_ADD_ONE_XX(args...) REPEAT_ADD_ONE(args)
 
-#define INNER(i, j, k) if (i == j == k) printf("Match\n")
-#define INNER_MACRO(inner, outer) REPEAT_ADD_ONE_INNER2(INNER, 2, 2, inner, outer)
-#define OUTER_MACRO(outer) REPEAT_ADD_ONE_INNER(INNER_MACRO, 3, 0, outer)
+#define INNER(k, j, i) if (i == j == k) printf("Match\n")
+#define MIDDLE(j, i) REPEAT_ADD_ONE_XX(INNER, 2, 2, j, i)
+#define OUTER(i) REPEAT_ADD_ONE_X(MIDDLE, 3, 0, i)
 void working() {
-    REPEAT_EXPAND(REPEAT_EXPAND(REPEAT_ADD_ONE(OUTER_MACRO, 2, 1)));
+    REPEAT_EXPAND(REPEAT_ADD_ONE(OUTER, 2, 1));
 }
 
 
