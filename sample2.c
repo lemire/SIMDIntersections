@@ -1,14 +1,15 @@
 #ifndef _REPEAT_H
 #define _REPEAT_H
 
-// Usage: REPEAT_EXPAND(REPEAT_ADD_ONE(macro, times, start_n, macro_args... ))
-//        Recursion allowed.  Only outermost level should use REPEAT_EXPAND.
+// Usage: REPEAT_ADD_ONE(macro, times, start_n, macro_args... )
+//        Recursion allowed if inner macros use REPEAT_ADD_ONE_INNER().
 //        This demo header only allows 3 layers of recursion and max n=10.
 //        Sample code at bottom.
 
-#define REPEAT_EXPAND(args...) _REPEAT_EXPAND_3(args)
-
 #define REPEAT_ADD_ONE(macro, times, start_n, macro_args... )           \
+    _REPEAT_EXPAND_3(REPEAT_ADD_ONE_INNER(macro, times, start_n, ## macro_args))
+
+#define REPEAT_ADD_ONE_INNER(macro, times, start_n, macro_args... )     \
     _REPEAT_ ## times(macro, start_n, _REPEAT_ADD_ONE, ## macro_args)
 
 #define _REPEAT_0(args...)  /* empty */
@@ -56,16 +57,16 @@ int printf(const char *format, ...);
 
 #define BODY(i) printf("%d\n", i);
 void simple(void) {
-    REPEAT_EXPAND(REPEAT_ADD_ONE(BODY, 5, 1));
+    REPEAT_ADD_ONE(BODY, 5, 1);
 }
 
 #define INNER(k, j, i) \
     printf("(%d, %d, %d)\n", i, j, k);          \
     if (i == j && j == k) printf("Match!\n")
-#define MIDDLE(j, i) REPEAT_ADD_ONE(INNER, 2, 2, j, i)
-#define OUTER(i) REPEAT_ADD_ONE(MIDDLE, 3, 0, i)
+#define MIDDLE(j, i) REPEAT_ADD_ONE_INNER(INNER, 2, 2, j, i)
+#define OUTER(i) REPEAT_ADD_ONE_INNER(MIDDLE, 3, 0, i)
 void recursive(void) {
-    REPEAT_EXPAND(REPEAT_ADD_ONE(OUTER, 2, 1));
+    REPEAT_ADD_ONE(OUTER, 2, 1);
 }
 
 int main() {
