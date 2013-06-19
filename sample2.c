@@ -39,6 +39,59 @@
 #define _REPEAT_ADD_ONE_10 11
 // ...
 
+#define REPEAT_DIV(number, divisor) _REPEAT_EXPAND(_REPEAT_DIV_ ## divisor(number))
+#define _REPEAT_DIV_1(n) n
+#define _REPEAT_DIV_2(n) _REPEAT_DIV_2_ ## n
+#define _REPEAT_DIV_2_2 1
+#define _REPEAT_DIV_2_4 2
+#define _REPEAT_DIV_2_6 3
+#define _REPEAT_DIV_2_8 4
+#define _REPEAT_DIV_2_10 5
+#define _REPEAT_DIV_2_12 6
+#define _REPEAT_DIV_2_14 7
+#define _REPEAT_DIV_2_16 8
+#define _REPEAT_DIV_2_18 9
+#define _REPEAT_DIV_2_20 10
+#define _REPEAT_DIV_2_22 11
+#define _REPEAT_DIV_2_24 12
+#define _REPEAT_DIV_2_26 13
+#define _REPEAT_DIV_2_28 14
+#define _REPEAT_DIV_2_30 15
+#define _REPEAT_DIV_2_32 16
+#define _REPEAT_DIV_3(n) _REPEAT_DIV_3_ ## n
+#define _REPEAT_DIV_3_3 1
+#define _REPEAT_DIV_3_6 2
+#define _REPEAT_DIV_3_9 3
+#define _REPEAT_DIV_3_12 4
+#define _REPEAT_DIV_3_15 5
+#define _REPEAT_DIV_3_18 6
+#define _REPEAT_DIV_3_21 7
+#define _REPEAT_DIV_3_24 8
+#define _REPEAT_DIV_3_27 9
+#define _REPEAT_DIV_3_30 10
+#define _REPEAT_DIV_4(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_2(n))
+#define _REPEAT_DIV_5(n) _REPEAT_DIV_5_ ## n
+#define _REPEAT_DIV_5_5 1
+#define _REPEAT_DIV_5_10 2
+#define _REPEAT_DIV_5_15 3
+#define _REPEAT_DIV_5_20 4
+#define _REPEAT_DIV_5_25 5
+#define _REPEAT_DIV_5_30 6
+#define _REPEAT_DIV_6(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_3(n))
+#define _REPEAT_DIV_7(n) _REPEAT_DIV_7_ ## n
+#define _REPEAT_DIV_7_7 1
+#define _REPEAT_DIV_7_14 2
+#define _REPEAT_DIV_7_21 3
+#define _REPEAT_DIV_7_28 4
+#define _REPEAT_DIV_8(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_4(n))
+#define _REPEAT_DIV_9(n) _REPEAT_DIV_9_ ## n
+#define _REPEAT_DIV_9_9 1
+#define _REPEAT_DIV_9_18 2
+#define _REPEAT_DIV_9_27 3
+#define _REPEAT_DIV_10(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_5(n))
+
+
+
 #define _REPEAT_EMPTY()
 #define _REPEAT_DEFER(token) token _REPEAT_EMPTY()
 
@@ -52,6 +105,12 @@
 // to generate code:   cpp -DSAMPLE_CODE sample.c 
 // or easier to read:  cpp -DSAMPLE_CODE sample.c > out.c; astyle out.c; less out.c
 // to compile and run: gcc  -Wall -O3 -DSAMPLE_CODE sample.c -o sample
+
+int a = REPEAT_DIV(8, 2);
+int b = REPEAT_DIV(16, 4);
+int c = REPEAT_DIV(18, 6);
+int d = REPEAT_DIV(24, 3);
+int e = REPEAT_DIV(10, 10);
 
 int printf(const char *format, ...);
 
