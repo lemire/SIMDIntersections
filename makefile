@@ -34,4 +34,5 @@ getmatrix: $(HEADERS) src/getmatrix.cpp
 	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  
 
 clean: 
-	rm -f *.o testintersection realintersection
+	rm -f *.o testintersection realintersection getmatrix
+
