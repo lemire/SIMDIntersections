@@ -89,8 +89,18 @@
 #define _REPEAT_DIV_9_18 2
 #define _REPEAT_DIV_9_27 3
 #define _REPEAT_DIV_10(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_5(n))
-
-
+#define _REPEAT_DIV_11(n) _REPEAT_DIV_11_ ## n
+#define _REPEAT_DIV_11_11 1
+#define _REPEAT_DIV_11_22 2
+#define _REPEAT_DIV_12(n) _REPEAT_DEFER(_REPEAT_DIV_3)(_REPEAT_DIV_6(n))
+#define _REPEAT_DIV_13(n) _REPEAT_DIV_13_ ## n
+#define _REPEAT_DIV_13_13 1
+#define _REPEAT_DIV_13_26 2
+#define _REPEAT_DIV_14(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_7(n))
+#define _REPEAT_DIV_15(n) _REPEAT_DIV_15_ ## n
+#define _REPEAT_DIV_15_15 1
+#define _REPEAT_DIV_15_30 2
+#define _REPEAT_DIV_16(n) _REPEAT_DEFER(_REPEAT_DIV_2)(_REPEAT_DIV_8(n))
 
 #define _REPEAT_EMPTY()
 #define _REPEAT_DEFER(token) token _REPEAT_EMPTY()
