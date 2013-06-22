@@ -1,15 +1,17 @@
-// FIXME: add defined macro requirements
 // NOTE: cpp options: -C keeps comments, -CC keeps macro comments
 //       -P to inhibit line numbering, -dX might be useful
 //       -fdirectives-only to skip macro expansion
 
-COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
+// COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
 
-#include "repeat.h"
+#include "macro.h"
 
 // PROFILE: check that static 'if' clauses are optimized out        
-#define CHECK_INNER_VECLEN CHECK_INNER_VECLEN_ ## VECLEN
-#define CHECK_INNER(freqnum, rarenum)                   \
+
+#define _CHECK_INNER_VECLEN(veclen) CHECK_INNER_VECLEN_ ## veclen
+#define CHECK_INNER_VECLEN(veclen) _CHECK_INNER_VECLEN(veclen)
+
+#define CHECK_INNER(freqnum, rarenum) {                 \
     Freq = NextFreq;                                    \
     if (freqnum + 1 < NUMFREQ) {                        \
         VLOAD(NextFreq, freq, freqnum + 1);             \
@@ -18,10 +20,10 @@ COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
     } else if (! lastPass) {                            \
         VLOAD(NextFreq, nextFreq, 0);                   \
     }                                                   \
-    CHECK_INNER_VECLEN();                               
+    CHECK_INNER_VECLEN(VECLEN)                          \
+    }
 
-
-#define CHECK_INNER_VECLEN_4()                  \
+#define CHECK_INNER_VECLEN_4                    \
     VSHUF(F0, Freq, 0);                         \
                                                 \
     VSHUF(F1, Freq, 1);                         \
@@ -38,11 +40,24 @@ COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
     VMATCH(F3, Rare);                           \
     VOR(Match, F2);                             \
                                                 \
-    VOR(Match, F3);                                   
+    VOR(Match, F3)                                   
 
-#define CHECK_INNER_VECLEN_8()                  \
-    CHECK_INNER_VECLEN_4();                     \
-    CHECK_INNER_VECLEN_4();                      
+#define CHECK_INNER_VECLEN_8                    \
+    CHECK_INNER_VECLEN_4;                       \
+    CHECK_INNER_VECLEN_4                      
+
+#define CHECK_OUTER(rarenum) {                                          \
+        Rare = NextRare;                                                \
+    if (rarenum + 1 < NUMRARE) {                                        \
+        VLOAD(NextRare, rare, rarenum + 1);                             \
+    } else if (! lastPass) {                                            \
+        VLOAD(NextRare, nextRare, 0);                                   \
+    }                                                                   \
+    VZERO(Match);                                                       \
+    MACRO_REPEAT_ADD_ONE_INNER(CHECK_INNER, NUMFREQ, 0, rarenum);       \
+    int bits = _mm_movemask_ps((VECFLOAT) Match);                       \
+    HANDLE_RARE_MATCH(Match, rarenum)                                   \
+    }
 
 // PROFILE: compare kShuffleCount[] to popcnt()
 #ifdef JUSTCOUNT
@@ -50,25 +65,11 @@ COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
     count += kShuffleCount[bits]
 #else // WRITE
 #define HANDLE_RARE_MATCH(Match, rarenum)                               \
-    VSHUF(Rare, kShuffleMatch[bits]); // reorder so matches first       \
-    VSTORE(match, Rare); // store both matches and non-matches          \
-    match += kShuffleCount[bits];  // non-matches will be overwritten
+    VSHUF(Rare, kShuffleMatch[bits]);                                   \
+    VSTORE(match, Rare);                                                \
+    match += kShuffleCount[bits];  
 #endif
 // FUTURE: optimize for two at a time with BLEND instead of SHUF?
-
-#define CHECK_OUTER(rarenum)                                    \
-    Rare = NextRare;                                            \
-    if (rarenum + 1 < NUMRARE) {                                \
-        VLOAD(NextRare, rare, rarenum + 1);                     \
-    } else if (! lastPass) {                                    \
-        VLOAD(NextRare, nextRare, 0);                           \
-    }                                                           \
-    VZERO(Match);                                               \
-    REPEAT_ADD_ONE(CHECK_INNER, NUMFREQ, 0, rarenum);           \
-    int bits = _mm_movemask_ps((VECFLOAT) Match);               \
-    HANDLE_RARE_MATCH(Match, rarenum)
-
-// FIXME: need to re-expand REPEAT_ADD_ONE() above
 
 // PROFILE: Compare ADVANCE_BEYOND_NEWMIN and ADVANCE_BEYOND_OLDMAX?
 #define ADVANCE_BEYOND_NEWMIN(num, granularity, array, next, newMin) {  \
@@ -88,15 +89,17 @@ COMPILER_ASSERT(EARLYCYCLES < NUMFREQ);
         next += advance;                                                \
     }
 
-#define FUNC(name) name ## _R ## NUMRARE ## _F ## NUMFREQ
+
+#define _FUNC(name, numrare, numfreq) name ## _R ## numrare ## _F ## numfreq 
+#define FUNC(name, numrare, numfreq) _FUNC(name, numrare, numfreq)
 
 #ifdef JUSTCOUNT
-size_t FUNC(count_vector)(const uint32_t *freq, size_t lenFreq,
-                          const uint32_t *rare, size_t lenRare)  {
+size_t FUNC(count_vector, NUMRARE, NUMFREQ)(const uint32_t *freq, size_t lenFreq,
+                                            const uint32_t *rare, size_t lenRare)  {
 #else // WRITE
-size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
-                          const uint32_t *rare, size_t lenRare,
-                          uint32_t *matchOut)  {
+size_t FUNC(match_vector, NUMRARE, NUMFREQ)(const uint32_t *freq, size_t lenFreq,
+                                            const uint32_t *rare, size_t lenRare,
+                                            uint32_t *matchOut)  {
     const uint32_t *matchOrig = matchOut;
 #endif
     
@@ -143,18 +146,20 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
 
 #if BRANCHLESS
         {
-            int times = (NUMRARE / GRANRARE) + RARELOOK;
-            REPEAT_INCREMENT(ADVANCE_BEYOND_OLDMAX, times, GRANRARE, 
-                             GRANRARE, rare, nextRare, maxFreq);
+#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), RARELOOK)
+            MACRO_REPEAT_ADDING(ADVANCE_BEYOND_OLDMAX, TIMES, GRANRARE, 
+                                GRANRARE, rare, nextRare, maxFreq);
+#undef TIMES
             int newRareMin = nextRare[0];
 
 #if EARLYCYCLES > 0
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif 
-            times = (NUMFREQ / GRANFREQ) + FREQLOOK;
-            REPEAT_INCREMENT(ADVANCE_BEYOND_NEWMIN, times, GRANFREQ, 
-                             GRANFREQ, freq, nextFreq, newRareMin);
+#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), FREQLOOK)
+            MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, times, GRANFREQ, 
+                                GRANFREQ, freq, nextFreq, newRareMin);
+#undef TIMES
         }
 #else // if not BRANCHLESS
         if (expected(maxFreq >= maxRare)) {  
@@ -163,13 +168,12 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
 
 #if EARLYCYCLES > 0
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif
 
-            //            int times = (NUMFREQ / GRANFREQ) + FREQLOOK;
-#define TIMES REPEAT_ADD(NUMFREQ, FREQLOOK)
-            REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANFREQ, GRANFREQ, 
-                          GRANFREQ, freq, nextFreq, newRareMin);
+#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), FREQLOOK)
+            MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANFREQ, GRANFREQ, 
+                                GRANFREQ, freq, nextFreq, newRareMin);
 #undef TIMES
         } else {
             nextFreq = freq + NUMFREQ * VECLEN;
@@ -177,13 +181,12 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
 
 #if EARLYCYCLES > 0
             // CHECK_OUTER(0) ... CHECK_OUTER(EARLYCYCLES-1)
-            REPEAT_ADD_ONE(CHECK_OUTER, EARLYCYCLES, 0);
+            MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCYCLES, 0);
 #endif
 
-            //            int times = (NUMRARE / GRANRARE) + RARELOOK;
-#define TIMES REPEAT_ADD(NUMFREQ, FREQLOOK)
-            REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANRARE, GRANRARE, 
-                          GRANRARE, rare, nextRare, newFreqMin);
+#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), RARELOOK)
+            MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANRARE, GRANRARE, 
+                                GRANRARE, rare, nextRare, newFreqMin);
 #undef TIMES
         }
 #endif // end not BRANCHLESS
@@ -200,11 +203,13 @@ size_t FUNC(match_vector)(const uint32_t *freq, size_t lenFreq,
 #if EARLYCYCLES > 0
         // CHECK_OUTER(EARLYCYCLES) ... CHECK_OUTER(NUMRARE-1)
         // calls CHECK_INNER(0 .. NUMFREQ-1) for each
-        REPEAT_ADD_ONE(CHECK_OUTER, NUMRARE - EARLYCYCLES, EARLYCYCLES);
+#define TIMES MACRO_SUB(NUMRARE, EARLYCYCLES)
+        MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, TIMES, EARLYCYCLES);
+#undef TIMES
 #else
         // CHECK_OUTER(0) ... CHECK_OUTER(NUMRARE-1)
         // calls CHECK_INNER(0 .. FREQ-1) for each
-        REPEAT_ADD_ONE(CHECK_OUTER, NUMRARE, 0);
+        MACRO_REPEAT_ADDDING_ONE(CHECK_OUTER, NUMRARE, 0);
 #endif
 
         freq = nextFreq;
