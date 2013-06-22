@@ -3,9 +3,9 @@
 #define MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args...) \
     _MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args)
 
-#define MACRO_REPEAT_ADD_ONE(macro, times, start_n, macro_args... )           \
+#define MACRO_REPEAT_ADDING_ONE(macro, times, start_n, macro_args... )           \
     MACRO_REPEAT(macro, times, start_n, _MACRO_ADD_ONE, 0, ## macro_args)
-#define MACRO_REPEAT_ADD_ONE_INNER(macro, times, start_n, macro_args... )     \
+#define MACRO_REPEAT_ADDING_ONE_INNER(macro, times, start_n, macro_args... )     \
     MACRO_REPEAT_INNER(macro, times, start_n, _MACRO_ADD_ONE, 0, ## macro_args)
 
 #define MACRO_REPEAT_ADDING(macro, times, start_n, increment, macro_args...)  \
@@ -347,15 +347,15 @@ int printf(const char *format, ...);
 
 #define PRINTD(x) printf("%d\n", x)
 void simple_add_one() {
-    MACRO_REPEAT_ADD_ONE(PRINTD, 16, 1);
+    MACRO_REPEAT_ADDING_ONE(PRINTD, 16, 1);
 }
 
 #define NUMOUTER 2
 #define NUMINNER 3
 #define INNER(freqnum, rarenum) printf("(%d, %d)\n", freqnum, rarenum)
-#define OUTER(n) MACRO_REPEAT_ADD_ONE_INNER(INNER, NUMINNER, 1, n)
+#define OUTER(n) MACRO_REPEAT_ADDING_ONE_INNER(INNER, NUMINNER, 1, n)
 void recursive_add_one(void) {
-    MACRO_REPEAT_ADD_ONE(OUTER, NUMOUTER, 0);
+    MACRO_REPEAT_ADDING_ONE(OUTER, NUMOUTER, 0);
 }
 
 #define NO_ARGS() printf("noargs\n")
@@ -379,7 +379,7 @@ void block() {
 
 #define DECLARE(x, base) int base ## x = x
 void declare() {
-    MACRO_REPEAT_ADD_ONE(DECLARE, 3, 0, var);
+    MACRO_REPEAT_ADDING_ONE(DECLARE, 3, 0, var);
     printf("sum: %d\n", var0 + var1 + var2);
 }
 
