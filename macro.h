@@ -1,29 +1,23 @@
-#define MACRO_REPEAT(macro, times, start_n, next_func, next_arg, macro_args...) \
-    _MACRO_EXPAND(_MACRO_ ## times(macro, start_n, next_func, next_arg, ## macro_args))
-#define MACRO_REPEAT_INNER(macro, times, start_n, next_func, next_arg, macro_args...) \
-    _MACRO_ ## times(macro, start_n, next_func, next_arg, ## macro_args)
+#define MACRO_REPEAT(macro, times, start_n, func_next, func_arg, macro_args...) \
+    _MACRO_EXPAND(_MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args))
+#define MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args...) \
+    _MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args)
 
 #define MACRO_REPEAT_ADD_ONE(macro, times, start_n, macro_args... )           \
     MACRO_REPEAT(macro, times, start_n, _MACRO_ADD_ONE, 0, ## macro_args)
 #define MACRO_REPEAT_ADD_ONE_INNER(macro, times, start_n, macro_args... )     \
     MACRO_REPEAT_INNER(macro, times, start_n, _MACRO_ADD_ONE, 0, ## macro_args)
 
-
 #define MACRO_REPEAT_ADDING(macro, times, start_n, increment, macro_args...)  \
     MACRO_REPEAT(macro, times, start_n, _MACRO_ADD, increment, ## macro_args)
+#define MACRO_REPEAT_ADDING_INNER(macro, times, start_n, increment, macro_args...)  \
+    MACRO_REPEAT_INNER(macro, times, start_n, _MACRO_ADD, increment, ## macro_args)
 
 #define MACRO_REPEAT_SAME_ARGS(macro, times, first_macro_arg, other_macro_args...) \
     MACRO_REPEAT(macro, times, first_macro_arg, _MACRO_UNCHANGED, 0, ## other_macro_args)
 
-#define MACRO_REPEAT_SAME_ARG(macro, times, first_macro_arg)          \
-    MACRO_REPEAT(macro, times, first_macro_arg, _MACRO_UNCHANGED, 0)
-
-
 #define MACRO_REPEAT_NO_ARGS(macro, times)            \
     MACRO_REPEAT(macro, times,, _MACRO_UNCHANGED, 0)
-#define MACRO_REPEAT_NO_ARGS_INNER(macro, times)      \
-    MACRO_REPEAT_INNER(macro, times,, _MACRO_UNCHANGED, 0)
-
 
 #define MACRO_REPEAT_BLOCK(block, times)              \
     MACRO_REPEAT(do block while, times, 0, _MACRO_UNCHANGED, 0)
@@ -31,8 +25,8 @@
 #define MACRO_REPEAT_APPEND_LITERAL(macro, times, initial, literal)           \
     MACRO_REPEAT(macro, times, initial, _MACRO_APPEND_LITERAL, literal)
 
-#define MACRO_REPEAT_CYCLE(macro, times, start_n, cycle_len, macro_args... )   \
-    MACRO_REPEAT(macro, times, start_n, _MACRO_CYCLE ## cycle_len ## _NEXT, 0, ## macro_args)
+#define MACRO_REPEAT_CYCLE(macro, times, start_n, cycle, macro_args... )   \
+    MACRO_REPEAT(macro, times, start_n, _MACRO_CYCLE ## cycle ## _NEXT, 0, ## macro_args)
 
 #define MACRO_ADD(x, y) _MACRO_ADD(x, y)
 #define MACRO_SUB(large, small) _MACRO_SUB_ ## small(large)
