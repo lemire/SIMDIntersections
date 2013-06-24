@@ -68,6 +68,10 @@
 #define _REPEAT_MUL_1(n) n
 #define _REPEAT_MUL_2(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(n)
 #define _REPEAT_MUL_3(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(_REPEAT_MUL_2(n))
+#define _REPEAT_MUL_4(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(_REPEAT_MUL_3(n))
+#define _REPEAT_MUL_5(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(_REPEAT_MUL_4(n))
+#define _REPEAT_MUL_6(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(_REPEAT_MUL_5(n))
+#define _REPEAT_MUL_7(n) _REPEAT_DEFER(_REPEAT_ADD_ ## n)(_REPEAT_MUL_6(n))
 
 #ifdef TEST_MUL
 REPEAT_MUL(0, 5);
