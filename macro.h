@@ -1,6 +1,8 @@
 #define MACRO_REPEAT(macro, times, start_n, func_next, func_arg, macro_args...) \
     _MACRO_EXPAND(_MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args))
 #define MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args...) \
+    _MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args)
+#define _MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args...) \
     _MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args)
 
 #define MACRO_REPEAT_ADDING_ONE(macro, times, start_n, macro_args... )           \
@@ -29,17 +31,20 @@
     MACRO_REPEAT(macro, times, start_n, _MACRO_CYCLE ## cycle ## _NEXT, 0, ## macro_args)
 
 #define MACRO_ADD(x, y) _MACRO_ADD(x, y)
-#define MACRO_SUB(large, small) _MACRO_SUB_ ## small(large)
+#define MACRO_SUB(large, small) _MACRO_SUB(large, small)
 #define MACRO_MUL(x, y)  _MACRO_MUL(x, y)
-#define MACRO_DIV(number, divisor) _MACRO_DIV(number, divisor)
 
+#define MACRO_DIV(number, divisor) _MACRO_EXPAND(_MACRO_DIV(number, divisor))
+#define MACRO_DIV_INNER(number, divisor) _MACRO_DIV(number, divisor)
+
+// FUTURE: need MACRO_MUL_INNER also?
 
 // INTERNALS
 
 #define _MACRO_EMPTY()
 #define _MACRO_DEFER(token) token _MACRO_EMPTY()
 
-#define _MACRO_EXPAND(args...) _MACRO_EXPAND_9(args)
+#define _MACRO_EXPAND(args...) _MACRO_EXPAND_9(_MACRO_EXPAND_9(_MACRO_EXPAND_9(args)))
 #define _MACRO_EXPAND_9(args...) _MACRO_EXPAND_3(_MACRO_EXPAND_3(_MACRO_EXPAND_3(args)))
 #define _MACRO_EXPAND_3(args...) _MACRO_EXPAND_1(_MACRO_EXPAND_1(_MACRO_EXPAND_1(args)))
 #define _MACRO_EXPAND_1(args...) args
@@ -187,6 +192,7 @@
 #define _MACRO_SUB_ONE_31 30
 #define _MACRO_SUB_ONE_32 31
 
+#define _MACRO_SUB(large, small) _MACRO_SUB_ ## small(large)
 #define _MACRO_SUB_0(x) x
 #define _MACRO_SUB_1(x) _MACRO_SUB_ONE(x)
 #define _MACRO_SUB_2(x) _MACRO_SUB_1(_MACRO_SUB_ONE(x))
@@ -257,7 +263,8 @@
 #define _MACRO_MUL_31(n) _MACRO_DEFER(_MACRO_ADD_ ## n)(_MACRO_MUL_30(n))
 #define _MACRO_MUL_32(n) _MACRO_DEFER(_MACRO_ADD_ ## n)(_MACRO_MUL_31(n))
 
-#define _MACRO_DIV(number, divisor) _MACRO_EXPAND(_MACRO_DIV_ ## divisor(number))
+#define _MACRO_DIV(number, divisor) __MACRO_DIV(number, divisor)
+#define __MACRO_DIV(number, divisor) _MACRO_DIV_ ## divisor(number)
 #define _MACRO_DIV_0(n) MACRO_DIV_ZERO_ERROR ## !
 #define _MACRO_DIV_1(n) n
 #define _MACRO_DIV_2(n) _MACRO_DIV_2_ ## n
