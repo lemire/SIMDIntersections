@@ -18,23 +18,29 @@
 
 // VECLEN: 4 for XMM SSE3; 8 for YMM AVX2
 COMPILER_ASSERT(VECLEN == 4 || VECLEN == 8);
-COMPILER_ASSERT(VEC_INT_T);
+// COMPILER_ASSERT(VEC_INT_T); // FUTURE: how to check?
 
 // NUMFREQ: number of ints from the "frequent" (longer) source
 COMPILER_ASSERT(NUMFREQ >= 4);
 COMPILER_ASSERT(MACRO_DIV(NUMFREQ, VECLEN) > 0);
 
-// GRANFREQ: granularity in ints of checks to advance 'freq'
-COMPILER_ASSERT(GRANFREQ > 0);
-COMPILER_ASSERT(MACRO_DIV(NUMFREQ, GRANFREQ) > 0));
-
 // NUMRARE: number of ints from the "rare" (shorter) source
 COMPILER_ASSERT(NUMRARE >= 4);
 COMPILER_ASSERT(MACRO_DIV(NUMRARE, VECLEN) > 0);
 
+// GRANFREQ: granularity in ints of checks to advance 'freq'
+COMPILER_ASSERT(GRANFREQ > 0);
+COMPILER_ASSERT(MACRO_DIV(NUMFREQ, GRANFREQ) > 0));
+
 // GRANRARE: granularity in ints of checks to advance 'rare'
 COMPILER_ASSERT(GRANRARE > 0);
 COMPILER_ASSERT(MACRO_DIV(NUMRARE, GRANRARE) > 0));
+
+// PEEKFREQ: number of extra GRANFREQ to try to skip in 'freq'
+COMPILER_ASSERT(PEEKFREQ + 1);
+
+// PEEKRARE: number of extra GRANRARE to try to skip in 'rare'
+COMPILER_ASSERT(PEEKRARE + 1);
 
 // EARLYCOMP: comparison cycles to perform "early" (before advancing second source)
 COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
@@ -43,8 +49,8 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
 #define _CHECK_INNER_VECLEN(veclen) CHECK_INNER_VECLEN_ ## veclen
 #define CHECK_INNER_VECLEN(veclen) _CHECK_INNER_VECLEN(veclen)
 
-#define CHECK_INNER(freqnum, rarenum) {                                 \
-        DEBUG_PRINT("CHECK_INNER " #freqnum " outer " #rarenum);        \
+#define CHECK_INNER(freqnum, rarenum)  {                                \
+    DEBUG_PRINT("CHECK_INNER " #freqnum " outer " #rarenum);            \
     Freq = NextFreq;                                                    \
     if (freqnum + 1 < MACRO_DIV_INNER(NUMFREQ, VECLEN)) {               \
         VEC_LOAD(NextFreq, freq, freqnum + 1);                          \
@@ -53,8 +59,8 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     } else if (! lastPass) {                                            \
         VEC_LOAD(NextFreq, nextFreq, 0);                                \
     }                                                                   \
-    CHECK_INNER_VECLEN(VECLEN)                                          \
-        }
+    CHECK_INNER_VECLEN(VECLEN);                                         \
+    }
 
 #define VEC_SHUF_ALL(index)                                 \
     (((index) << 6) | ((index) << 4) | ((index) << 2) | (index))
@@ -113,18 +119,14 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
 // PROFILE: Maybe always ADVANCE_BEYOND_OLDMAX instead of ADVANCE_BEYOND_NEWMIN?
 #define ADVANCE_BEYOND_NEWMIN(num, granularity, array, next, newMin) {  \
         int advance = 0;                                                \
-        if (newMin > array[num - 1]) {                                  \
-            advance = granularity;                                      \
-        }                                                               \
+        if (newMin > array[num - 1]) advance = granularity;             \
         next += advance;                                                \
     }
 
 // NOTE: newMin > array[num - 1] vs oldMax >= array[num - 1]
 #define ADVANCE_BEYOND_OLDMAX(num, granularity, array, next, oldMax) {  \
         int advance = 0;                                                \
-        if (oldMax >= array[num - 1]) {                                 \
-            advance = granularity;                                      \
-        }                                                               \
+        if (oldMax >= array[num - 1]) advance = granularity;            \
         next += advance;                                                \
     }
 
@@ -140,28 +142,25 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
 #define REVERSE()
 #endif
 
-#define FUNC(name, numrare, granrare, rarelook, numfreq, granfreq,      \
-             freqlook, earlycomp, veclen, branch, reversed)             \
-    _FUNC(name, numrare, granrare, rarelook, numfreq, granfreq,         \
-          freqlook, earlycomp, veclen, branch, reversed)    
-#define _FUNC(name, numrare, granrare, rarelook, numfreq, granfreq,     \
-              freqlook, earlycomp, veclen, branch, reversed)            \
-    name ## _R ## numrare ## G ## granrare ## L ## rarelook             \
-    ##  _F ## numfreq ## G ## granfreq ## L ## freqlook                 \
-    ##  _E ## earlycomp ## _V ## veclen ## branch ## reversed
+#define FUNC(args...) _FUNC(args)
+#define _FUNC(name, veclen, numrare, granrare, peekrare, numfreq, granfreq, \
+              peekfreq, earlycomp, branch, reversed)                    \
+    name ## V ## veclen ## _R ## numrare ## G ## granrare ## P         \
+        ## peekrare ##  _F ## numfreq ## G ## granfreq ## P ## peekfreq \
+        ##  _E ## earlycomp ## branch ## reversed
 
 
 #if JUSTCOUNT
-size_t FUNC(count_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
-            FREQLOOK, EARLYCOMP, VECLEN, BRANCH(), REVERSED())
+size_t FUNC(count, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
+            PEEKFREQ, EARLYCOMP, BRANCH(), REVERSED())
 #if REVERSED  // swap rare and freq
     (const uint32_t *rare, size_t lenRare, const uint32_t *freq, size_t lenFreq)  {
 #else
     (const uint32_t *freq, size_t lenFreq, const uint32_t *rare, size_t lenRare)  {
 #endif // REVERSED
 #else // WRITE
-size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
-                FREQLOOK, EARLYCOMP, VECLEN, BRANCH(), REVERSE())
+size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
+            PEEKFREQ, EARLYCOMP, BRANCH(), REVERSE())
 #if REVERSED
     (const uint32_t *rare, size_t lenRare, const uint32_t *freq, size_t lenFreq,  
      uint32_t matchOut)  {
@@ -181,8 +180,8 @@ size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
     const uint32_t *lastFreq = &rare[lenRare];
 
     // FUTURE: check that these limits are correct
-    const uint32_t *stopFreq = lastFreq - NUMFREQ - (FREQLOOK * GRANFREQ) - 1;
-    const uint32_t *stopRare = lastRare - NUMRARE - (RARELOOK * GRANRARE) - 1;
+    const uint32_t *stopFreq = lastFreq - NUMFREQ - (PEEKFREQ * GRANFREQ) - 1;
+    const uint32_t *stopRare = lastRare - NUMRARE - (PEEKRARE * GRANRARE) - 1;
     
     // use scalar if not enough room to load vectors
     if (rarely(freq >= stopFreq) || rare >= stopRare) {
@@ -215,10 +214,10 @@ size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
 
 #if BRANCHLESS
         {
-#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), RARELOOK)
+#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), PEEKRARE)
             MACRO_REPEAT_ADDING(ADVANCE_BEYOND_OLDMAX, TIMES, GRANRARE, GRANRARE,
                                 GRANRARE, rare, nextRare, maxFreq);
-#undef TIMES // NUMRARE/GRANRARE + RARELOOK
+#undef TIMES // NUMRARE/GRANRARE + PEEKRARE
             int newRareMin = nextRare[0];
 
 #if EARLYCOMP > 0
@@ -226,10 +225,10 @@ size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
             MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCOMP, 0);
 #endif // EARLYCOMP
 
-#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), FREQLOOK)
+#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), PEEKFREQ)
             MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANFREQ, GRANFREQ,
                                 GRANFREQ, freq, nextFreq, newRareMin);
-#undef TIMES // NUMFREQ/GRANFREQ + FREQLOOK
+#undef TIMES // NUMFREQ/GRANFREQ + PEEKFREQ
         }
 #else // if not BRANCHLESS
         if (expected(maxFreq >= maxRare)) {  
@@ -241,10 +240,10 @@ size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
             MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCOMP, 0);
 #endif // EARLYCOMP
 
-#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), FREQLOOK) 
+#define TIMES MACRO_ADD(MACRO_DIV(NUMFREQ, GRANFREQ), PEEKFREQ) 
             MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANFREQ, GRANFREQ, 
                                 GRANFREQ, freq, nextFreq, newRareMin);
-#undef TIMES // NUMFREQ/GRANFREQ + FREQLOOK
+#undef TIMES // NUMFREQ/GRANFREQ + PEEKFREQ
         } else {
             nextFreq = freq + NUMFREQ;
             int newFreqMin = nextFreq[0];
@@ -254,10 +253,10 @@ size_t FUNC(match_vector, NUMRARE, GRANRARE, RARELOOK, NUMFREQ, GRANFREQ, \
             MACRO_REPEAT_ADDING_ONE(CHECK_OUTER, EARLYCOMP, 0);
 #endif
 
-#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), RARELOOK)
+#define TIMES MACRO_ADD(MACRO_DIV(NUMRARE, GRANRARE), PEEKRARE)
             MACRO_REPEAT_ADDING(ADVANCE_BEYOND_NEWMIN, TIMES, GRANRARE, GRANRARE, 
                                 GRANRARE, rare, nextRare, newFreqMin);
-#undef TIMES // NUMRARE/GRANRARE + RARELOOK
+#undef TIMES // NUMRARE/GRANRARE + PEEKRARE
         }
 #endif // end not BRANCHLESS
 
