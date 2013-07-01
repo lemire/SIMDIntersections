@@ -2,19 +2,16 @@
 //       -P to inhibit line numbering, -dX might be useful
 //       -fdirectives-only to skip macro expansion
 
-// NOTE: the same 'symbol' can only be used once per compilation unit
-#define COMPILER_ASSERT(test)                           \
-    _COMPILER_ASSERT_LINE(test, __LINE__, #test )
-#define _COMPILER_ASSERT_LINE(test, line, string)                       \
-    _COMPILER_ASSERT_PASTE(test, COMPILER_LINE_, line, string)
-#define _COMPILER_ASSERT_PASTE(test, prefix, line, string)             \
-    _COMPILER_ASSERT_SYMBOL(test, prefix ## line, string)
-#define _COMPILER_ASSERT_SYMBOL(test, symbol, string)          \
-    typedef char symbol [ ((test) ? 1 : string) ]
-
-    //    typedef char symbol [ ((test) ? 1 : -1) ]
-
+#include <stdint.h>
+#include <stddef.h>
+#include "compiler.h"
 #include "macro.h"
+#include "vec4.h"
+
+// #define REGISTER(reg) 
+#define REGISTER(reg) asm(reg)
+
+#define DEBUG_PRINT(args...) 
 
 // VECLEN: 4 for XMM SSE3; 8 for YMM AVX2
 COMPILER_ASSERT(VECLEN == 4 || VECLEN == 8);
@@ -22,30 +19,32 @@ COMPILER_ASSERT(VECLEN == 4 || VECLEN == 8);
 
 // NUMFREQ: number of ints from the "frequent" (longer) source
 COMPILER_ASSERT(NUMFREQ >= 4);
-COMPILER_ASSERT(MACRO_DIV(NUMFREQ, VECLEN) > 0);
+COMPILER_ASSERT(NUMFREQ % VECLEN == 0);
 
 // NUMRARE: number of ints from the "rare" (shorter) source
 COMPILER_ASSERT(NUMRARE >= 4);
-COMPILER_ASSERT(MACRO_DIV(NUMRARE, VECLEN) > 0);
+COMPILER_ASSERT(NUMRARE % VECLEN == 0);
 
 // GRANFREQ: granularity in ints of checks to advance 'freq'
 COMPILER_ASSERT(GRANFREQ > 0);
-COMPILER_ASSERT(MACRO_DIV(NUMFREQ, GRANFREQ) > 0));
+COMPILER_ASSERT(NUMFREQ % GRANFREQ == 0);
 
 // GRANRARE: granularity in ints of checks to advance 'rare'
 COMPILER_ASSERT(GRANRARE > 0);
-COMPILER_ASSERT(MACRO_DIV(NUMRARE, GRANRARE) > 0));
+COMPILER_ASSERT(NUMRARE % GRANRARE == 0);
 
 // PEEKFREQ: number of extra GRANFREQ to try to skip in 'freq'
-COMPILER_ASSERT(PEEKFREQ + 1);
+COMPILER_ASSERT(PEEKFREQ >= 0);
 
 // PEEKRARE: number of extra GRANRARE to try to skip in 'rare'
-COMPILER_ASSERT(PEEKRARE + 1);
+COMPILER_ASSERT(PEEKRARE >= 0);
 
 // EARLYCOMP: comparison cycles to perform "early" (before advancing second source)
-COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
+COMPILER_ASSERT(EARLYCOMP <= NUMRARE / GRANRARE);
 
 // PROFILE: check that static 'if' clauses are optimized out        
+
+
 #define _CHECK_INNER_VECLEN(veclen) CHECK_INNER_VECLEN_ ## veclen
 #define CHECK_INNER_VECLEN(veclen) _CHECK_INNER_VECLEN(veclen)
 
@@ -53,7 +52,7 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     DEBUG_PRINT("CHECK_INNER " #freqnum " outer " #rarenum);            \
     Freq = NextFreq;                                                    \
     if (freqnum + 1 < MACRO_DIV_INNER(NUMFREQ, VECLEN)) {               \
-        VEC_LOAD(NextFreq, freq, freqnum + 1);                          \
+        VEC_LOAD(NextFreq, freq, freqnum + 1);        \
     } else if (rarenum + 1 < MACRO_DIV_INNER(NUMRARE, VECLEN)) {        \
         VEC_LOAD(NextFreq, freq, 0);                                    \
     } else if (! lastPass) {                                            \
@@ -62,20 +61,17 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     CHECK_INNER_VECLEN(VECLEN);                                         \
     }
 
-#define VEC_SHUF_ALL(index)                                 \
-    (((index) << 6) | ((index) << 4) | ((index) << 2) | (index))
-
 #define CHECK_INNER_VECLEN_4                    \
-    VEC_SHUF(F0, Freq, VEC_SHUF_ALL(0));        \
+    VEC_SET_ALL_FROM_INDEX(F0, Freq, 0);        \
                                                 \
-    VEC_SHUF(F1, Freq, VEC_SHUF_ALL(1));        \
+    VEC_SET_ALL_FROM_INDEX(F1, Freq, 1);        \
     VEC_MATCH(F0, Rare);                        \
                                                 \
-    VEC_SHUF(F2, Freq, VEC_SHUF_ALL(2));        \
+    VEC_SET_ALL_FROM_INDEX(F2, Freq, 2);        \
     VEC_MATCH(F1, Rare);                        \
     VEC_OR(Match, F0);                          \
                                                 \
-    VEC_SHUF(F3, Freq, VEC_SHUF_ALL(3));        \
+    VEC_SET_ALL_FROM_INDEX(F3, Freq, 3);        \
     VEC_MATCH(F2, Rare);                        \
     VEC_OR(Match, F1);                          \
                                                 \
@@ -89,6 +85,7 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     CHECK_INNER_VECLEN_8_NOT_YET_IMPLEMENTED
 
 
+// PROFILE: faster to load than VEC_ZERO?
 #define CHECK_OUTER(rarenum) {                                          \
         DEBUG_PRINT("CHECKOUTER " #rarenum);                            \
     Rare = NextRare;                                                    \
@@ -100,9 +97,10 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     VEC_ZERO(Match);                                                    \
     MACRO_REPEAT_ADDING_ONE_INNER(CHECK_INNER, MACRO_DIV_INNER(NUMFREQ, VECLEN), \
                                   0, rarenum);                          \
-    int bits = VEC_MOVEMASK(Match);                                     \
+    int bits = VEC_READ_MASK(Match);                                    \
     HANDLE_RARE_MATCH(Match, rarenum)                                   \
     }
+
 
 // PROFILE: compare kShuffleCount[] to popcnt()
 #if JUSTCOUNT
@@ -110,9 +108,9 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
     count += kShuffleCount[bits]
 #else // WRITE
 #define HANDLE_RARE_MATCH(Match, rarenum)                               \
-    VEC_SHUF(Rare, kShuffleMatch[bits]);                                \
-    VEC_STORE(match, Rare);                                             \
-    match += kShuffleCount[bits];  
+    VEC_SHUFFLE_BYTES(Rare, kShuffleMatch[bits]);                   \
+    VEC_STORE(matchOut, Rare);                                          \
+    matchOut += kShuffleCount[bits];  
 #endif
 // PROFILE: optimize for two at a time with BLEND instead of SHUF?
 
@@ -142,6 +140,10 @@ COMPILER_ASSERT(EARLYCOMP <= MACRO_DIV(NUMRARE, GRANRARE));
 #define REVERSE()
 #endif
 
+// TEMPORARY
+int kShuffleMatch[10];
+int kShuffleCount[10];
+
 #define FUNC(args...) _FUNC(args)
 #define _FUNC(name, veclen, numrare, granrare, peekrare, numfreq, granfreq, \
               peekfreq, earlycomp, branch, reversed)                    \
@@ -159,17 +161,25 @@ size_t FUNC(count, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
     (const uint32_t *freq, size_t lenFreq, const uint32_t *rare, size_t lenRare)  {
 #endif // REVERSED
 #else // WRITE
+
+
 size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
             PEEKFREQ, EARLYCOMP, BRANCH(), REVERSE())
+#undef _FUNC
+#undef FUNC
+#undef REVERSE
+#undef BRANCH
+
 #if REVERSED
     (const uint32_t *rare, size_t lenRare, const uint32_t *freq, size_t lenFreq,  
-     uint32_t matchOut)  {
+     uint32_t *matchOut)  {
 #else
     (const uint32_t *freq, size_t lenFreq, const uint32_t *rare, size_t lenRare, 
-     uint32_t matchOut)  {
+     uint32_t *matchOut)  {
 #endif // REVERSED
     const uint32_t *matchOrig = matchOut;
 #endif // WRITE
+
 
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0) {
@@ -184,31 +194,36 @@ size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
     const uint32_t *stopRare = lastRare - NUMRARE - (PEEKRARE * GRANRARE) - 1;
     
     // use scalar if not enough room to load vectors
-    if (rarely(freq >= stopFreq) || rare >= stopRare) {
+    if (COMPILER_RARELY(freq >= stopFreq) || rare >= stopRare) {
         goto FINISH_SCALAR;
     }
 
-    register VEC_INT_T F0 REGISTER("xmm0");
-    register VEC_INT_T F1 REGISTER("xmm1");
-    register VEC_INT_T F2 REGISTER("xmm2");
-    register VEC_INT_T F3 REGISTER("xmm3");
+    register VEC_T F0 REGISTER("xmm0");
+    register VEC_T F1 REGISTER("xmm1");
+    register VEC_T F2 REGISTER("xmm2");
+    register VEC_T F3 REGISTER("xmm3");
 
-    register VEC_INT_T Match REGISTER("xmm4");
+    register VEC_T Match REGISTER("xmm4");
 
-    register VEC_INT_T Rare REGISTER("xmm5");
-    register VEC_INT_T Freq REGISTER("xmm6");
+    register VEC_T Rare REGISTER("xmm5");
+    register VEC_T Freq REGISTER("xmm6");
 
-    register VEC_INT_T NextRare REGISTER("xmm7");
-    register VEC_INT_T NextFreq REGISTER("xmm8");
+    register VEC_T NextRare REGISTER("xmm7");
+    register VEC_T NextFreq REGISTER("xmm8");
 
     VEC_LOAD(NextFreq, freq, 0);
     VEC_LOAD(NextRare, rare, 0);
 
     uint32_t maxFreq = freq[NUMFREQ - 1];  
+#if ! BRANCHLESS
     uint32_t maxRare = rare[NUMRARE - 1];  
-    
+#endif // not BRANCHLESS
+
     uint32_t lastPass = 0;  // current pass always completed
-    uint32_t nextRare, nextFreq; // used outside loop for scalar finish
+
+    // CHECK: are these correct defs?
+    const uint32_t *nextRare = rare;
+    const uint32_t *nextFreq = freq;
 
     do {  // while (! lastPass)
 
@@ -231,7 +246,7 @@ size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
 #undef TIMES // NUMFREQ/GRANFREQ + PEEKFREQ
         }
 #else // if not BRANCHLESS
-        if (expected(maxFreq >= maxRare)) {  
+        if (COMPILER_LIKELY(maxFreq >= maxRare)) {  
             nextRare = rare + NUMRARE;    
             int newRareMin = nextRare[0];
 
@@ -260,12 +275,14 @@ size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
         }
 #endif // end not BRANCHLESS
 
-        if (unexpected(nextRare >= stopRare || nextFreq >= stopFreq)) {
+        if (COMPILER_RARELY(nextRare >= stopRare || nextFreq >= stopFreq)) {
             lastPass = 1;
         } else {
             // preload next maxFreq and maxRare
             maxFreq = nextFreq[NUMFREQ - 1];  
+#if ! BRANCHLESS
             maxRare = nextRare[NUMRARE - 1];  
+#endif // not BRANCHLESS
             // NextRare and NextFreq loaded in macros below
         }
 
@@ -286,7 +303,8 @@ size_t FUNC(match, VECLEN, NUMRARE, GRANRARE, PEEKRARE, NUMFREQ, GRANFREQ, \
     } while (! lastPass);
 
  FINISH_SCALAR:
-    return count; // plus scalar
+    // FIXME
+    return matchOrig ? count : 0; // plus scalar
 
 
 #undef CHECK_INNER
