@@ -1,3 +1,5 @@
+#pragma once
+
 #define MACRO_REPEAT(macro, times, start_n, func_next, func_arg, macro_args...) \
     _MACRO_EXPAND(_MACRO_ ## times(macro, start_n, func_next, func_arg, ## macro_args))
 #define MACRO_REPEAT_INNER(macro, times, start_n, func_next, func_arg, macro_args...) \
@@ -344,11 +346,8 @@
 #define _MACRO_CYCLE4_PREV_2 1
 #define _MACRO_CYCLE4_PREV_3 2
 
-#ifdef TEST_MUL
-#endif // TEST_MUL
 
-
-#ifdef MAIN
+#ifdef MACRO_MAIN
 
 int printf(const char *format, ...);
 
@@ -414,4 +413,4 @@ int main() {
 }
 
 
-#endif
+#endif // MACRO_MAIN
