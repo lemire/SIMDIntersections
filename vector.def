@@ -7,11 +7,10 @@
 #include "compiler.h"
 #include "macro.h"
 #include "vec4.h"
-
+#define DEBUG_PRINT(args...) 
 // #define REGISTER(reg) 
 #define REGISTER(reg) asm(reg)
 
-#define DEBUG_PRINT(args...) 
 
 // VECLEN: 4 for XMM SSE3; 8 for YMM AVX2
 COMPILER_ASSERT(VECLEN == 4 || VECLEN == 8);
