@@ -6,10 +6,9 @@
 
 #include </opt/intel/iaca-lin32/include/iacaMarks.h>
 
-
-size_t match_scalar(const uint32_t *freq, size_t lenFreq, 
-                    const uint32_t *rare, size_t lenRare,
-                    uint32_t *matchOut);
+size_t nate_scalar(const uint32_t *freq, size_t lenFreq, 
+                   const uint32_t *rare, size_t lenRare,
+                   uint32_t *matchOut);
 
 #define FREQ_SPACE (-1)
 #define RARE_SPACE (1)
@@ -39,10 +38,12 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *freq, size_t lenFreq,
     ASM_REGISTER(VEC_T Freq, xmm3);
 
     VEC_LOAD(Freq, freq);
-    ASM_REGISTER(uint64_t maxFreq, r8, = freq[VECLEN - 1]);  
+    ASM_REGISTER(uint64_t maxFreq, r8);
+    maxFreq = freq[VECLEN - 1];  
 
     //    ASM_REGISTER(uint64_t valRare, r9, = rare[0]);
-    uint64_t valRare = rare[0];
+    uint64_t valRare;
+    valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
     ASM_REGISTER(uint64_t valNextRare, r9);
 
@@ -60,7 +61,9 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *freq, size_t lenFreq,
     ASM_REGISTER(uint64_t advanceOut, r10);
     ASM_REGISTER(uint64_t advanceFreq, r11);
     ASM_REGISTER(uint64_t advanceRare, r11);
-    ASM_REGISTER(uint64_t one, r15, = 1L);
+    ASM_REGISTER(uint64_t one, r15);
+    one = 1L;
+
 
     do {
 #ifdef IACA
@@ -129,7 +132,7 @@ FINISH_SCALAR:
     
     lenFreq = stopFreq + FREQ_SPACE - freq;
     lenRare = stopRare + RARE_SPACE - rare;
-    size_t tail = match_scalar(freq, lenFreq, rare, lenRare, matchOut);
+    size_t tail = nate_scalar(freq, lenFreq, rare, lenRare, matchOut);
 
     return count + tail;
 }
