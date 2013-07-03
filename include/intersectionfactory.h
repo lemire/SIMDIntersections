@@ -12,6 +12,7 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 #include "branchless.h"
+#include "../scalvec.c"
 
 #ifdef __INTEL_COMPILER
 /**
@@ -22,6 +23,7 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
+    schemes[ "scalvec" ] = match_scalvec_v4_r1g1_f4g1;
     schemes[ "branchless" ] = branchlessintersection;
     schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
     schemes[ "scalarbranchlesscached2" ] = scalar_branchless_cached2;
@@ -100,6 +102,7 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
+    {"scalvec", match_scalvec_v4_r1g1_f4g1},
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
     {"scalarbranchlesscached2", scalar_branchless_cached2},
