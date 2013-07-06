@@ -14,8 +14,8 @@
 
 #include </opt/intel/iaca-lin32/include/iacaMarks.h>
 
-// #define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
-#define COUNTBITS(result, mask) result = kCountBits[mask];
+#define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
+// #define COUNTBITS(result, mask) result = kCountBits[mask];
 
 int kCountBits[] = {
     0, //  0 0000
@@ -163,11 +163,6 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         valNextRarePlusOne = nextRare[1];
         maxFreq = nextFreq[VECLEN - 1];
 
-
-#ifdef IACA
-    IACA_START;
-#endif
-
         // Start to calculate advanceNextFreq
         VEC_CMP_GREATER(Advance, NextFreq);
         VEC_READ_MASK(mask, Advance);
@@ -218,8 +213,7 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
 
 
 
-        // FUTURE: try to advance Rare farther using same packed compare?
-
+        // FUTURE: try to advance Rare farther with a packed compare?
 
         advanceNextRare = 0;
         if (valNextRare <= maxFreq) {
@@ -242,14 +236,17 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         ASM_PTR_ADD(nextRare, advanceNextRare);
 
         if (COMPILER_RARELY(nextRare > stopRare)) {
+            // Perform last match
+            VEC_MATCH(MatchRare, MatchFreq);
+            advanceOut = 0;
+            VEC_SET_PTEST(advanceOut, one, MatchRare);
+            ASM_PTR_ADD(matchOut, advanceOut);
             goto FINISH_SCALAR;
         }
 
         DEBUG_PRINT("nextRare += %ld val %ld\n", 
                     advanceNextRare, valNextRare);
 
-        //        VEC_SET_ALL_TO_INT(Advance, valNextRare - 1);
-        //        VEC_SET_ALL_TO_INT(NextRare, valNextRare);
 
         VEC_SET_ALL_TO_INT(Advance, valNextRare);
 
