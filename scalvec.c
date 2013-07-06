@@ -16,8 +16,9 @@
 #include </opt/intel/iaca-lin32/include/iacaMarks.h>
 #endif
 
-#define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
-// #define COUNTBITS(result, mask) result = kCountBits[mask];
+// PROFILE: faster with lookup?
+// #define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
+#define COUNTBITS(result, mask) result = kCountBits[mask];
 
 int kCountBits[] = {
     0, //  0 0000
@@ -61,7 +62,7 @@ size_t match_scalar(const uint32_t *A, const size_t lenA,
 
     const uint32_t *endA = A + lenA;
     const uint32_t *endB = B + lenB;
-
+    
     while (1) {
         while (*A < *B) {
         SKIP_FIRST_COMPARE: 
@@ -114,7 +115,6 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
     VEC_T NextFreq;
     VEC_T MatchRare;
     VEC_T NextRare;
-    VEC_T Advance;
 
     //    ASM_REGISTER(uint64_t maxNextFreq, r11);
     uint64_t maxFreq;
@@ -156,27 +156,25 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
     }
 
     VEC_SET_ALL_TO_INT(NextRare, valNextRare);
-    //    VEC_SET_ALL_TO_INT(Advance, valNextRare - 1);
-    VEC_COPY(Advance, NextRare);
     VEC_COPY(NextFreq, MatchFreq);
 
     while (1) {
+        //        DEBUG_PRINT("MatchRare: " VEC_FORMAT_DEBUG(MatchRare));
+        //        DEBUG_PRINT("MatchFreq: " VEC_FORMAT_DEBUG(MatchFreq));
+        VEC_MATCH(MatchFreq, MatchRare);
+        VEC_COPY(MatchRare, NextRare);
+
         // NOTE: follows nextRare in memory but not necessarily iteration
         valNextRarePlusOne = nextRare[1];
         maxFreq = nextFreq[VECLEN - 1];
 
+
         // Start to calculate advanceNextFreq
-        VEC_CMP_GREATER(Advance, NextFreq);
-        VEC_READ_MASK(mask, Advance);
+        VEC_CMP_GREATER(NextRare, NextFreq);
+        VEC_READ_MASK(mask, NextRare);
         COUNTBITS(advanceNextFreq, mask);
 
-        //        DEBUG_PRINT("MatchRare: " VEC_FORMAT_DEBUG(MatchRare));
-        //        DEBUG_PRINT("MatchFreq: " VEC_FORMAT_DEBUG(MatchFreq));
-        VEC_MATCH(MatchRare, MatchFreq);
         
-        // NOTE: the latency of loading maxNextFreq is critical
-        //maxNextFreq = nextFreq[advanceNextFreq + VECLEN - 1];
-
 
         // FUTURE: better way to specify 32-bit register
         //        ASM_BLOCK(ASM_LINE("movl %c1(%2, %3, %c4), %0d") :    \
@@ -195,20 +193,20 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
 
         // Advance output if match should be preserved
         advanceOut = 0;
-        VEC_SET_PTEST(advanceOut, one, MatchRare);
+        VEC_SET_PTEST(advanceOut, one, MatchFreq);
         ASM_PTR_ADD(matchOut, advanceOut);
         // DEBUG_PRINT("match: %ld (%ld)\n", advanceOut,  matchOut - matchOrig);
+        
+        VEC_COPY(MatchFreq, NextFreq);
+
 
         if (COMPILER_RARELY(nextFreq >= stopFreq)) {
             goto FINISH_SCALAR;
         }
 
-        VEC_COPY(MatchFreq, NextFreq);
         VEC_LOAD(NextFreq, nextFreq);  
         // DEBUG_PRINT("NextFreq " VEC_FORMAT_DEBUG(NextFreq));
-
-        VEC_COPY(MatchRare, NextRare);
-
+        
         // Write this next potential match (may be overwritten)
         //DEBUG_PRINT("Writing %ld (%ld)\n", valNextRare, matchOut - matchOrig);
         *matchOut = valNextRare;
@@ -217,23 +215,24 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
 
         // FUTURE: try to advance Rare farther with a packed compare?
 
-        advanceNextRare = 0;
-        if (valNextRare <= maxFreq) {
-            advanceNextRare = one; 
-            valNextRare = valNextRarePlusOne;
-        }
-#if 0
-        ASM_BLOCK(ASM_LINE("cmp %2, %0")                         \
+        //    advanceNextRare = 0;
+        //    if (valNextRare <= maxFreq) {
+        //        advanceNextRare = one; 
+        //        valNextRare = valNextRarePlusOne;
+        //    }
+
+        ASM_BLOCK(ASM_LINE("xor %1, %1")                          \
+                  ASM_LINE("cmp %2, %0")                          \
                   ASM_LINE("cmovbe %3, %1")                       \
                   ASM_LINE("cmovbe %4, %0") :                     \
                   /* writes %0 */ "+r" (valNextRare),            \
                   /* writes %1 */ "+r" (advanceNextRare) :       \
-                  /* reads %2 */ "r" (maxNextFreq),              \
+                  /* reads %2 */ "r" (maxFreq),                  \
                   /* reads %3 */ "r" (one),                      \
                   /* reads %4 */ "r" (valNextRarePlusOne) :      \
                   /* clobbers */ "cc");
         // NOTE: "+r" for conditional moves since initial value is live
-#endif
+
 
         ASM_PTR_ADD(nextRare, advanceNextRare);
 
@@ -250,14 +249,12 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
                     advanceNextRare, valNextRare);
 
 
-        VEC_SET_ALL_TO_INT(Advance, valNextRare);
+        VEC_SET_ALL_TO_INT(NextRare, valNextRare);
 
 
 #ifdef IACA
         IACA_END;
 #endif
-
-        VEC_COPY(NextRare, Advance);
 
         DEBUG_PRINT("NextFreq: " VEC_FORMAT_DEBUG(NextFreq));
         DEBUG_PRINT("NextRare: " VEC_FORMAT_DEBUG(NextRare));
