@@ -12,7 +12,9 @@
 // #define DEBUG_PRINT(args...) printf(args)
 #define DEBUG_PRINT(args...)
 
+#ifdef IACA
 #include </opt/intel/iaca-lin32/include/iacaMarks.h>
+#endif
 
 #define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
 // #define COUNTBITS(result, mask) result = kCountBits[mask];
