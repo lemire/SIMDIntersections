@@ -168,13 +168,19 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         valNextRarePlusOne = nextRare[1];
         maxFreq = nextFreq[VECLEN - 1];
 
+        // Advance output if match should be preserved
+        advanceOut = 0;
+        VEC_SET_PTEST(advanceOut, one, MatchFreq);
 
         // Start to calculate advanceNextFreq
         VEC_CMP_GREATER(NextRare, NextFreq);
         VEC_READ_MASK(mask, NextRare);
         COUNTBITS(advanceNextFreq, mask);
 
+        ASM_PTR_ADD(matchOut, advanceOut);
+        // DEBUG_PRINT("match: %ld (%ld)\n", advanceOut,  matchOut - matchOrig);
         
+        VEC_COPY(MatchFreq, NextFreq);
 
         // FUTURE: better way to specify 32-bit register
         //        ASM_BLOCK(ASM_LINE("movl %c1(%2, %3, %c4), %0d") :    \
@@ -191,13 +197,8 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         DEBUG_PRINT("nextFreq += %ld min %d max %ld\n", advanceNextFreq,    
                     *nextFreq, maxFreq);
 
-        // Advance output if match should be preserved
-        advanceOut = 0;
-        VEC_SET_PTEST(advanceOut, one, MatchFreq);
-        ASM_PTR_ADD(matchOut, advanceOut);
-        // DEBUG_PRINT("match: %ld (%ld)\n", advanceOut,  matchOut - matchOrig);
+
         
-        VEC_COPY(MatchFreq, NextFreq);
 
 
         if (COMPILER_RARELY(nextFreq >= stopFreq)) {
