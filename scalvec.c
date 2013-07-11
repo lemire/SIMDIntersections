@@ -4,10 +4,6 @@
 #include "asm.h"
 
 #include <stdio.h>
-//#define DEBUG_PRINT(args...)                  \
-//    ASM_PUSH_REGISTERS();                     \
-//    printf(args);                             \
-//    ASM_POP_REGISTERS();
 
 // #define DEBUG_PRINT(args...) printf(args)
 #define DEBUG_PRINT(args...)
@@ -16,7 +12,6 @@
 #include </opt/intel/iaca-lin32/include/iacaMarks.h>
 #endif
 
-// PROFILE: faster with lookup?
 // #define COUNTBITS(result, mask) VEC_POPCNT(result, mask)
 #define COUNTBITS(result, mask) result = kCountBits[mask];
 
@@ -51,6 +46,17 @@ extern "C" {
     size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq, 
                                       const uint32_t *nextRare, size_t lenRare,
                                       uint32_t *matchOut);
+
+    size_t match_scalvec_v4_f16(const uint32_t *freq, size_t lenFreq, 
+                                const uint32_t *rare, size_t lenRare,
+                                uint32_t *matchOut);
+
+    // v4r for vector len 4 reversed args
+    size_t match_scalvec_v4r_f16(const uint32_t *rare, size_t lenRare,
+                                 const uint32_t *freq, size_t lenFreq, 
+                                 uint32_t *matchOut)  {
+        return match_scalvec_v4_f16(freq, lenFreq, rare, lenRare, matchOut);
+    }
 }
 #endif
 
@@ -177,7 +183,7 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         VEC_READ_MASK(mask, NextRare);
         COUNTBITS(advanceNextFreq, mask);
 
-        ASM_PTR_ADD(matchOut, advanceOut);
+        ASM_LEA_ADD_BASE_MUL(matchOut, advanceOut, sizeof(uint32_t));
         // DEBUG_PRINT("match: %ld (%ld)\n", advanceOut,  matchOut - matchOrig);
         
         VEC_COPY(MatchFreq, NextFreq);
@@ -193,7 +199,7 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
         //                    mask, maxNextFreq, valNextRare);
 
         //  nextFreq = nextFreq + advanceFreq;  
-        ASM_PTR_ADD(nextFreq, advanceNextFreq);
+        ASM_LEA_ADD_BASE_MUL(nextFreq, advanceNextFreq, sizeof(uint32_t));
         DEBUG_PRINT("nextFreq += %ld min %d max %ld\n", advanceNextFreq,    
                     *nextFreq, maxFreq);
 
@@ -234,15 +240,14 @@ size_t match_scalvec_v4_r1g1_f4g1(const uint32_t *nextFreq, size_t lenFreq,
                   /* clobbers */ "cc");
         // NOTE: "+r" for conditional moves since initial value is live
 
-
-        ASM_PTR_ADD(nextRare, advanceNextRare);
+        ASM_LEA_ADD_BASE_MUL(nextRare, advanceNextRare, sizeof(uint32_t));
 
         if (COMPILER_RARELY(nextRare > stopRare)) {
             // Perform last match
             VEC_MATCH(MatchRare, MatchFreq);
             advanceOut = 0;
             VEC_SET_PTEST(advanceOut, one, MatchRare);
-            ASM_PTR_ADD(matchOut, advanceOut);
+            ASM_LEA_ADD_BASE_MUL(matchOut, advanceOut, sizeof(uint32_t));
             goto FINISH_SCALAR;
         }
 
@@ -278,6 +283,181 @@ FINISH_SCALAR:
 
     return count + tail;
 }
+
+size_t match_scalvec_v4_f16(const uint32_t *freq, size_t lenFreq, 
+                           const uint32_t *rare, size_t lenRare,
+                           uint32_t *matchOut) {
+
+    const uint32_t *matchOrig = matchOut;
+    if (lenFreq == 0 || lenRare == 0) {
+        return 0;
+    }
+
+    const uint32_t *lastRare = &rare[lenRare];
+    const uint32_t *lastFreq = &freq[lenFreq];
+
+#undef FREQ_SPACE
+#undef RARE_SPACE
+#define FREQ_SPACE (4 * VECLEN - 1)
+#define RARE_SPACE (1)
+
+    const uint32_t *stopFreq = lastFreq - FREQ_SPACE; 
+    const uint32_t *stopRare = lastRare - RARE_SPACE; 
+
+    register uint64_t one = 1; // convenience constant
+    uint64_t valRare = *rare;
+
+    if (COMPILER_RARELY(freq >= stopFreq) 
+        || COMPILER_RARELY(rare >= stopRare)) {
+        goto FINISH_SCALAR;
+    }
+
+    VEC_T F0, F1, F2, F3;
+    VEC_T X1, X2, X3;
+    VEC_T RSame;
+
+
+    VEC_LOAD_OFFSET(F0, freq, 0 * sizeof(VEC_T));
+    VEC_LOAD_OFFSET(F1, freq, 1 * sizeof(VEC_T));
+    VEC_LOAD_OFFSET(F2, freq, 2 * sizeof(VEC_T));
+    VEC_LOAD_OFFSET(F3, freq, 3 * sizeof(VEC_T));
+
+    while (1) {
+        // NOTE: expects valRare, F0-F3
+        DEBUG_PRINT("valRare: %ld\n", valRare);
+        DEBUG_PRINT("F0: " VEC_FORMAT_DEBUG(F0));
+        DEBUG_PRINT("F1: " VEC_FORMAT_DEBUG(F1));
+        DEBUG_PRINT("F2: " VEC_FORMAT_DEBUG(F2));
+        DEBUG_PRINT("F3: " VEC_FORMAT_DEBUG(F3));
+
+#ifdef IACA
+        IACA_START;
+#endif
+
+        VEC_SET_ALL_TO_INT(RSame, valRare);
+        uint64_t minFreq = freq[0];
+
+        VEC_COPY(X1, RSame);
+        VEC_COPY(X2, RSame);
+        VEC_COPY(X3, RSame);
+
+        VEC_CMP_GREATER(X1, F1);
+        VEC_CMP_GREATER(X2, F2);
+        VEC_CMP_GREATER(X3, F3);
+
+        VEC_CMP_EQUAL(F0, RSame);
+        VEC_CMP_EQUAL(F1, RSame);
+        VEC_CMP_EQUAL(F2, RSame);
+        VEC_CMP_EQUAL(F3, RSame);
+
+        VEC_OR(F0, F1);
+        VEC_OR(F2, F3);
+        VEC_OR(F0, F2);
+
+        // if (valRare > f[1 * VECLEN]) advanceFreq = 1
+        // else advanceFreq = 0;
+        int32_t low;
+        VEC_COPY_LOW(low, X1);
+        DEBUG_PRINT(" advanceFreq: X1 +%d,", -low);
+        int64_t advanceFreq = (-low);
+
+        // if (valRare > f[2 * VECLEN]) advanceFreq += 1
+        VEC_COPY_LOW(low, X2);
+        DEBUG_PRINT(" X2 +%d,", -low);
+        advanceFreq -= low;
+
+        // if (valRare > f[3 * VECLEN]) advanceFreq += 1
+        VEC_COPY_LOW(low, X3);
+        DEBUG_PRINT(" X3 +%d,", -low);
+        advanceFreq -= low;
+
+        // convert to {0, 1, 2, 3} to {0, 4, 8, 12}
+        advanceFreq *= VECLEN;
+
+        // preload for below
+        uint64_t valRarePlusOne = rare[1];
+
+        uint64_t maxFreq = freq[4 * VECLEN - 1];
+
+        // if (valRare > f[0]) advanceFreq += 1;
+        ASM_ADD_CMOV(advanceFreq, 1, valRare, minFreq, cmovg);
+        DEBUG_PRINT(" f0 (%ld > %ld) +%d,", 
+                    valRare, minFreq, (valRare > minFreq) ? 1 : 0);
+
+
+        // if (valRare == [anyF]) advanceMatch = 1
+        uint64_t advanceMatch = 0;
+        VEC_SET_PTEST(advanceMatch, one, F0);
+
+        // write potential match
+        *matchOut = valRare;
+
+        // advance freq one more if match was found
+        advanceFreq += advanceMatch;
+        DEBUG_PRINT(" match +%ld\n", advanceMatch);
+        freq += advanceFreq;
+
+        // advance matchOut if there was a match
+        matchOut += advanceMatch;
+
+        DEBUG_PRINT("advanceFreq: %ld advanceMatch: %ld advanceRare: %d\n",
+                    advanceFreq, advanceMatch, 
+                    (valRare <= maxFreq) ? 1 : 0);
+
+        if (COMPILER_RARELY(freq >= stopFreq)) {
+            if (valRare <= maxFreq) rare += 1;
+            goto FINISH_SCALAR;
+        }
+
+        // load the upcoming vectors as quickly as we can
+        VEC_LOAD_OFFSET(F1, freq, 1 * sizeof(VEC_T));
+        VEC_LOAD_OFFSET(F2, freq, 2 * sizeof(VEC_T));
+        VEC_LOAD_OFFSET(F3, freq, 3 * sizeof(VEC_T));
+        VEC_LOAD_OFFSET(F0, freq, 0 * sizeof(VEC_T));
+
+        if (COMPILER_RARELY(rare >= stopRare)) {
+            if (valRare <= maxFreq) rare += 1;
+            goto FINISH_SCALAR;
+        }
+            
+        //    if (valRare <= maxFreq) {
+        //        rare += 1; 
+        //        valRare = valRarePlusOne;
+        //    }
+        // PROFILE: faster as flow control?
+        const uint32_t *rarePlusOne = rare + 1;
+        ASM_BLOCK(ASM_LINE("cmp %2, %0")                                \
+                  ASM_LINE("cmovle %3, %1")                               \
+                  ASM_LINE("cmovle %4, %0") :                             \
+                  /* writes %0 */ "+r" (valRare),                         \
+                  /* writes %1 */ "+r" (rare) :                           \
+                  /* reads %2 */ "r" (maxFreq),                           \
+                  /* reads %3 */ "r" (rarePlusOne),                       \
+                  /* reads %4 */ "r" (valRarePlusOne) :                   \
+                  /* clobbers */ "cc");
+
+#ifdef IACA
+        IACA_END;
+#endif
+    }
+
+    size_t count;
+ FINISH_SCALAR:
+    count = matchOut - matchOrig;
+    
+    DEBUG_PRINT("Pre-tail count %zd\n", count);
+    
+    lenFreq = stopFreq + FREQ_SPACE - freq;
+    lenRare = stopRare + RARE_SPACE - rare;
+    DEBUG_PRINT("lenFreq %ld lenRare %ld\n", lenFreq, lenRare);
+    
+    size_t tail = match_scalar(freq, lenFreq, rare, lenRare, matchOut);
+    
+    DEBUG_PRINT("Tail count %zd\n", tail);
+    
+    return count + tail;
+}
+
 
 #ifdef TEST_SCALVEC
 
