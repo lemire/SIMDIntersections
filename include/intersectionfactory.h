@@ -12,7 +12,7 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 #include "branchless.h"
-#include "../scalvec.c"
+#include "../nate/libscalvec.h"
 
 #ifdef __INTEL_COMPILER
 /**
@@ -23,29 +23,41 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
-    schemes[ "scalvec16" ] = match_scalvec_v4_f16;
-    schemes[ "scalvec16r" ] = match_scalvec_v4r_f16;
-    schemes[ "branchless" ] = branchlessintersection;
-    schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
-    schemes[ "scalarbranchlesscached2" ] = scalar_branchless_cached2;
-    schemes[ "scalardanbranchless" ] = branchlessintersection;
-    schemes[ "scalarbranchless" ] = scalar_branchless;
-    schemes[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
+    schemes[ "scalar" ] = match_scalar;
+    schemes[ "f2_a0" ] = match_scalvec_v4_f2_a0;
+    schemes[ "f3_a0" ] = match_scalvec_v4_f3_a0;
+    schemes[ "f4_a0" ] = match_scalvec_v4_f4_a0;
+    schemes[ "f5_a0" ] = match_scalvec_v4_f5_a0;
+    schemes[ "f6_a0" ] = match_scalvec_v4_f6_a0;
+    schemes[ "f7_a0" ] = match_scalvec_v4_f7_a0;
+    schemes[ "f8_a0" ] = match_scalvec_v4_f8_a0;
+    schemes[ "f2_a1" ] = match_scalvec_v4_f2_a1;
+    schemes[ "f3_a1" ] = match_scalvec_v4_f3_a1;
+    schemes[ "f4_a1" ] = match_scalvec_v4_f4_a1;
+    schemes[ "f5_a1" ] = match_scalvec_v4_f5_a1;
+    schemes[ "f6_a1" ] = match_scalvec_v4_f6_a1;
+    schemes[ "f7_a1" ] = match_scalvec_v4_f7_a1;
+    schemes[ "f8_a1" ] = match_scalvec_v4_f8_a1;
+    schemes[ "f3_a2" ] = match_scalvec_v4_f3_a2;
+    schemes[ "f4_a2" ] = match_scalvec_v4_f4_a2;
+    schemes[ "f5_a2" ] = match_scalvec_v4_f5_a2;
+    schemes[ "f6_a2" ] = match_scalvec_v4_f6_a2;
+    schemes[ "f7_a2" ] = match_scalvec_v4_f7_a2;
+    schemes[ "f8_a2" ] = match_scalvec_v4_f8_a2;
+    schemes[ "f4_a3" ] = match_scalvec_v4_f4_a3;
+    schemes[ "f5_a3" ] = match_scalvec_v4_f5_a3;
+    schemes[ "f6_a3" ] = match_scalvec_v4_f6_a3;
+    schemes[ "f7_a3" ] = match_scalvec_v4_f7_a3;
+    schemes[ "f8_a3" ] = match_scalvec_v4_f8_a3;
+    schemes[ "f5_a4" ] = match_scalvec_v4_f5_a4;
+    schemes[ "f6_a4" ] = match_scalvec_v4_f6_a4;
+    schemes[ "f7_a4" ] = match_scalvec_v4_f7_a4;
+    schemes[ "f8_a4" ] = match_scalvec_v4_f8_a4;
+
     schemes[ "@hybriddan" ] =  danielshybridintersection;
-
-    schemes[ "widevector" ] =  widevector_intersect;
-     schemes[ "widevectorleo" ] =  leowidevector_intersect;
-
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;
-
-    schemes[ "scalarnate" ] =  nate_scalar;
-    schemes[ "scalarnatewg" ] =  nate_scalarwithoutgoto;
-
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
-
-    schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
-    schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
 
     return schemes;
 }
@@ -103,8 +115,6 @@ std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initiali
 
 
 std::map<std::string,intersectionfunction> realschemes = {
-    {"scalvec16", match_scalvec_v4_f16},
-    {"scalvec16r", match_scalvec_v4r_f16},
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
     {"scalarbranchlesscached2", scalar_branchless_cached2},

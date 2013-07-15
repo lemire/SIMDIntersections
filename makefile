@@ -27,8 +27,8 @@ all:  testintersection realintersection getmatrix
 testintersection: $(HEADERS) src/testintersection.cpp  
 	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  
 
-realintersection: $(HEADERS) src/realintersection.cpp  
-	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  
+realintersection: $(HEADERS) src/realintersection.cpp  nate/libscalvec.a
+	$(CXX) $(CXXFLAGS) -Iinclude  src/realintersection.cpp nate/libscalvec.a -o realintersection  
 
 getmatrix: $(HEADERS) src/getmatrix.cpp  
 	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  

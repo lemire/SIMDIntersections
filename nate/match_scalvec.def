@@ -30,6 +30,8 @@ extern "C" {
 }
 #endif
 
+#ifndef HEADER
+
 size_t FUNC_NAME(NUMFREQ, VECLEN, ADVANCE)         
      (const uint32_t *rare, size_t lenRare,
       const uint32_t *freq, size_t lenFreq, 
@@ -149,3 +151,5 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, ADVANCE)
     
     return count + tail;
 }
+
+#endif // notdef HEADER
