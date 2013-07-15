@@ -30,7 +30,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif 
-    size_t FUNC_NAME(NUMFREQ, VECLEN)         
+    size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)         
          (const uint32_t *rare, size_t lenRare,
           const uint32_t *freq, size_t lenFreq, 
           uint32_t *matchOut);
@@ -40,7 +40,7 @@ extern "C" {
 
 #ifndef HEADER
 
-size_t FUNC_NAME(NUMFREQ, VECLEN)         
+size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)         
      (const uint32_t *rare, size_t lenRare,
       const uint32_t *freq, size_t lenFreq, 
       uint32_t *matchOut)  {
@@ -57,7 +57,6 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
     VEC_T Rare;
 
     MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, F);
-    MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, N);
 
     if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
     uint64_t valRare = rare[0];
@@ -66,8 +65,11 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
     uint64_t maxFreq = freq[NUMFREQ * VECLEN - 1];
     MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
 
+#ifdef PRELOAD
     uint64_t nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
+    MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, N);
     MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
+#endif // PRELOAD
 
     if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
 
@@ -116,12 +118,18 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
     do {  
         DEBUG_ASSERT(maxFreq < valRare);
 
+#ifdef PRELOAD
         maxFreq = nextMaxFreq;
         MACRO_REPEAT_ADDING_ONE(_COPY_NEXT, NUMFREQ, 0, F, N);        
 
         freq += NUMFREQ * VECLEN;
         nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
         MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
+#else
+        maxFreq = freq[2 * NUMFREQ * VECLEN - 1];
+        freq += NUMFREQ * VECLEN;
+        MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
+#endif // PRELOAD
 
         DEBUG_PRINT("X freq += %d: maxFreq %ld valRare %ld stopFreq-freq %ld\n",
                     NUMFREQ * VECLEN, maxFreq, 
