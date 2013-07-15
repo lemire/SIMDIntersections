@@ -2,6 +2,7 @@
 #include "compiler.h"
 #include "scalar.h"
 #include "macro.h"
+#include "asm.h"
 
 #include <stdint.h>
 #include <stddef.h>

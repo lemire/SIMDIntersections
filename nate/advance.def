@@ -69,8 +69,8 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, ADVANCE)
     do { 
         DEBUG_ASSERT(maxFreq >= valRare);
         *matchOut = valRare;        
-        rare += 1;
-        valRare = rare[0]; // for next iteration
+        valRare = rare[1]; // for next iteration
+        ASM_LEA_ADD_BYTES(rare, sizeof(*rare));   // rare += 1;
         DEBUG_PRINT(" rare += 1: maxFreq %ld valRare %ld stopRare-rare %ld\n",
                     maxFreq, valRare, stopRare - rare);
         if (COMPILER_RARELY(rare >= stopRare)) {
@@ -91,14 +91,16 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, ADVANCE)
                     freq[ADVANCE * VECLEN], 
                     valRare, stopFreq - (freq + advanceFreq));
         // NOTE: casting to char * to allow add rather than lea is worse
-        freq += advanceFreq;
+        //        freq += advanceFreq;
+        ASM_LEA_ADD_BASE(freq, advanceFreq);
+        maxFreq = freq[NUMFREQ * VECLEN - 1];
+
         // FIXME: figure out (unnecessary?) lea with icc
         if (COMPILER_RARELY(freq >= stopFreq)) {
             rare -= 1;
             freq -= advanceFreq;
             goto FINISH_SCALAR;
         }
-        maxFreq = freq[NUMFREQ * VECLEN - 1];
 #endif
 
         MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMFREQ, 0, ".");

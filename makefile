@@ -5,7 +5,7 @@
 ifeq ($(INTEL), 1)
 # if you wish to use the Intel compiler, please do "make INTEL=1".
     YOURCXX ?= /opt/intel/bin/icpc
-    CXXFLAGS = -std=c++0x -O3 -Wall -xSSE4.1 -DNDEBUG=1  -ggdb
+    CXXFLAGS = -std=c++0x -O3 -Wall -msse4.2 -DNDEBUG=1  -ggdb
 else 
     YOURCXX ?= g++-4.7
 ifeq ($(DEBUG),1)
