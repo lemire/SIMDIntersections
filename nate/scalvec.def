@@ -16,8 +16,7 @@
     VEC_LOAD_OFFSET(base ## num, freq, (NUMFREQ + num) * sizeof(VEC_T))
 
 #define _COPY_NEXT(num, dest, src)              \
-    dest ## 0 = src ## 0
-
+    dest ## num = src ## num
 
 #define _DEBUG_PRINT_VEC(num, prefix)                                   \
     DEBUG_PRINT(prefix " F" #num ": " VEC_FORMAT_DEBUG(F ## num))

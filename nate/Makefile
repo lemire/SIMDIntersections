@@ -1,4 +1,4 @@
-CFLAGS = -std=gnu99 -O2 -Wall -g3 -msse4.2
+CFLAGS = -std=gnu99 -O2 -Wall -g3 -msse4.2 
 IACA = /opt/intel/iaca-lin32/bin/iaca.sh -mark 0 -64 -arch SNB
 
 all:  libscalvec.a

@@ -24,6 +24,7 @@
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
     schemes[ "scalar" ] = match_scalar;
+    schemes[ "f1" ] = match_scalvec_v4_f1;
     schemes[ "f2" ] = match_scalvec_v4_f2;
     schemes[ "f3" ] = match_scalvec_v4_f3;
     schemes[ "f4" ] = match_scalvec_v4_f4;
