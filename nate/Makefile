@@ -13,7 +13,7 @@ debug: test.o scalar.o scalvec.c
 scalvec.o:  scalvec.def Makefile
 	$(CC) $(CFLAGS) -c scalvec.c -o scalvec.o
 
-iaca: scalvec.c
+iaca: scalvec.c 
 	$(CC) $(CFLAGS) -DIACA -c scalvec.c -o iaca.o
 	$(IACA) -analysis LATENCY -o latency.iaca iaca.o
 	$(IACA) -analysis THROUGHPUT -o throughput.iaca iaca.o	

@@ -83,11 +83,12 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare));   // rare += 1;
         DEBUG_PRINT(" rare += 1: maxFreq %ld valRare %ld stopRare-rare %ld\n",
                     maxFreq, valRare, stopRare - rare);
+
         if (COMPILER_RARELY(rare >= stopRare)) {
             rare -= 1;
             goto FINISH_SCALAR;
         }
-        
+
         MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMFREQ, 0, ".");
 
         MACRO_REPEAT_ADDING_ONE(_COMPARE_EQUAL_RARE, NUMFREQ, 0);
@@ -95,14 +96,15 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
         DEBUG_PRINT(".*matchOut: %d\n", *matchOut);
         MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMFREQ, 0, "..");
 
+        VEC_SET_ALL_TO_INT(Rare, valRare);
+
         // FUTURE: use a list macro
         SCALVEC_MATCH_ALL();
 
         VEC_ADD_PTEST(matchOut, 1, F0);
 
         MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
-        
-        VEC_SET_ALL_TO_INT(Rare, valRare);
+
     } while (maxFreq >= valRare);
 
     
