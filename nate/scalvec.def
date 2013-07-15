@@ -27,6 +27,11 @@
 #define _MACRO_JOIN(a, b) a ## b
 #define MACRO_JOIN(a, b) _MACRO_JOIN(a, b)
 
+#ifndef PRELOAD
+#define _NO_PRELOAD
+#define PRELOAD
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
@@ -44,6 +49,11 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)
      (const uint32_t *rare, size_t lenRare,
       const uint32_t *freq, size_t lenFreq, 
       uint32_t *matchOut)  {
+
+#ifdef _NO_PRELOAD
+#undef PRELOAD
+#endif
+#undef _NO_PRELOAD
 
     const uint32_t *matchOrig = matchOut;
     if (lenFreq == 0 || lenRare == 0) return 0;

@@ -27,8 +27,6 @@
 
 #define FUNC_NAME(args...) _FUNC_NAME(args)
 
-#define PRELOAD
-
 #define NUMFREQ 1
 #define SCALVEC_MATCH_ALL()                   
 #include "scalvec.def"
@@ -93,8 +91,6 @@
 #include "scalvec.def"
 #undef SCALVEC_MATCH_ALL
 #undef NUMFREQ
-
-#undef PRELOAD
 
 #define PRELOAD _p
 
