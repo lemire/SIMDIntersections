@@ -4,6 +4,8 @@
 #include <smmintrin.h>
 #include <nmmintrin.h>
 
+#define VECLEN 4
+
 #define VEC_T __m128i
 #define VEC_FLOAT_T __m128
 
