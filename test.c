@@ -4,7 +4,7 @@
 
 #include "test.h"
 
-#define TEST_PRINT(verbosity, level, args...)   \
+#define TEST_PRINT(verbosity, level, args...)    \
     do { if (verbosity >= level) printf(args); } while (0)
 
 size_t match_scalar(const uint32_t *rare, size_t lenRare,
