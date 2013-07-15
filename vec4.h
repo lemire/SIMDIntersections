@@ -32,7 +32,7 @@
     
 #define VEC_SET_ALL_TO_INT(reg, int32)                                  \
     __asm VEC_VOLATILE("movd %1, %0; pshufd $0, %0, %0"                 \
-                       :" =x" (reg) : "g" (int32) ) 
+                       : "=x" (reg) : "g" (int32) ) 
 
 #define VEC_MATCH(dest, other)                                          \
     __asm VEC_VOLATILE("pcmpeqd %1, %0" : "+x" (dest) : "x" (other))
@@ -54,6 +54,8 @@
 #define VEC_CMP_GREATER(dest, other)                                    \
     __asm VEC_VOLATILE("pcmpgtd %1, %0" : "+x" (dest) : "x" (other))
 
+
+//  Port 1|5, Latency 1, Throughput 2
 #define VEC_CMP_EQUAL(dest, other)                                      \
     __asm VEC_VOLATILE("pcmpeqd %1, %0" : "+x" (dest) : "x" (other))
     
@@ -66,6 +68,7 @@
 #define VEC_POPCNT(count, var)                                          \
     __asm VEC_VOLATILE("popcnt %1, %0" : "=r" (count) : "g" (var))       
 
+// PTEST P1-L1-T1, CMOVcc 2P0|1|5-L2-T1
 #define VEC_SET_PTEST(var, val, xmm)                                  \
     __asm VEC_VOLATILE("ptest %2, %2; cmovnz %1, %0" :                \
                        /* writes %0 */ "+r" (var) :                   \
@@ -92,7 +95,7 @@
 #define VEC_ADD(xmm_dest, xmm_src)                                      \
     __asm VEC_VOLATILE("paddd %1, %0" : "=x" (xmm_dest) : "x" (xmm_src))       
 
-
+//  Port 0|1|5, Latency 1, Throughput 3
 #define VEC_OR(dest, other)                                             \
     __asm VEC_VOLATILE("por %1, %0" : "+x" (dest) : "x" (other) )
 
