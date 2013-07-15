@@ -31,6 +31,14 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "f5" ] = match_scalvec_v4_f5;
     schemes[ "f6" ] = match_scalvec_v4_f6;
     schemes[ "f7" ] = match_scalvec_v4_f7;
+    schemes[ "f8" ] = match_scalvec_v4_f8;
+    schemes[ "f1p" ] = match_scalvec_v4_f1_p;
+    schemes[ "f2p" ] = match_scalvec_v4_f2_p;
+    schemes[ "f3p" ] = match_scalvec_v4_f3_p;
+    schemes[ "f4p" ] = match_scalvec_v4_f4_p;
+    schemes[ "f5p" ] = match_scalvec_v4_f5_p;
+    schemes[ "f6p" ] = match_scalvec_v4_f6_p;
+    schemes[ "f7p" ] = match_scalvec_v4_f7_p;
     schemes[ "@hybriddan" ] =  danielshybridintersection;
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;
