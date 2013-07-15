@@ -1,14 +1,23 @@
 // FUTURE: push/pop registers to make assigned registers work with printf()
-#ifdef DEBUG
 #define _XMM_REGISTER(num, name, initializer...)        \
     VEC_T name ## num initializer
-#else
-#define _XMM_REGISTER(num, name, initializer...)                \
-    register VEC_T name ## num __asm("xmm" #num) initializer
-#endif // DEBUG
 
-#define _LOAD_FREQ(num)                                          \
-    VEC_LOAD_OFFSET(F ## num, freq, num * sizeof(VEC_T))
+#if 0
+#ifdef DEBUG
+#define _XMM_REGISTER(num, name, initializer...)              \
+     register VEC_T name ## num __asm("xmm" #num) initializer
+#endif // DEBUG
+#endif
+
+#define _LOAD_FREQ(num, base)                                   \
+    VEC_LOAD_OFFSET(base ## num, freq, num * sizeof(VEC_T))
+
+#define _LOAD_NEXT_FREQ(num, base)                                   \
+    VEC_LOAD_OFFSET(base ## num, freq, (NUMFREQ + num) * sizeof(VEC_T))
+
+#define _COPY_NEXT(num, dest, src)              \
+    dest ## 0 = src ## 0
+
 
 #define _DEBUG_PRINT_VEC(num, prefix)                                   \
     DEBUG_PRINT(prefix " F" #num ": " VEC_FORMAT_DEBUG(F ## num))
@@ -47,15 +56,22 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
     const uint32_t *stopRare = &rare[lenRare] - kRareSpace; 
 
     VEC_T Rare;
+
     MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, F);
+    MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, N);
 
     if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
     uint64_t valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
 
     uint64_t maxFreq = freq[NUMFREQ * VECLEN - 1];
+    MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
+
+    uint64_t nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
+    MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
+
     if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
-    
+
 #ifdef IACA
     IACA_START;
 #endif
@@ -73,8 +89,6 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
             goto FINISH_SCALAR;
         }
         
-        MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0);
-
         MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMFREQ, 0, ".");
 
         MACRO_REPEAT_ADDING_ONE(_COMPARE_EQUAL_RARE, NUMFREQ, 0);
@@ -86,6 +100,8 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
         SCALVEC_MATCH_ALL();
 
         VEC_ADD_PTEST(matchOut, 1, F0);
+
+        MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
         
         VEC_SET_ALL_TO_INT(Rare, valRare);
     } while (maxFreq >= valRare);
@@ -98,17 +114,24 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
  ADVANCE_FREQ:
     do {  
         DEBUG_ASSERT(maxFreq < valRare);
+
+        maxFreq = nextMaxFreq;
+        MACRO_REPEAT_ADDING_ONE(_COPY_NEXT, NUMFREQ, 0, F, N);        
+
         freq += NUMFREQ * VECLEN;
-        DEBUG_PRINT("X freq += %d: maxFreq %d valRare %ld stopFreq-freq %ld\n",
-                    NUMFREQ * VECLEN, freq[NUMFREQ * VECLEN -1], 
+        nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
+        MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
+
+        DEBUG_PRINT("X freq += %d: maxFreq %ld valRare %ld stopFreq-freq %ld\n",
+                    NUMFREQ * VECLEN, maxFreq, 
                     valRare, stopFreq - freq);
         if (COMPILER_RARELY(freq >= stopFreq)) {
             freq -= NUMFREQ * VECLEN;
             goto FINISH_SCALAR;
         }
-        maxFreq = freq[NUMFREQ * VECLEN - 1];
+
     } while (maxFreq < valRare);
-    
+
     goto ADVANCE_RARE;
 
     size_t count;
