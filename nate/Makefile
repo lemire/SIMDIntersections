@@ -18,7 +18,7 @@ iaca: scalvec.c
 	$(IACA) -analysis LATENCY -o latency.iaca iaca.o
 	$(IACA) -analysis THROUGHPUT -o throughput.iaca iaca.o	
 
-libscalvec.a: scalar.o scalvec.o scalvec.def Makefile
+libscalvec.a: scalar.o scalvec.o 
 	$(AR) $(ARFLAGS) $@ $^
 
 clean: 
