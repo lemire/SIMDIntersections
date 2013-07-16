@@ -1,4 +1,4 @@
-// FUTURE: push/pop registers to make assigned registers work with printf()
+// Future: Push/pop registers to make assigned registers work with printf()
 #define _XMM_REGISTER(num, name, initializer...)        \
     VEC_T name ## num initializer
 
@@ -9,11 +9,8 @@
 #endif // DEBUG
 #endif
 
-#define _LOAD_FREQ(num, base)                                   \
-    VEC_LOAD_OFFSET(base ## num, freq, num * sizeof(VEC_T))
-
-#define _LOAD_NEXT_FREQ(num, base)                                   \
-    VEC_LOAD_OFFSET(base ## num, freq, (NUMFREQ + num) * sizeof(VEC_T))
+#define _VEC_LOAD_OFFSET(num, base, ptr)                        \
+    VEC_LOAD_OFFSET(base ## num, ptr, num * sizeof(VEC_T))
 
 #define _COPY_NEXT(num, dest, src)              \
     dest ## num = src ## num
@@ -63,7 +60,7 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
     VEC_SET_ALL_TO_INT(Rare, valRare);
 
     uint64_t maxFreq = freq[NUMFREQ * VECLEN - 1];
-    MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
+    MACRO_REPEAT_ADDING_ONE(_VEC_LOAD_OFFSET, NUMFREQ, 0, F, freq);
 
     if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
 
@@ -99,7 +96,7 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
 
         VEC_ADD_PTEST(matchOut, 1, F0);
 
-        MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
+        MACRO_REPEAT_ADDING_ONE(_VEC_LOAD_OFFSET, NUMFREQ, 0, F, freq);
 
     } while (maxFreq >= valRare);
 
@@ -113,18 +110,22 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
         DEBUG_ASSERT(maxFreq < valRare);
 
         maxFreq = freq[2 * NUMFREQ * VECLEN - 1];
-        ASM_LEA_ADD_BYTES(freq, NUMFREQ * sizeof(VEC_T));
 
-        MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
+
+        // NOTE: fastest on Sandy Bridge to LEA 0x40(freq), nextFreq
+        // I don't know why the temp variable makes a difference, but it does
+        const uint32_t *nextFreq = freq + NUMFREQ * VECLEN;
+
+        MACRO_REPEAT_ADDING_ONE(_VEC_LOAD_OFFSET, NUMFREQ, 0, F, nextFreq);
 
         DEBUG_PRINT("X freq += %d: maxFreq %ld valRare %ld stopFreq-freq %ld\n",
                     NUMFREQ * VECLEN, maxFreq, 
-                    valRare, stopFreq - freq);
-        if (COMPILER_RARELY(freq >= stopFreq)) {
-            freq -= NUMFREQ * VECLEN;
+                    valRare, stopFreq - nextFreq);
+        if (COMPILER_RARELY(nextFreq >= stopFreq)) {
             goto FINISH_SCALAR;
         }
 
+        freq = nextFreq;  // NOTE: temp variable helps produce better assembly
     } while (maxFreq < valRare);
 
     goto ADVANCE_RARE;
