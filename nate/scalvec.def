@@ -27,15 +27,10 @@
 #define _MACRO_JOIN(a, b) a ## b
 #define MACRO_JOIN(a, b) _MACRO_JOIN(a, b)
 
-#ifndef PRELOAD
-#define _NO_PRELOAD
-#define PRELOAD
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif 
-    size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)         
+    size_t FUNC_NAME(NUMFREQ, VECLEN)         
          (const uint32_t *rare, size_t lenRare,
           const uint32_t *freq, size_t lenFreq, 
           uint32_t *matchOut);
@@ -45,15 +40,10 @@ extern "C" {
 
 #ifndef HEADER
 
-size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)         
+size_t FUNC_NAME(NUMFREQ, VECLEN)         
      (const uint32_t *rare, size_t lenRare,
       const uint32_t *freq, size_t lenFreq, 
       uint32_t *matchOut)  {
-
-#ifdef _NO_PRELOAD
-#undef PRELOAD
-#endif
-#undef _NO_PRELOAD
 
     const uint32_t *matchOrig = matchOut;
     if (lenFreq == 0 || lenRare == 0) return 0;
@@ -74,12 +64,6 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)
 
     uint64_t maxFreq = freq[NUMFREQ * VECLEN - 1];
     MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
-
-#ifdef PRELOAD
-    uint64_t nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
-    MACRO_REPEAT_ADDING_ONE(_XMM_REGISTER, NUMFREQ, 0, N);
-    MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
-#endif // PRELOAD
 
     if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
 
@@ -128,18 +112,9 @@ size_t FUNC_NAME(NUMFREQ, VECLEN, PRELOAD)
     do {  
         DEBUG_ASSERT(maxFreq < valRare);
 
-#ifdef PRELOAD
-        maxFreq = nextMaxFreq;
-        MACRO_REPEAT_ADDING_ONE(_COPY_NEXT, NUMFREQ, 0, F, N);        
-
-        freq += NUMFREQ * VECLEN;
-        nextMaxFreq = freq[2 * NUMFREQ * VECLEN - 1];
-        MACRO_REPEAT_ADDING_ONE(_LOAD_NEXT_FREQ, NUMFREQ, 0, N);
-#else
         maxFreq = freq[2 * NUMFREQ * VECLEN - 1];
         freq += NUMFREQ * VECLEN;
         MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
-#endif // PRELOAD
 
         DEBUG_PRINT("X freq += %d: maxFreq %ld valRare %ld stopFreq-freq %ld\n",
                     NUMFREQ * VECLEN, maxFreq, 

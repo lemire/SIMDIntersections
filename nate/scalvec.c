@@ -22,8 +22,8 @@
 #endif
 
 
-#define _FUNC_NAME(numfreq, veclen, preload)                    \
-    match_scalvec_v ## veclen ## _f ## numfreq ## preload
+#define _FUNC_NAME(numfreq, veclen)             \
+    match_scalvec_v ## veclen ## _f ## numfreq
 
 #define FUNC_NAME(args...) _FUNC_NAME(args)
 
@@ -92,68 +92,6 @@
 #undef SCALVEC_MATCH_ALL
 #undef NUMFREQ
 
-#define PRELOAD _p
-
-#define NUMFREQ 1
-#define SCALVEC_MATCH_ALL()                   
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 2
-#define SCALVEC_MATCH_ALL()                     \
-    VEC_OR(F0, F1)
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 3
-#define SCALVEC_MATCH_ALL()                     \
-    VEC_OR(F0, F1);                             \
-    VEC_OR(F0, F2)
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 4
-#define SCALVEC_MATCH_ALL()                             \
-    VEC_OR(F0, F1); VEC_OR(F2, F3);                     \
-    VEC_OR(F0, F2);
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 5
-#define SCALVEC_MATCH_ALL()                             \
-    VEC_OR(F0, F1); VEC_OR(F2, F3);                     \
-    VEC_OR(F0, F2);                                     \
-    VEC_OR(F0, F4)
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 6
-#define SCALVEC_MATCH_ALL()                             \
-    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5);     \
-    VEC_OR(F0, F2);                                     \
-    VEC_OR(F0, F4)
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#define NUMFREQ 7
-#define SCALVEC_MATCH_ALL()                                   \
-    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5);           \
-    VEC_OR(F0, F2); VEC_OR(F4, F6);                           \
-    VEC_OR(F0, F4)
-#include "scalvec.def"
-#undef SCALVEC_MATCH_ALL
-#undef NUMFREQ
-
-#undef PRELOAD
-
-
-
 #ifdef TEST
 
 #include "test.h"
@@ -161,23 +99,17 @@
 
 #define _MACRO_QUOTE(arg) #arg
 #define MACRO_QUOTE(arg) _MACRO_QUOTE(arg)
-#define TEST_FUNC(numfreq, preload)                                     \
+#define TEST_FUNC(numfreq)                                              \
     printf("Testing %s()\n",                                            \
-           MACRO_QUOTE(FUNC_NAME(numfreq, VECLEN, preload)));           \
-    success &= test_all(FUNC_NAME(numfreq, VECLEN, preload), len, verbosity);
+           MACRO_QUOTE(FUNC_NAME(numfreq, VECLEN)));           \
+    success &= test_all(FUNC_NAME(numfreq, VECLEN), len, verbosity);
 
 int main(void) {
     int verbosity = 1;
     int len = 2048;
     bool success = 1;
 
-#define PRELOAD
-    MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 8, 1, PRELOAD);
-#undef PRELOAD
-
-#define PRELOAD _p
-    MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 7, 1, PRELOAD);
-#undef PRELOAD    
+    MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 8, 1);
 
     return success;
 }
