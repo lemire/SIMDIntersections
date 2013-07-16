@@ -28,7 +28,7 @@ size_t danielshybridintersectioncardinality(const uint32_t * set1,
     return highlyscalablewordpresscom::dan_cardinality_intersect_SIMD(set1, length1, set2, length2);
 }
 
-size_t danielshybridintersection(const uint32_t * set1,
+size_t olddanielshybridintersection(const uint32_t * set1,
         const size_t length1, const uint32_t * set2, const size_t length2, uint32_t *out) {
     if ((10 * length1 <= length2) or (10 * length2 <= length1)) {
         if ((200 * length1 < length2) or (200 * length2 < length1)) {
@@ -40,6 +40,29 @@ size_t danielshybridintersection(const uint32_t * set1,
                         set1, length1,out);
         } else {
             if (length1 < length2)
+                return natedanalt_medium(set1, length1, set2, length2,out);
+            else
+                return natedanalt_medium(set2, length2, set1, length1,out);
+        }
+    }
+    return highlyscalablewordpresscom::dan_intersect_SIMD(set1, length1, set2, length2,out);
+}
+
+size_t danielshybridintersection(const uint32_t * set1,
+        const size_t length1, const uint32_t * set2, const size_t length2, uint32_t *out) {
+    if ((length1==0) or (length2 == 0)) return 0;
+    const double scale1 = set1[length1 - 1];
+    const double scale2 = set2[length2 - 1];
+    if ((10 * length1 * scale2 <= length2 * scale1) or (10 * length2 * scale1 <= length1 * scale2)) {
+        if ((200 * length1 * scale2 < length2 * scale1) or (200 * length2 * scale1 < length1 * scale2)) {
+            if (length1 * scale2 < length2 * scale1)
+                return danfar_medium(set1, length1,
+                        set2, length2,out);
+            else
+                return danfar_medium(set2, length2,
+                        set1, length1,out);
+        } else {
+            if (length1 * scale2 < length2 * scale1)
                 return natedanalt_medium(set1, length1, set2, length2,out);
             else
                 return natedanalt_medium(set2, length2, set1, length1,out);
