@@ -92,6 +92,46 @@
 #undef SCALVEC_MATCH_ALL
 #undef NUMFREQ
 
+#define NUMFREQ 9
+#define SCALVEC_MATCH_ALL()                                             \
+    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5); VEC_OR(F6, F7);     \
+    VEC_OR(F0, F2); VEC_OR(F4, F6);                                     \
+    VEC_OR(F0, F4);                                                     \
+    VEC_OR(F0, F8);
+#include "scalvec.def"
+#undef SCALVEC_MATCH_ALL
+#undef NUMFREQ
+
+#define NUMFREQ 10
+#define SCALVEC_MATCH_ALL()                                             \
+    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5); VEC_OR(F6, F7);     \
+    VEC_OR(F0, F2); VEC_OR(F4, F6);                                     \
+    VEC_OR(F0, F4); VEC_OR(F8, F9);                                     \
+    VEC_OR(F0, F8);
+#include "scalvec.def"
+#undef SCALVEC_MATCH_ALL
+#undef NUMFREQ
+
+#define NUMFREQ 11
+#define SCALVEC_MATCH_ALL()                                             \
+    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5); VEC_OR(F6, F7);     \
+    VEC_OR(F0, F2); VEC_OR(F4, F6); VEC_OR(F8, F9);                     \
+    VEC_OR(F0, F4); VEC_OR(F8, F10);                                    \
+    VEC_OR(F0, F8);
+#include "scalvec.def"
+#undef SCALVEC_MATCH_ALL
+#undef NUMFREQ
+
+#define NUMFREQ 12
+#define SCALVEC_MATCH_ALL()                                             \
+    VEC_OR(F0, F1); VEC_OR(F2, F3); VEC_OR(F4, F5); VEC_OR(F6, F7);     \
+    VEC_OR(F0, F2); VEC_OR(F4, F6); VEC_OR(F8, F9); VEC_OR(F10, F11);   \
+    VEC_OR(F0, F4); VEC_OR(F8, F10);                                    \
+    VEC_OR(F0, F8);
+#include "scalvec.def"
+#undef SCALVEC_MATCH_ALL
+#undef NUMFREQ
+
 #ifdef TEST
 
 #include "test.h"
@@ -109,7 +149,7 @@ int main(void) {
     int len = 2048;
     bool success = 1;
 
-    MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 8, 1);
+    MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 12, 1);
 
     return success;
 }
