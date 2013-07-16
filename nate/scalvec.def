@@ -113,7 +113,8 @@ size_t FUNC_NAME(NUMFREQ, VECLEN)
         DEBUG_ASSERT(maxFreq < valRare);
 
         maxFreq = freq[2 * NUMFREQ * VECLEN - 1];
-        freq += NUMFREQ * VECLEN;
+        ASM_LEA_ADD_BYTES(freq, NUMFREQ * sizeof(VEC_T));
+
         MACRO_REPEAT_ADDING_ONE(_LOAD_FREQ, NUMFREQ, 0, F);
 
         DEBUG_PRINT("X freq += %d: maxFreq %ld valRare %ld stopFreq-freq %ld\n",
