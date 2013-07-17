@@ -60,6 +60,46 @@ extern "C" {
                                 const uint32_t *freq, size_t lenFreq,
                                 uint32_t *matchOut);
 
+    size_t match_scalvec_v4_f2_p0(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f2_p1(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f2_p2(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f2_p3(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+
+    size_t match_scalvec_v4_f4_p0(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f4_p1(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f4_p2(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f4_p3(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+
+    size_t match_scalvec_v4_f8_p0(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f8_p1(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f8_p2(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+    size_t match_scalvec_v4_f8_p3(const uint32_t *rare, size_t lenRare,
+                                  const uint32_t *freq, size_t lenFreq,
+                                  uint32_t *matchOut);
+
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
