@@ -35,6 +35,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "scalarbranchlessunrolled" ] = scalar_branchless_unrolled;
     schemes[ "@hybriddan" ] =  danielshybridintersection;
 
+
     schemes[ "widevector" ] =  widevector_intersect;
      schemes[ "widevectorleo" ] =  leowidevector_intersect;
 
@@ -115,6 +116,7 @@ std::map<std::string,intersectionfunction> realschemes = {
     {"scalarbranchless", scalar_branchless},
     {"scalarbranchlessunrolled", scalar_branchless_unrolled},
     {   "@hybriddan",danielshybridintersection},
+
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
     {   "scalarnate", nate_scalar},
