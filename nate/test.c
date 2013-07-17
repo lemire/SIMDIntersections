@@ -111,6 +111,8 @@ bool test_random(match_func_t match_func, size_t len,
     uint64_t lenFreq = len;
     uint64_t lenRare = len / increment;
     uint64_t lenOut = lenRare;
+    uint64_t incRare = increment * increment;
+
 
     uint32_t freq[lenFreq];
     freq[0] = rand() % increment;
@@ -119,9 +121,9 @@ bool test_random(match_func_t match_func, size_t len,
     }
 
     uint32_t rare[lenRare];
-    rare[0] = rand() % increment;
+    rare[0] = rand() % incRare;
     for (int i = 1; i < lenRare; i++) {
-        rare[i] = rare[i - 1] + rand() % increment + 1; 
+        rare[i] = rare[i - 1] + rand() % incRare + 1; 
     }
 
     uint32_t outForward[lenOut];
