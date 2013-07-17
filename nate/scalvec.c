@@ -151,7 +151,7 @@ int main(void) {
 
     MACRO_REPEAT_ADDING_ONE(TEST_FUNC, 12, 1);
 
-    return success;
+    return success == 1;
 }
 
 #endif // TEST
