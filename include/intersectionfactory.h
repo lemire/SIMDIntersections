@@ -24,18 +24,23 @@
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
     schemes[ "scalar" ] = match_scalar;
-    schemes[ "f01" ] = match_scalvec_v4_f1;
     schemes[ "f02" ] = match_scalvec_v4_f2;
-    schemes[ "f03" ] = match_scalvec_v4_f3;
     schemes[ "f04" ] = match_scalvec_v4_f4;
-    schemes[ "f05" ] = match_scalvec_v4_f5;
-    schemes[ "f06" ] = match_scalvec_v4_f6;
-    schemes[ "f07" ] = match_scalvec_v4_f7;
     schemes[ "f08" ] = match_scalvec_v4_f8;
-    schemes[ "f09" ] = match_scalvec_v4_f9;
-    schemes[ "f10" ] = match_scalvec_v4_f10;
-    schemes[ "f11" ] = match_scalvec_v4_f11;
     schemes[ "f12" ] = match_scalvec_v4_f12;
+    schemes[ "f02p0" ] = match_scalvec_v4_f2_p0;
+    schemes[ "f02p1" ] = match_scalvec_v4_f2_p1;
+    schemes[ "f02p2" ] = match_scalvec_v4_f2_p2;
+    schemes[ "f02p3" ] = match_scalvec_v4_f2_p3;
+    schemes[ "f04p0" ] = match_scalvec_v4_f4_p0;
+    schemes[ "f04p1" ] = match_scalvec_v4_f4_p1;
+    schemes[ "f04p2" ] = match_scalvec_v4_f4_p2;
+    schemes[ "f04p3" ] = match_scalvec_v4_f4_p3;
+    schemes[ "f08p0" ] = match_scalvec_v4_f8_p0;
+    schemes[ "f08p1" ] = match_scalvec_v4_f8_p1;
+    schemes[ "f08p2" ] = match_scalvec_v4_f8_p2;
+    schemes[ "f08p3" ] = match_scalvec_v4_f8_p3;
+
     schemes[ "@hybriddan" ] =  danielshybridintersection;
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "natemediumdanfar" ] = danfar_medium;
