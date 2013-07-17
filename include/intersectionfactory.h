@@ -12,7 +12,7 @@
 #include "mediumintersection.h"
 #include "widevectorintersection.h"
 #include "branchless.h"
-#include "match.c"
+#include "match.h"
 
 #ifdef __INTEL_COMPILER
 /**

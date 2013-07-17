@@ -24,14 +24,17 @@ HEADERS= $(shell ls include/*h)
 
 all:  testintersection realintersection getmatrix
 
-testintersection: $(HEADERS) src/testintersection.cpp  
-	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  
+match.o: src/match.c include/match.h  
+	$(CXX) $(CXXFLAGS) -Iinclude -c src/match.c  
 
-realintersection: $(HEADERS) src/realintersection.cpp  
-	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  
+testintersection: $(HEADERS) src/testintersection.cpp  match.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  match.o
 
-getmatrix: $(HEADERS) src/getmatrix.cpp  
-	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  
+realintersection: $(HEADERS) src/realintersection.cpp  match.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  match.o
+
+getmatrix: $(HEADERS) src/getmatrix.cpp  match.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  match.o
 
 clean: 
 	rm -f *.o testintersection realintersection getmatrix
