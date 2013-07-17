@@ -124,19 +124,20 @@ size_t FUNC_NAME(NUMFREQ, NUMPROBE, VECLEN)
         DEBUG_PRINT("freq += %ld: probeMax %ld valRare %ld stopFreq-freq %ld\n",
                     kProbe, probeMax, valRare, stopFreq - probeFreq);
 
-        MACRO_REPEAT_ADDING_ONE(_VEC_LOAD_PROBE, NUMPROBE, 0, P, freq);
-        MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMPROBE, 0, P, ".");
-
         if (COMPILER_RARELY(probeFreq >= stopFreq)) {
             goto FINISH_SCALAR;
         }
+
+        MACRO_REPEAT_ADDING_ONE(_VEC_LOAD_PROBE, NUMPROBE, 0, P, freq);
+        MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMPROBE, 0, P, ".");
+
+        MACRO_REPEAT_ADDING_ONE(_COMPARE_GREATER, NUMPROBE, 0, P, Rare);
+        MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMPROBE, 0, P, "..");
 
         freq = probeFreq;
 
     } while (probeMax < valRare);
 
-    MACRO_REPEAT_ADDING_ONE(_COMPARE_GREATER, NUMPROBE, 0, P, Rare);
-    MACRO_REPEAT_ADDING_ONE(_DEBUG_PRINT_VEC, NUMPROBE, 0, P, "..");
 
     int32_t back = 0; // NOTE: back must be signed 
     MACRO_REPEAT_ADDING_ONE(_COPY_LOW_AND_ADD, NUMPROBE, 0, P, back);
