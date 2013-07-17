@@ -26,9 +26,6 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
     schemes[ "f8p0" ] = match_v4_f8_p0;
-    schemes[ "f4p1" ] = match_v4_f4_p1;
-    schemes[ "f8p1" ] = match_v4_f8_p1;
-    schemes[ "f8p3" ] = match_v4_f8_p3;
 
     schemes[ "branchless" ] = branchlessintersection;
     schemes[ "scalarbranchlesscached" ] = scalar_branchless_cached;
@@ -111,9 +108,6 @@ std::map<std::string,intersectionfunction> realschemes = {
     {"f2p0", match_v4_f2_p0},
     {"f4p0", match_v4_f4_p0},
     {"f8p0", match_v4_f8_p0},
-    {"f4p1", match_v4_f4_p1},
-    {"f8p1", match_v4_f8_p1},
-    {"f8p3", match_v4_f8_p3},
     {"branchless", branchlessintersection},
     {"scalarbranchlesscached", scalar_branchless_cached},
     {"scalarbranchlesscached2", scalar_branchless_cached2},
