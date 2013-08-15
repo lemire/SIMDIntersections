@@ -38,21 +38,18 @@ public:
         rand(seed) {
     }
 
-    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
-        return generateUniform( N, Max);
-    }
 
     /**
      * fill the vector with N numbers uniformly picked from  from 0 to Max, not including Max
      * if it is not possible, an exception is thrown
      */
-    vector<uint32_t> generateUniform(uint32_t N, uint32_t Max) {
+    void generateUniform(uint32_t N, uint32_t Max, vector<uint32_t> & ans) {
         if (Max < N)
             throw runtime_error(
                     "can't generate enough distinct elements in small interval");
-        vector < uint32_t > ans;
+        ans.clear();
         if (N == 0)
-            return ans; // nothing to do
+            return; // nothing to do
         ans.reserve(N);
         assert(Max >= 1);
 
@@ -70,6 +67,7 @@ public:
                 ++i;
             }
             assert(c == ans.size());
+            assert(N == ans.size());
         } else {
             set < uint32_t > s;
             while (s.size() < N)
@@ -77,7 +75,14 @@ public:
             ans.assign(s.begin(), s.end());
             assert(N == ans.size());
         }
-        return ans;
+    }
+
+    // Max value is excluded from range
+    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
+        vector<uint32_t> ans;
+        ans.reserve(N);
+        generateUniform(N,Max,ans);
+        return  ans;
     }
 
     ZRandom rand;
@@ -86,17 +91,18 @@ public:
 
 class ClusteredDataGenerator {
 public:
+    vector<uint32_t>  buffer;
     UniformDataGenerator unidg;
     ClusteredDataGenerator(uint32_t seed = time(NULL)) :
-        unidg(seed) {
+        buffer(), unidg(seed) {
     }
 
     // Max value is excluded from range
     template<class iterator>
     void fillUniform(iterator begin, iterator end, uint32_t Min, uint32_t Max) {
-        vector < uint32_t > v = unidg.generateUniform(end - begin, Max - Min);
-        for (size_t k = 0; k < v.size(); ++k)
-            *(begin + k) = Min + v[k];
+        unidg.generateUniform(end - begin, Max - Min,buffer);
+        for (size_t k = 0; k < buffer.size(); ++k)
+            *(begin + k) = Min + buffer[k];
     }
 
     // Max value is excluded from range
