@@ -18,6 +18,110 @@ using namespace std;
 
 using namespace std::tr1;
 
+
+
+int numberOfTrailingZeros(uint64_t x) {
+    if (x == 0) return 64;
+    return  __builtin_ctzl(x);
+}
+
+
+
+
+class BoolArray {
+public:
+
+
+    vector<uint64_t> buffer;
+    size_t sizeinbits;
+    BoolArray(const size_t n, const uint64_t initval = 0) :
+        buffer(n / 64 + (n % 64 == 0 ? 0 : 1), initval),
+                sizeinbits(n) {
+    }
+
+    BoolArray() :
+        buffer(), sizeinbits(0) {
+    }
+
+    BoolArray(const BoolArray & ba) :
+        buffer(ba.buffer), sizeinbits(ba.sizeinbits) {
+    }
+
+    void setSizeInBits(const size_t sizeib) {
+        sizeinbits = sizeib;
+    }
+
+    void toArray(vector<uint32_t> & ans) {
+        size_t pos = 0;
+        for (size_t k = 0; k < buffer.size(); ++k) {
+            const uint64_t myword = buffer[k];
+            if(myword != 0)
+            for(int offset = 0; offset<64;++offset) {
+                    if((myword >> offset) == 0) break;
+                    offset+=numberOfTrailingZeros((myword >> offset));
+                    ans[pos++]=64 * k + offset;
+                }
+            }
+    }
+
+
+    BoolArray& operator=(const BoolArray & x) {
+        this->buffer = x.buffer;
+        this->sizeinbits = x.sizeinbits;
+        return *this;
+    }
+
+    /**
+     * set to true (whether it was already set to true or not)
+     *
+     * This is an expensive (random access) API, you really ought to
+     * prepare a new word and then append it.
+     */
+     __attribute__((always_inline))
+    inline void set(const size_t pos) {
+        buffer[pos / 64] |= (static_cast<uint64_t> (1) << (pos
+                % 64));
+    }
+
+    /**
+     * set to false (whether it was already set to false or not)
+     *
+     * This is an expensive (random access) API, you really ought to
+     * prepare a new word and then append it.
+     */
+     __attribute__((always_inline))
+    inline void unset(const size_t pos) {
+        buffer[pos / 64] |= ~(static_cast<uint64_t> (1) << (pos
+                % 64));
+    }
+
+    /**
+     * true of false? (set or unset)
+     */
+     __attribute__((always_inline))
+    inline bool get(const size_t pos) const {
+        return (buffer[pos / 64] & (static_cast<uint64_t> (1) << (pos
+                % 64))) != 0;
+    }
+
+    /**
+     * set all bits to 0
+     */
+    void reset() {
+        memset(&buffer[0], 0, sizeof(uint64_t) * buffer.size());
+        sizeinbits = 0;
+    }
+
+    size_t sizeInBits() const {
+        return sizeinbits;
+    }
+
+    ~BoolArray() {
+    }
+
+
+};
+
 vector<uint32_t> generateArray(uint32_t N, const uint32_t mask = 0xFFFFFFFFU) {
     vector < uint32_t > ans(N);
     for (size_t k = 0; k < N; ++k)
@@ -32,76 +136,105 @@ vector<uint32_t> generateArray32(uint32_t N, const uint32_t mask = 0xFFFFFFFFU) 
     return ans;
 }
 
+
 class UniformDataGenerator {
 public:
     UniformDataGenerator(uint32_t seed = time(NULL)) :
         rand(seed) {
     }
 
-    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
-        return generateUniform( N, Max);
-    }
-
     /**
      * fill the vector with N numbers uniformly picked from  from 0 to Max, not including Max
      * if it is not possible, an exception is thrown
      */
-    vector<uint32_t> generateUniform(uint32_t N, uint32_t Max) {
-        if (Max < N)
-            throw runtime_error(
-                    "can't generate enough distinct elements in small interval");
-        vector < uint32_t > ans;
-        if (N == 0)
-            return ans; // nothing to do
+    vector<uint32_t> generateUniformHash(uint32_t N, uint32_t Max, vector < uint32_t > & ans) {
+        if(Max < N) throw runtime_error("can't generate enough distinct elements in small interval");
+        ans.clear();
+        if(N==0) return ans; // nothing to do
         ans.reserve(N);
         assert(Max >= 1);
-
-        if (2 * N > Max) {
-            unordered_set < uint32_t > s;
-            while (s.size() < Max - N)
-                s.insert(rand.getValue(Max - 1));
-            vector < uint32_t > tmp(s.begin(), s.end());
+        if (2*N > Max) {
+            unordered_set <uint32_t> s;
+            while (s.size() < Max - N )
+                    s.insert(rand.getValue(Max - 1) );
+            vector<uint32_t> tmp(s.begin(), s.end());
             s.clear();
-            sort(tmp.begin(), tmp.end());
+            sort(tmp.begin(),tmp.end());
             tmp.push_back(Max);
             ans.resize(N);
             size_t i = 0;
             size_t c = 0;
-            for (size_t j = 0; j < tmp.size(); ++j) {
+            for(size_t j = 0; j < tmp.size() ; ++j) {
                 const uint32_t v = tmp[j];
-                for (; i < v; ++i)
-                    ans[c++] = i;
+                for(; i<v; ++i)
+                  ans[c++] = i;
                 ++i;
             }
             assert(c == ans.size());
         } else {
-            unordered_set < uint32_t > s;
-            while (s.size() < N)
-                s.insert(rand.getValue(Max - 1));
+            unordered_set <uint32_t> s;
+            while (s.size() < N )
+                s.insert(rand.getValue(Max - 1) );
             ans.assign(s.begin(), s.end());
-            sort(ans.begin(), ans.end());
+            sort(ans.begin(),ans.end());
             assert(N == ans.size());
         }
         return ans;
     }
 
+
+    void generateUniformBitmap(uint32_t N, uint32_t Max, vector<uint32_t> & ans) {
+        if(Max < N) throw runtime_error("can't generate enough distinct elements in small interval");
+        assert(Max >= 1);
+        BoolArray bs(Max);
+        uint32_t card = 0;
+        while(card < N) {
+            uint32_t v = rand.getValue(Max - 1) ;
+            if(!bs.get(v)) {
+                bs.set(v);
+                ++card;
+            }
+        }
+        ans.resize(N);
+        bs.toArray(ans);
+    }
+
+
+    void fastgenerateUniform(uint32_t N, uint32_t Max, vector<uint32_t> & ans) {
+        if(N*1024 > Max) {
+          generateUniformBitmap(N,Max,ans);
+        }
+        generateUniformHash(N,Max,ans);
+    }
+
+
+
+    // Max value is excluded from range
+    vector<uint32_t> generate(uint32_t N, uint32_t Max) {
+        vector<uint32_t> ans;
+        ans.reserve(N);
+        fastgenerateUniform(N,Max,ans);
+        return  ans;
+    }
     ZRandom rand;
 
 };
 
+
 class ClusteredDataGenerator {
 public:
+    vector<uint32_t>  buffer;
     UniformDataGenerator unidg;
     ClusteredDataGenerator(uint32_t seed = time(NULL)) :
-        unidg(seed) {
+        buffer(), unidg(seed) {
     }
 
     // Max value is excluded from range
     template<class iterator>
     void fillUniform(iterator begin, iterator end, uint32_t Min, uint32_t Max) {
-        vector < uint32_t > v = unidg.generateUniform(end - begin, Max - Min);
-        for (size_t k = 0; k < v.size(); ++k)
-            *(begin + k) = Min + v[k];
+        unidg.fastgenerateUniform(end - begin, Max - Min,buffer);
+        for (size_t k = 0; k < buffer.size(); ++k)
+            *(begin + k) = Min + buffer[k];
     }
 
     // Max value is excluded from range

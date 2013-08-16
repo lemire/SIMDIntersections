@@ -24,7 +24,7 @@ HEADERS= $(shell ls include/*h)
 
 all:  testintersection realintersection getmatrix
 
-match.o: src/match.c include/match.h  
+match.o: src/match.cpp include/match.h  
 	$(CXX) $(CXXFLAGS) -Iinclude -c src/match.cpp  
 
 testintersection: $(HEADERS) src/testintersection.cpp  match.o
