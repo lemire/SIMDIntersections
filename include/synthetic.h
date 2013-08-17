@@ -55,7 +55,6 @@ public:
         size_t pos = 0;
         for (size_t k = 0; k < buffer.size(); ++k) {
             const uint64_t myword = buffer[k];
-            if(myword != 0)
             for(int offset = 0; offset<64;++offset) {
                     if((myword >> offset) == 0) break;
                     offset+=numberOfTrailingZeros((myword >> offset));
@@ -143,6 +142,21 @@ public:
         rand(seed) {
     }
 
+
+    void negate(vector<uint32_t> & in , vector<uint32_t> & out, uint32_t Max) {
+        out.resize(Max-in.size());
+        in.push_back(Max);
+        size_t i = 0;
+        size_t c = 0;
+        for(size_t j = 0; j < in.size() ; ++j) {
+            const uint32_t v = in[j];
+            for(; i<v; ++i)
+                out[c++] = i;
+            ++i;
+        }
+        assert(c == out.size());
+    }
+
     /**
      * fill the vector with N numbers uniformly picked from  from 0 to Max, not including Max
      * if it is not possible, an exception is thrown
@@ -153,32 +167,12 @@ public:
         if(N==0) return ans; // nothing to do
         ans.reserve(N);
         assert(Max >= 1);
-        if (2*N > Max) {
-            unordered_set <uint32_t> s;
-            while (s.size() < Max - N )
-                    s.insert(rand.getValue(Max - 1) );
-            vector<uint32_t> tmp(s.begin(), s.end());
-            s.clear();
-            sort(tmp.begin(),tmp.end());
-            tmp.push_back(Max);
-            ans.resize(N);
-            size_t i = 0;
-            size_t c = 0;
-            for(size_t j = 0; j < tmp.size() ; ++j) {
-                const uint32_t v = tmp[j];
-                for(; i<v; ++i)
-                  ans[c++] = i;
-                ++i;
-            }
-            assert(c == ans.size());
-        } else {
-            unordered_set <uint32_t> s;
-            while (s.size() < N )
+        unordered_set <uint32_t> s;
+        while (s.size() < N )
                 s.insert(rand.getValue(Max - 1) );
-            ans.assign(s.begin(), s.end());
-            sort(ans.begin(),ans.end());
-            assert(N == ans.size());
-        }
+        ans.assign(s.begin(), s.end());
+        sort(ans.begin(),ans.end());
+        assert(N == ans.size());
         return ans;
     }
 
@@ -201,6 +195,12 @@ public:
 
 
     void fastgenerateUniform(uint32_t N, uint32_t Max, vector<uint32_t> & ans) {
+        if (2*N > Max) {
+            vector<uint32_t> buf(N);
+            fastgenerateUniform(Max-N,Max,buf);
+            negate(buf,ans,Max);
+            return;
+        }
         if(N*1024 > Max) {
           generateUniformBitmap(N,Max,ans);
         }
@@ -217,6 +217,7 @@ public:
         return  ans;
     }
     ZRandom rand;
+
 
 };
 
