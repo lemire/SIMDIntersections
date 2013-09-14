@@ -5,13 +5,13 @@
 ifeq ($(INTEL), 1)
 # if you wish to use the Intel compiler, please do "make INTEL=1".
     YOURCXX ?= /opt/intel/bin/icpc
-    CXXFLAGS = -std=c++0x -O3 -Wall -msse4.2 -DNDEBUG=1 -g3
+    CXXFLAGS = -std=c++0x -O3 -Wall -mAVX -DNDEBUG=1 -g3
 else 
     YOURCXX ?= g++-4.7
 ifeq ($(DEBUG),1)
-    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align  -Winline
+    CXXFLAGS = -mavx -std=c++0x -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align  -Winline
 else
-    CXXFLAGS = -msse4.2 -std=c++0x -Weffc++ -DNDEBUG=1 -pedantic -O3 -Wall -Wextra -Winline  -Wcast-align  
+    CXXFLAGS = -mavx -std=c++0x -Weffc++ -DNDEBUG=1 -pedantic -O3 -Wall -Wextra -Winline  -Wcast-align  
 endif
 endif
 
