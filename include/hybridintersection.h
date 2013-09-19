@@ -53,21 +53,21 @@ size_t danielshybridintersection(const uint32_t * set1,
     if ((length1==0) or (length2 == 0)) return 0;
     const double scale1 = set1[length1 - 1];
     const double scale2 = set2[length2 - 1];
-    if ((10 * length1 * scale2 <= length2 * scale1) or (10 * length2 * scale1 <= length1 * scale2)) {
-	if ((200 * length1 * scale2 < length2 * scale1) or (200 * length2 * scale1 < length1 * scale2)) {
-            if (length1 * scale2 < length2 * scale1)
+    if ((10 * static_cast<double>(length1) * scale2 <= static_cast<double>(length2) * scale1) or (10 * static_cast<double>(length2) * scale1 <= static_cast<double>(length1) * scale2)) {
+	if ((200 * static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1) or (200 * static_cast<double>(length2) * scale1 < static_cast<double>(length1) * scale2)) {
+            if (static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1)
                 return danfar_medium(set1, length1,
                         set2, length2,out);
             else
                 return danfar_medium(set2, length2,
                         set1, length1,out);
         }
-        if (length1 * scale2 < length2 * scale1)
+        if (static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1)
                 return natedanalt_medium(set1, length1, set2, length2,out);
         else
                 return natedanalt_medium(set2, length2, set1, length1,out);
-    } else if ((2 * length1 * scale2 <= length2 * scale1) or (2 * length2 * scale1 <= length1 * scale2)) {
-            if (length1 * scale2 < length2 * scale1)
+    } else if ((2 * static_cast<double>(length1) * scale2 <= static_cast<double>(length2) * scale1) or (2 * static_cast<double>(length2) * scale1 <= static_cast<double>(length1) * scale2)) {
+            if (static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1)
                 return match_v4_f2_p0(set1, length1,
                         set2, length2,out);
             else

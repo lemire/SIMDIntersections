@@ -168,8 +168,8 @@ int main(int argc, char **argv) {
                             + 1].size() : data[2 * k].size();
         }
 
-        cout << std::fixed << std::setprecision(3) << intersize * 1.0
-                / smallestsize << "\t";
+        cout << std::fixed << std::setprecision(3) << static_cast<double>(intersize)
+                / static_cast<double>(smallestsize) << "\t";
         cout.flush();
         if (ratio > 1) {
             if (natemode) {
@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 
             }
             time = z.split();
-            cout << std::setprecision(0) << volume * 1.0 / (time) << "\t";
+            cout << std::setprecision(0) << static_cast<double>(volume) / static_cast<double>(time) << "\t";
             cout.flush();
         }
 

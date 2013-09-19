@@ -1,7 +1,7 @@
 #include "match.h"
 
 size_t match_scalar(const uint32_t *A, const size_t lenA,
-                    const uint32_t *B, const size_t lenB, 
+                    const uint32_t *B, const size_t lenB,
                     uint32_t *out) {
 
     const uint32_t *initout = out;
@@ -9,10 +9,10 @@ size_t match_scalar(const uint32_t *A, const size_t lenA,
 
     const uint32_t *endA = A + lenA;
     const uint32_t *endB = B + lenB;
-    
+
     while (1) {
         while (*A < *B) {
-        SKIP_FIRST_COMPARE: 
+        SKIP_FIRST_COMPARE:
             if (++A == endA) goto FINISH;
         }
         while (*A > *B) {
@@ -63,7 +63,7 @@ size_t match_v4_f2_p0
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -156,7 +156,7 @@ size_t match_v4_f4_p0
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -261,7 +261,7 @@ size_t match_v4_f8_p0
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -374,7 +374,7 @@ size_t match_v4_f2_p1
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -485,7 +485,7 @@ size_t match_v4_f4_p1
 ADVANCE_RARE:
     do {
 
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -606,7 +606,7 @@ size_t match_v4_f8_p1
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -736,7 +736,7 @@ size_t match_v4_f2_p2
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -854,7 +854,7 @@ size_t match_v4_f4_p2
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -980,7 +980,7 @@ size_t match_v4_f8_p2
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -1115,7 +1115,7 @@ size_t match_v4_f2_p3
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -1237,7 +1237,7 @@ size_t match_v4_f4_p3
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -1372,7 +1372,7 @@ size_t match_v4_f8_p3
 
 ADVANCE_RARE:
     do {
-        *matchOut = valRare;
+        *matchOut = static_cast<uint32_t>(valRare);
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 

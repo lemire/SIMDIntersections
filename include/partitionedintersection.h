@@ -14,13 +14,13 @@ namespace partitioned {
  * Silly function.
  */
 uint16_t _high16(uint32_t x) {
-    return x >> 16;
+    return static_cast<uint16_t>(x >> 16);
 }
 /**
  * Another function.
  */
 uint16_t _low16(uint32_t x) {
-    return x;
+    return static_cast<uint16_t>(x);
 }
 
 /**
@@ -31,7 +31,7 @@ uint16_t _low16(uint32_t x) {
 // R - partitioned sorted array
 size_t partition(const uint32_t *A, const size_t s_a, uint16_t *R, const size_t /*Rlength*/) {
     uint16_t high = 0;
-    size_t partition_length = 0;
+    int partition_length = 0;
     size_t partition_size_position = 1;
     size_t counter = 0;
     size_t p = 0;
@@ -60,13 +60,13 @@ size_t partition(const uint32_t *A, const size_t s_a, uint16_t *R, const size_t 
             R[counter++] = chigh; // partition prefix
             R[counter++] = 0; // reserve place for partition size
             R[counter++] = clow; // write the first element
-            R[partition_size_position] = partition_length - 1; // store "-1"
+            R[partition_size_position] = static_cast<uint16_t>(partition_length - 1); // store "-1"
             partition_length = 1; // reset counters
             partition_size_position = counter - 2;
             high = chigh;
         }
     }
-    R[partition_size_position] = partition_length - 1;
+    R[partition_size_position] = static_cast<uint16_t>(partition_length - 1);
 
     return counter;
 }

@@ -137,14 +137,14 @@ int main(int argc, char **argv) {
         cout<< std::setprecision(3)<< (100*ir) << "%\t\t";
         cout.flush();
         for(uint32_t sr :  sizeratios) {
-            vector<uint32_t> buffer(round(sr*minlength + 15)/16*16);
+            vector<uint32_t> buffer((sr*minlength + 15)/16*16);
             vector <
             pair<
             vector<uint32_t>, vector<uint32_t>
             >
             > data(howmany);
             for(size_t k = 0; k < howmany; ++k)
-                data[k] = getPair(cdg, minlength,1U<<MaxBit, sr, ir);
+                data[k] = getPair(cdg, minlength,1U<<MaxBit, static_cast<float>(sr), ir);
             size_t volume = 0;
             z.reset();
             for (size_t L = 0; L < loop; ++L) {
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 
             }
             time = z.split();
-            cout << std::setprecision(4) << volume * 1.0 / (time) << "\t";
+            cout << std::setprecision(4) << static_cast<double>(volume) / static_cast<double>(time) << "\t";
             cout.flush();
 
 

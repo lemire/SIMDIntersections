@@ -58,7 +58,7 @@ public:
             for(int offset = 0; offset<64;++offset) {
                     if((myword >> offset) == 0) break;
                     offset+=numberOfTrailingZeros((myword >> offset));
-                    ans[pos++]=64 * k + offset;
+                    ans[pos++]=static_cast<uint32_t>(64 * k + offset);
                 }
             }
     }
@@ -146,7 +146,7 @@ public:
     void negate(vector<uint32_t> & in , vector<uint32_t> & out, uint32_t Max) {
         out.resize(Max-in.size());
         in.push_back(Max);
-        size_t i = 0;
+        uint32_t i = 0;
         size_t c = 0;
         for(size_t j = 0; j < in.size() ; ++j) {
             const uint32_t v = in[j];
@@ -226,14 +226,14 @@ class ClusteredDataGenerator {
 public:
     vector<uint32_t>  buffer;
     UniformDataGenerator unidg;
-    ClusteredDataGenerator(uint32_t seed = time(NULL)) :
+    ClusteredDataGenerator(uint32_t seed = static_cast<uint32_t>(time(NULL))) :
         buffer(), unidg(seed) {
     }
 
     // Max value is excluded from range
     template<class iterator>
     void fillUniform(iterator begin, iterator end, uint32_t Min, uint32_t Max) {
-        unidg.fastgenerateUniform(end - begin, Max - Min,buffer);
+        unidg.fastgenerateUniform(static_cast<uint32_t>(end - begin), Max - Min,buffer);
         for (size_t k = 0; k < buffer.size(); ++k)
             *(begin + k) = Min + buffer[k];
     }
@@ -242,7 +242,7 @@ public:
     // throws exception if impossible
     template<class iterator>
     void fillClustered(iterator begin, iterator end, uint32_t Min, uint32_t Max) {
-        const size_t N = end - begin;
+        const uint32_t N = static_cast<uint32_t>(end - begin);
         const uint32_t range = Max - Min;
         if (range < N)
             throw runtime_error("can't generate that many in small interval.");
@@ -289,7 +289,7 @@ public:
     vector<double> proba;
 
     ZRandom rand;
-    ZipfianGenerator(uint32_t seed = time(NULL)) :
+    ZipfianGenerator(uint32_t seed = static_cast<uint32_t>(time(NULL))) :
         n(0), zetan(0), theta(0), proba(n), rand(seed) {
     }
 
@@ -330,7 +330,7 @@ public:
     int nextInt() {
         // Map z to the value
         const double u = rand.getDouble();
-        return lower_bound(proba.begin(), proba.end(), u) - proba.begin();
+        return static_cast<int>(lower_bound(proba.begin(), proba.end(), u) - proba.begin());
     }
 
 };
@@ -360,25 +360,25 @@ vector<uint32_t> generateZipfianArray32(uint32_t N, double power,
  *  intersectionratio * minlength : length of the intersection
  */
 template <class generator>
-pair<vector<uint32_t>,vector<uint32_t> > getPair(generator gen, size_t minlength,size_t Max, float sizeratio, float intersectionratio) {
+pair<vector<uint32_t>,vector<uint32_t> > getPair(generator gen, uint32_t minlength,uint32_t Max, float sizeratio, float intersectionratio) {
     if(sizeratio < 1) throw runtime_error("sizeratio should be larger or equal to 1");
     if(intersectionratio < 0) throw runtime_error("intersectionratio should be positive");
     if(intersectionratio > 1) throw runtime_error("intersectionratio cannot be larger than 1");
-    const size_t maxlenth = round(minlength * sizeratio);
+    const uint32_t maxlenth = static_cast<uint32_t>(round(static_cast<float>(minlength) * sizeratio));
     if(maxlenth > Max)  throw runtime_error("I can't generate an array so large in such a small range.");
     if(maxlenth < minlength) throw runtime_error("something went wrong, possibly an overflow.");
     // we basically assume that, if we do nothing, intersections are very small
-    const size_t intersize = round (minlength * intersectionratio);
+    const uint32_t intersize = static_cast<uint32_t>(round (static_cast<float>(minlength) * intersectionratio));
 
     vector<uint32_t> inter = gen.generate(intersize,Max);
-    vector<uint32_t> smallest =  unite(gen.generate(minlength-inter.size(),Max),inter);
-    vector<uint32_t> largest = unite(gen.generate(maxlenth-inter.size(),Max),inter);
+    vector<uint32_t> smallest =  unite(gen.generate(static_cast<uint32_t>(minlength-inter.size()),Max),inter);
+    vector<uint32_t> largest = unite(gen.generate(static_cast<uint32_t>(maxlenth-inter.size()),Max),inter);
     vector<uint32_t> intersection = intersect(smallest,largest);
 
-    if(abs(intersection.size() * 1.0 /smallest.size() - intersectionratio) > 0.05)
+    if(abs(static_cast<double>(intersection.size())  /static_cast<double>(smallest.size()) - intersectionratio) > 0.05)
         throw runtime_error("Bad intersection ratio. Fix me.");
 
-    if(abs(largest.size() * 1.0 /smallest.size() - sizeratio) > 0.05)
+    if(abs(static_cast<double>(largest.size())  /static_cast<double>(smallest.size()) - sizeratio) > 0.05)
         throw runtime_error("Bad size ratio. Fix me.");
     return pair<vector<uint32_t>,vector<uint32_t> >(smallest,largest);
 }
