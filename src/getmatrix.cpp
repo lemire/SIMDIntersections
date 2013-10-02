@@ -82,6 +82,10 @@ int main(int argc, char **argv) {
     if (howmany == 0) {
         howmany = 5;
     }
+    if(myscheme == NULL) {
+        printusage();
+        return -1;
+    }
     const uint32_t minlength = 1U << S;
     cout << "########### Intersection benchmark ###########" << endl;
 

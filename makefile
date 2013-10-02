@@ -9,9 +9,9 @@ ifeq ($(INTEL), 1)
 else 
     YOURCXX ?= g++-4.7
 ifeq ($(DEBUG),1)
-    CXXFLAGS = -mavx -std=c++0x -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align -Wconversion  -Winline
+    CXXFLAGS = -mavx -std=c++11 -Weffc++ -pedantic -ggdb -Wall -Wextra -Wcast-align -Wconversion  -Winline
 else
-    CXXFLAGS = -mavx -std=c++0x -Weffc++ -DNDEBUG=1 -pedantic -O3 -Wall -Wextra -Winline  -Wcast-align  -Wconversion
+    CXXFLAGS = -mavx -std=c++11 -Weffc++ -DNDEBUG=1 -pedantic -O3 -Wall -Wextra -Winline  -Wcast-align  -Wconversion
 endif
 endif
 
