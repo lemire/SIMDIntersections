@@ -96,12 +96,10 @@ size_t frogintersectioncardinality(const uint32_t * set1, const size_t length1,
 
 }
 
-/**
- * assumes that smalllength < largelength
- */
 size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
         const size_t smalllength, const uint32_t * largeset,
         const size_t largelength) {
+    if(largelength < smalllength) return onesidedgallopingintersectioncardinality(largeset,largelength,smallset,smalllength);
     if (0 == smalllength)
         return 0;
     size_t answer = 0;
@@ -132,12 +130,10 @@ size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
 }
 
 
-/**
- * assumes that smalllength < largelength
- */
 size_t onesidedgallopingintersection(const uint32_t * smallset,
         const size_t smalllength, const uint32_t * largeset,
         const size_t largelength, uint32_t * out) {
+    if(largelength < smalllength) return onesidedgallopingintersection(largeset,largelength,smallset,smalllength,out);
     if (0 == smalllength)
         return 0;
     const uint32_t * const initout(out);
