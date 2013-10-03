@@ -50,7 +50,7 @@ size_t match_v4_f2_p0
     VEC_T F0, F1;
 
     if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
-    uint64_t valRare;
+    uint32_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
 
@@ -63,7 +63,7 @@ size_t match_v4_f2_p0
 
 ADVANCE_RARE:
     do {
-        *matchOut = static_cast<uint32_t>(valRare);
+        *matchOut = valRare;
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
@@ -141,7 +141,7 @@ size_t match_v4_f4_p0
     VEC_T F0, F1, F2, F3;
 
     if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
-    uint64_t valRare;
+    uint32_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
 
@@ -156,7 +156,7 @@ size_t match_v4_f4_p0
 
 ADVANCE_RARE:
     do {
-        *matchOut = static_cast<uint32_t>(valRare);
+        *matchOut = valRare;
         valRare = rare[1]; // for next iteration
         ASM_LEA_ADD_BYTES(rare, sizeof(*rare)); // rare += 1;
 
