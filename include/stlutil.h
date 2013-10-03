@@ -7,14 +7,14 @@
 
 vector<uint32_t> unite(const vector<uint32_t> & x, const vector<uint32_t> & y) {
     vector<uint32_t> ans (x.size() + y.size());
-    ans.resize(unite(&x[0],x.size(), &y[0],y.size(), &ans[0]));
+    ans.resize(unite(x.data(),x.size(), y.data(),y.size(), ans.data()));
     return ans;
 }
 
 
 vector<uint32_t> intersect(const vector<uint32_t> & x, const vector<uint32_t> & y) {
     vector<uint32_t> ans (x.size() + y.size());
-    ans.resize(classicalintersection(&x[0],x.size(), &y[0],y.size(), &ans[0]));
+    ans.resize(classicalintersection(x.data(),x.size(), y.data(),y.size(), ans.data()));
     return ans;
 }
 

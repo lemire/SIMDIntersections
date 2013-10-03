@@ -107,7 +107,7 @@ public:
      * set all bits to 0
      */
     void reset() {
-        memset(&buffer[0], 0, sizeof(uint64_t) * buffer.size());
+        memset(buffer.data(), 0, sizeof(uint64_t) * buffer.size());//memset can be slow
         sizeinbits = 0;
     }
 
