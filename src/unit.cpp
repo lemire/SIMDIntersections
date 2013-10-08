@@ -9,7 +9,7 @@
 #include "common.h"
 #include "intersectionfactory.h"
 
-int test1(intersectionfunction f) {
+int test1(intersectionfunction f, bool testwriteback) {
 
     const uint32_t firstpost[227] = { 1418, 3436, 4642, 7532, 13479, 13485,
             17600, 17602, 17606, 18096, 24309, 27964, 29019, 29021, 33006,
@@ -590,6 +590,7 @@ int test1(intersectionfunction f) {
     correct.resize(cs);
     if (inter != correct)
         return 1;
+    if(!testwriteback) return 0;
     vector < uint32_t > inter2(firstpost,firstpost+227);
     size_t s2 = f(inter2.data(), 227, secondpost, 4786, inter2.data());
     inter2.resize(s2);
@@ -605,7 +606,8 @@ int main() {
         cout<<"testing "<<n<<" ... ";
         cout.flush();
         int code;
-        if((code = test1(realschemes[n]))==0)
+        bool testwriteback = (n != "hssimd") && (n != "hssimddan");
+        if((code = test1(realschemes[n],testwriteback))==0)
             cout<<"ok"<<endl;
         else {
             cout<<" Error"<<code<<endl;

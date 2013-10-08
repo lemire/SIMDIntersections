@@ -132,8 +132,7 @@ std::map<std::string,intersectionfunction> realschemes = {
 
 
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
-    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD},
-};
+    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD}};
 
 
 std::map<std::string,cardinalityintersectionfunction> schemes = {

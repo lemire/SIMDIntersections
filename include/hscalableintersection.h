@@ -1,6 +1,9 @@
 /*
  * Schemes inspired or lifted from
  * http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
+ *
+ * The downside of these schemes is that they can't safely write back on the input
+ * buffers.
  */
 
 #ifndef HSCALABLEINTERSECTION_H_
@@ -55,10 +58,8 @@ size_t intersect_scalar(const uint32_t *A, const size_t s_a,
     return out - initout;
 }
 /**
- * Note that the original shuffle_mask construction from
+ * More or less from
  * http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
- * is wrong/unsafe in the sense that it will zero values that should be
- * left unperturbed.
  */
 const static __m128i shuffle_mask[16] = {
         _mm_set_epi8(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0),
@@ -174,9 +175,13 @@ size_t cardinality_intersect_SIMD(const uint32_t *A, const size_t s_a,
 
 /**
  * Taken almost verbatim from http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
+ *
+ * It is not safe for out to be either A or B.
  */
 size_t intersect_SIMD(const uint32_t *A, const size_t s_a,
         const uint32_t *B, const size_t s_b, uint32_t * out) {
+    assert(out != A);
+    assert(out != B);
     const uint32_t * const initout (out);
     size_t i_a = 0, i_b = 0;
 
@@ -298,9 +303,15 @@ size_t dan_cardinality_intersect_SIMD(const uint32_t *A, const size_t s_a,
 }
 
 
-
+/**
+ * Optimized version of http://highlyscalable.wordpress.com/2012/06/05/fast-intersection-sorted-lists-sse/
+ *
+ * It is not safe for out to be either A or B.
+ */
 size_t dan_intersect_SIMD(const uint32_t *A, const size_t s_a,
         const uint32_t *B, const size_t s_b, uint32_t * out) {
+    assert(out != A);
+    assert(out != B);
     const uint32_t * const initout (out);
     size_t i_a = 0, i_b = 0;
     const static uint32_t cyclic_shift1 = _MM_SHUFFLE(0, 3, 2, 1);
