@@ -22,7 +22,8 @@ CXX := $(YOURCXX)
 
 HEADERS= $(shell ls include/*h)
 
-all:  testintersection realintersection getmatrix
+all: unit testintersection realintersection getmatrix
+	echo "please run unit tests by running the unit executable"
 
 match.o: src/match.cpp include/match.h  
 	$(CXX) $(CXXFLAGS) -Iinclude -c src/match.cpp  
