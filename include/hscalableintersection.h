@@ -262,7 +262,7 @@ size_t dan_cardinality_intersect_SIMD(const uint32_t *A, const size_t s_a,
             cmp_mask = _mm_or_si128(cmp_mask, cmp_mask4);
             // convert the 128-bit mask to the 4-bit mask
             const int mask = _mm_movemask_ps((__m128 ) cmp_mask);
-            count += _mm_popcnt_u32(mask); // a number of elements is a weight of the mask
+            count += _mm_popcnt_u32(mask); // the number of elements is the weight of the mask
             const uint32_t a_max = A[i_a + 3];
             if (a_max <= B[i_b + 3]) {
                 i_a += 4;

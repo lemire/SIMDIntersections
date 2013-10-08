@@ -36,6 +36,10 @@ realintersection: $(HEADERS) src/realintersection.cpp  match.o
 getmatrix: $(HEADERS) src/getmatrix.cpp  match.o
 	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  match.o
 
+unit: $(HEADERS) src/unit.cpp  match.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o unit src/unit.cpp  match.o
+
+
 clean: 
 	rm -f *.o testintersection realintersection getmatrix
 
