@@ -48,8 +48,19 @@ size_t olddanielshybridintersection(const uint32_t * set1,
 size_t danielshybridintersection(const uint32_t * set1,
         const size_t length1, const uint32_t * set2, const size_t length2, uint32_t *out) {
     if ((length1==0) or (length2 == 0)) return 0;
-    const double scale1 = set1[length1 - 1];
-    const double scale2 = set2[length2 - 1];
+    const double scale1 = set1[length1 - 1] - set1[0] + 1;
+    const double scale2 = set2[length2 - 1] - set2[0] + 1;
+    /**
+     * We compare the densities, defined respectively as
+     *
+     * length1/(set1[length1 - 1] - set1[0] + 1)
+     *
+     * and
+     *
+     * length2 / (set2[length1 - 1] - set2[0] + 1)
+     *
+     * Based on this comparison, we select one 3 algorithms.
+     */
     if ((10 * static_cast<double>(length1) * scale2 <= static_cast<double>(length2) * scale1) or (10 * static_cast<double>(length2) * scale1 <= static_cast<double>(length1) * scale2)) {
 	if ((200 * static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1) or (200 * static_cast<double>(length2) * scale1 < static_cast<double>(length1) * scale2)) {
             if (static_cast<double>(length1) * scale2 < static_cast<double>(length2) * scale1)
