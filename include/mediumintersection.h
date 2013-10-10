@@ -380,7 +380,7 @@ size_t natedanalt_medium(const uint32_t *rare, const size_t lenRare,
     size_t count = 0;
     if (lenFreq == 0 || lenRare == 0)
         return count;
-
+    assert(lenRare <= lenFreq);
     typedef __m128i vec;
     const uint32_t veclen = sizeof(vec) / sizeof(uint32_t);
     const size_t vecmax = veclen - 1;
@@ -507,6 +507,7 @@ size_t danfar_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
         return 0;
+    assert(lenRare <= lenFreq);
     const uint32_t * const initout (out);
     typedef __m128i vec;
     const uint32_t veclen = sizeof(vec) / sizeof(uint32_t);

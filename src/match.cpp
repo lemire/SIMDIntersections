@@ -35,7 +35,7 @@ size_t match_v4_f2_p0
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
  uint32_t *matchOut) {
-
+    assert(lenRare <= lenFreq);
     const uint32_t *matchOrig = matchOut;
     if (lenFreq == 0 || lenRare == 0) return 0;
 

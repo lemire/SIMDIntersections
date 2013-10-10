@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <immintrin.h>
+#include <assert.h>
 
 #define VEC_T __m128i
 
