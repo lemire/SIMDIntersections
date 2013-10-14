@@ -119,6 +119,8 @@ std::map<std::string,intersectionfunction> realschemes = {
 
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
+    {   "scalar1sgallopingexperimental", onesidedgallopingintersection_experimental},
+
     {   "scalarnate", nate_scalar},
     {   "scalarnatewg",  nate_scalarwithoutgoto},
 

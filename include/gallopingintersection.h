@@ -62,6 +62,65 @@ static size_t __frogadvanceUntil(const uint32_t * array, const size_t pos,
 
 }
 
+
+
+/**
+ * EXPERIMENTAL VERSION
+ *
+ * This is often called galloping or exponential search.
+ *
+ * Used by frogintersectioncardinality below
+ *
+ * Based on binary search...
+ * Find the smallest integer larger than pos such
+ * that array[pos]>= min.
+ * If none can be found, return array.length.
+ * From code by O. Kaser.
+ */
+static size_t __frogadvanceUntil_experimental(const uint32_t * array, const size_t pos,
+        const size_t length, const size_t min) {
+    size_t lower = pos + 1;
+
+    // special handling for a possibly common sequential case
+    if ((lower >= length) or (array[lower] >= min)) {
+        return lower;
+    }
+
+    size_t spansize = 1; // could set larger
+    // bootstrap an upper limit
+
+    while ((lower + spansize < length) and (array[lower + spansize] < min))
+        spansize *= 2;
+    size_t upper = (lower + spansize < length) ? lower + spansize : length - 1;
+
+    // maybe we are lucky (could be common case when the seek ahead expected to be small and sequential will otherwise make us look bad)
+    /*if (array[upper] == min) {
+        return upper;
+    }*/
+
+    if (array[upper] < min) {// means array has no item >= min
+        return length;
+    }
+
+    // we know that the next-smallest span was too small
+    lower += (spansize / 2);
+
+    // else begin binary search
+    size_t mid = 0;
+    while (lower + 1 != upper) {
+        mid = (lower + upper) / 2;
+        if (array[mid] == min) {
+            return mid;
+        } else if (array[mid] < min)
+            lower = mid;
+        else
+            upper = mid;
+    }
+    return upper;
+
+}
+
+
 /**
  * based on galloping
  */
@@ -95,6 +154,7 @@ size_t frogintersectioncardinality(const uint32_t * set1, const size_t length1,
     return answer;
 
 }
+
 
 size_t onesidedgallopingintersectioncardinality(const uint32_t * smallset,
         const size_t smalllength, const uint32_t * largeset,
@@ -163,5 +223,39 @@ size_t onesidedgallopingintersection(const uint32_t * smallset,
 
 }
 
+
+
+size_t onesidedgallopingintersection_experimental(const uint32_t * smallset,
+        const size_t smalllength, const uint32_t * largeset,
+        const size_t largelength, uint32_t * out) {
+    if(largelength < smalllength) return onesidedgallopingintersection_experimental(largeset,largelength,smallset,smalllength,out);
+    if (0 == smalllength)
+        return 0;
+    const uint32_t * const initout(out);
+    size_t k1 = 0, k2 = 0;
+    while (true) {
+        if (largeset[k1] < smallset[k2]) {
+            k1 = __frogadvanceUntil_experimental(largeset, k1, largelength, smallset[k2]);
+            if (k1 == largelength)
+                break;
+        }
+        midpoint: if (smallset[k2] < largeset[k1]) {
+            ++k2;
+            if (k2 == smalllength)
+                break;
+        } else {
+            *out++ = smallset[k2];
+            ++k2;
+            if (k2 == smalllength)
+                break;
+            k1 = __frogadvanceUntil_experimental(largeset, k1, largelength, smallset[k2]);
+            if (k1 == largelength)
+                break;
+            goto midpoint;
+        }
+    }
+    return out - initout;
+
+}
 
 #endif /* GALLOPINGINTERSECTION_H_ */
