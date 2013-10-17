@@ -9,15 +9,15 @@
 #include "timer.h"
 #include "synthetic.h"
 #include "util.h"
-
-
+#include "skipping.h"
 
 void printusage() {
     cout << " Try ./realintersection -r 40" << endl;
     cout << " Use the -s flag to specify just some scheme, choose from: "
             << endl;
     for(string x : allRealNames()) cout <<" "<< x << endl;
-    cout << " Separate the schemes by a comma (e.g. -s schlegel,danscalar). "<< endl;
+    cout << " Separate the schemes by a comma (e.g. -s schlegel,danscalar). "
+            << endl;
 }
 
 int main(int argc, char **argv) {
@@ -27,10 +27,15 @@ int main(int argc, char **argv) {
     size_t loop = 1000;
     uint32_t S = 12;
     uint32_t ratio = 1;
+    bool skipping = false;
     map<string, intersectionfunction> myschemes(realschemes);
     int c;
-    while ((c = getopt(argc, argv, "uns:S:m:l:r:h")) != -1)
+    while ((c = getopt(argc, argv, "uns:S:m:l:r:hk")) != -1)
         switch (c) {
+        case 'k':
+            skipping = true;
+            myschemes.clear();
+            break;
         case 'u':
             safe = false;
             break;
@@ -59,19 +64,19 @@ int main(int argc, char **argv) {
             myschemes.clear();
             {
                 const string codecsstr(optarg);
-                const vector < string > codecslst = split(codecsstr, ",:;");
+                const vector<string> codecslst = split(codecsstr, ",:;");
                 for (auto i = codecslst.begin(); i != codecslst.end(); ++i) {
                     if (realschemes.find(*i) == realschemes.end()) {
-                            cerr << " Warning!!! Warning: unrecognized: " << *i
-                                    << endl;
-                            printusage();
-                            return -1;
+                        cerr << " Warning!!! Warning: unrecognized: " << *i
+                                << endl;
+                        printusage();
+                        return -1;
 
                     } else {
                         const auto K = realschemes.find(*i);
                         const std::string name = K->first;
                         const intersectionfunction fn = K->second;
-                        myschemes[name] =  fn;
+                        myschemes[name] = fn;
                     }
                 }
             }
@@ -105,7 +110,7 @@ int main(int argc, char **argv) {
         if (MaxBit > 31)
             MaxBit = 31;
     }
-    cout<<"# algo: ";
+    cout << "# algo: ";
     for(auto algo : myschemes) {
         cout << algo.first<< " ";
     }
@@ -168,8 +173,9 @@ int main(int argc, char **argv) {
                             + 1].size() : data[2 * k].size();
         }
 
-        cout << std::fixed << std::setprecision(3) << static_cast<double>(intersize)
-                / static_cast<double>(smallestsize) << "\t";
+        cout << std::fixed << std::setprecision(3)
+                << static_cast<double> (intersize)
+                        / static_cast<double> (smallestsize) << "\t";
         cout.flush();
         if (ratio > 1) {
             if (natemode) {
@@ -200,61 +206,114 @@ int main(int argc, char **argv) {
         cout.flush();
         size_t maxsize = 0;
         for(auto x : data)
-            if(x.size() > maxsize) maxsize = x.size();
-        vector<uint32_t> buffer((maxsize+15)/16*16);
-        for(auto algo : myschemes) {
-            if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
+          if(x.size() > maxsize) maxsize = x.size();
+        vector < uint32_t > buffer((maxsize + 15) / 16 * 16);
+        /**
+         * Skipping is a standard technique in IR. We test it here.
+         */
+        if (skipping) {
+            vector < Skipping > sdata;
+            for(vector<uint32_t> & x : data)
+                sdata.emplace_back(Skipping(32,x.data(),static_cast<uint32_t>(x.size())));
             for (size_t k = 0; k < 2 * howmany; k += 2) {
-                vector<uint32_t> out(buffer.size());
-                size_t correctanswer = classicalintersection(
-                        &data[k][0], data[k].size(), &data[k + 1][0],
-                        data[k + 1].size(),&out[0]);
+                vector < uint32_t > out(buffer.size());
+                size_t correctanswer = classicalintersection(&data[k][0],
+                        data[k].size(), &data[k + 1][0], data[k + 1].size(),
+                        &out[0]);
                 out.resize(correctanswer);
-                vector<uint32_t> out2(buffer.size());
-                size_t thisschemesanswer = algo.second(
-                        &data[k][0], data[k].size(), &data[k + 1][0],
-                        data[k + 1].size(),&out2[0]);
+                vector < uint32_t > out2(buffer.size());
+                size_t thisschemesanswer = sdata[k].intersect(sdata[k+1],&out2[0]);
                 out2.resize(thisschemesanswer);
                 if (out != out2) {
-                    if(thisschemesanswer != correctanswer) {
+                    if (thisschemesanswer != correctanswer) {
                         cerr << "expecting cardinality of " << correctanswer;
-                        cerr << " got " << thisschemesanswer << "."
-                        << endl;
-                        if(correctanswer < 10)
-                            for(uint32_t x : out)
-                                cerr<<x<<endl;
-                    } else {
-                        cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
-                        for(size_t jj = 0; jj < correctanswer; ++jj)
-                            if(out[jj]!= out2[jj]) {
-                                cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
-                                break;
-                            }
+                        cerr << " got " << thisschemesanswer << "." << endl;
+if                    (correctanswer < 10)
+                    for(uint32_t x : out)
+                    cerr<<x<<endl;
+                } else {
+                    cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
+                    for(size_t jj = 0; jj < correctanswer; ++jj)
+                    if(out[jj]!= out2[jj]) {
+                        cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
+                        break;
                     }
-                    throw runtime_error("bug");
                 }
+                throw runtime_error("bug");
             }
-            volume = 0;
-            z.reset();
-            for (size_t L = 0; L < loop; ++L) {
-
-                for (size_t k = 0; k < 2 * howmany; k += 2) {
-                    volume += data[k].size();
-                    volume += data[k + 1].size();
-                    bogus
-                    += algo.second(&data[k][0],
-                            data[k].size(), &data[k + 1][0],
-                            data[k + 1].size(),&buffer[0]);
-                }
-
-            }
-            time = z.split();
-            cout << std::setprecision(0) << static_cast<double>(volume) / static_cast<double>(time) << "\t";
-            cout.flush();
         }
+        volume = 0;
+        z.reset();
+        for (size_t L = 0; L < loop; ++L) {
 
-        cout << endl;
+            for (size_t k = 0; k < 2 * howmany; k += 2) {
+                volume += data[k].size();
+                volume += data[k + 1].size();
+                bogus
+                += sdata[k].intersect(sdata[k+1],&buffer[0]);
+            }
 
+        }
+        time = z.split();
+        cout << std::setprecision(0) << static_cast<double>(volume) / static_cast<double>(time) << "\t";
+        cout.flush();
     }
-    cout << "# bogus = " << bogus << endl;
+    /**
+    * End of Skipping
+    */
+    for(auto algo : myschemes) {
+        if (safe and buggyschemes.find(algo.first) == buggyschemes.end() )
+        for (size_t k = 0; k < 2 * howmany; k += 2) {
+            vector<uint32_t> out(buffer.size());
+            size_t correctanswer = classicalintersection(
+                    &data[k][0], data[k].size(), &data[k + 1][0],
+                    data[k + 1].size(),&out[0]);
+            out.resize(correctanswer);
+            vector<uint32_t> out2(buffer.size());
+            size_t thisschemesanswer = algo.second(
+                    &data[k][0], data[k].size(), &data[k + 1][0],
+                    data[k + 1].size(),&out2[0]);
+            out2.resize(thisschemesanswer);
+            if (out != out2) {
+                if(thisschemesanswer != correctanswer) {
+                    cerr << "expecting cardinality of " << correctanswer;
+                    cerr << " got " << thisschemesanswer << "."
+                    << endl;
+                    if(correctanswer < 10)
+                    for(uint32_t x : out)
+                    cerr<<x<<endl;
+                } else {
+                    cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
+                    for(size_t jj = 0; jj < correctanswer; ++jj)
+                    if(out[jj]!= out2[jj]) {
+                        cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
+                        break;
+                    }
+                }
+                throw runtime_error("bug");
+            }
+        }
+        volume = 0;
+        z.reset();
+        for (size_t L = 0; L < loop; ++L) {
+
+            for (size_t k = 0; k < 2 * howmany; k += 2) {
+                volume += data[k].size();
+                volume += data[k + 1].size();
+                bogus
+                += algo.second(&data[k][0],
+                        data[k].size(), &data[k + 1][0],
+                        data[k + 1].size(),&buffer[0]);
+            }
+
+        }
+        time = z.split();
+        cout << std::setprecision(0) << static_cast<double>(volume) / static_cast<double>(time) << "\t";
+        cout.flush();
+    }
+
+    cout << endl;
+
+}
+cout << "# bogus = " << bogus << endl;
 }
