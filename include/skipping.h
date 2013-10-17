@@ -107,7 +107,7 @@ uint32_t y  = 0;
                     cout << "instead I am getting " << largemainval << endl;
                     throw logic_error("no2222xxxxx");
                 }
-              //  cout<<"(bef do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+//                cout<<"(bef do) I am at "<<x<<" with value "<<debug2[x]<<endl;
                 uint32_t check = 0;
                 do {
                     //cout<<"skipping x="<<x<<endl;
@@ -117,9 +117,10 @@ uint32_t y  = 0;
                         //cout<<"we skipped to the end, aborting"<<endl;
                         goto END_OF_MAIN;
                     }
-
+/*
                     largemainpointer = otherlarger.mainbuffer.data()
                             + otherlarger.highbuffer[x >> BlockSizeLog].second;
+                    largemainval = otherlarger.highbuffer[(x >> BlockSizeLog)-1].first;
                     largemainpointer = decode(largemainpointer, largemainval);
 
                     if (debug2[x] != largemainval) {
@@ -130,13 +131,14 @@ uint32_t y  = 0;
                         throw logic_error("no2222");
                         check = x;
                     }
-                //    cout<<"(in do) I am at "<<x<<" with value "<<debug2[x]<<endl;
-
+                   cout<<"(in do) I am at "<<x<<" with value "<<debug2[x]<<"==="<<largemainval<<endl;
+*/
                 } while (otherlarger.highbuffer[x >> BlockSizeLog].first < val);
                 largemainpointer = otherlarger.mainbuffer.data()
                         + otherlarger.highbuffer[x >> BlockSizeLog].second;
+                largemainval = otherlarger.highbuffer[(x >> BlockSizeLog)-1].first;
                 largemainpointer = decode(largemainpointer, largemainval);
-               /// cout<<"(after do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+                //cout<<"(after do) I am at "<<x<<" with value "<<debug2[x]<<endl;
 
                 if (debug2[x] != largemainval) {
                     cout << "I am supposed to be at " << x
