@@ -1,9 +1,11 @@
 /*
- * This is a simple implementation of the Skipping data structure and algorithms described in
+ * This is a simple implementation of the Skipping data structure and algorithms similar to
+ * what is described in
  *
  * Sanders and Transier, Intersection in Integer Inverted Indices, 2007.
  *
- * As suggested in their conclusion, we leave the higher-level structure uncompressed.
+ * As suggested in their conclusion, we leave the higher-level structure uncompressed. We also
+ * use differential coding.
  *
  * Sanders and Transier's proposal is similar in spirit to the skipping structure proposed in
  *
@@ -81,7 +83,7 @@ public:
                 do {
                     x = ((x >> otherlarger.BlockSizeLog) + 1) << otherlarger.BlockSizeLog;
                     if (x >= otherlarger.Length) {
-                        goto END_OF_MAIN;
+                        return intersectsize;
                     }
                 } while (otherlarger.highbuffer[x >> otherlarger.BlockSizeLog].first < val);
                 largemainpointer = otherlarger.mainbuffer.data()
@@ -94,7 +96,7 @@ public:
             while (largemainval < val) {
                 ++x;
                 if (x >= otherlarger.Length) {
-                    goto END_OF_MAIN;
+                    return intersectsize;
                 }
                 largemainpointer = decode(largemainpointer, largemainval);
              }
@@ -102,7 +104,7 @@ public:
                 out[intersectsize++] = val;
             }
         }
-        END_OF_MAIN: return intersectsize;
+        return intersectsize;
     }
 
     uint32_t BlockSizeLog;
@@ -130,16 +132,37 @@ private:
     uint8_t extract7bitsmaskless(const uint32_t val) {
         return static_cast<uint8_t> ((val >> (7 * i)));
     }
-
     static inline const uint8_t * decode(const uint8_t * buffer, uint32_t& prev) {
-        for (uint32_t v = 0, shift = 0;; shift += 7) {
-            uint8_t c = *buffer++;
-            v += ((c & 127) << shift);
-            if ((c & 128)) {
-                prev += v;
-                return buffer;
-            }
+        // manually unrolled for performance
+        uint32_t v = 0;
+        uint8_t c = *buffer++;
+        v += (c & 127) ;
+        if ((c & 128)) {
+            prev += v;
+            return buffer;
         }
+        c = *buffer++;
+        v += ((c & 127) << 7);
+        if ((c & 128)) {
+            prev += v;
+            return buffer;
+        }
+        c = *buffer++;
+        v += ((c & 127) << 14);
+        if ((c & 128)) {
+            prev += v;
+            return buffer;
+        }
+        c = *buffer++;
+        v += ((c & 127) << 21);
+        if ((c & 128)) {
+            prev += v;
+            return buffer;
+        }
+        c = *buffer++;
+        v += ((c & 127) << 30);
+        prev += v;
+        return buffer;
     }
 };
 
