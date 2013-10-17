@@ -34,7 +34,9 @@ public:
 
     // annoyingly, we need a copy constructor
     Skipping(const Skipping & other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
-    highbuffer(other.highbuffer), Length(other.Length) { }
+    highbuffer(other.highbuffer), Length(other.Length) {
+        throw runtime_error("this should never be used");
+    }
 
 
     ~Skipping() {}
