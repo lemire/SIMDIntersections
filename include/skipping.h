@@ -32,10 +32,8 @@ public:
         load(data, length);// cheap constructor
     }
 
-    // annoyingly, we need a copy constructor
-    Skipping(const Skipping & other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
+    Skipping(Skipping && other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
     highbuffer(other.highbuffer), Length(other.Length) {
-        throw runtime_error("this should never be used");
     }
 
 
