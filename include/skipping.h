@@ -36,6 +36,18 @@ public:
 if(mainbuffer.size()==0) throw logic_error("ooooo");
     }
 
+    uint32_t decompress(uint32_t * out) const {
+        const uint8_t * bout = mainbuffer.data();
+        uint32_t pos = 0;
+
+        uint32_t val = 0;
+        for(uint32_t k = 0; k < Length;++k) {
+          bout = decode(bout,val);
+          out[pos++] = val;
+        }
+        return pos;
+    }
+
 
     uint32_t intersect(const Skipping & otherlarger, uint32_t * out) const {
         // we assume that "this" is the smallest of the two
@@ -49,6 +61,11 @@ if(mainbuffer.size()==0) throw logic_error("ooooo");
         assert(otherlarger.Length>0);
         uint32_t intersectsize = 0;
 
+        vector<uint32_t> debug1(Length);
+        decompress(debug1.data());
+        vector<uint32_t> debug2(otherlarger.Length);
+        otherlarger.decompress(debug2.data());
+
         const uint8_t * inbyte =
                 reinterpret_cast<const uint8_t *> (mainbuffer.data());
         const uint8_t * const endbyte =
@@ -60,26 +77,77 @@ if(mainbuffer.size()==0) throw logic_error("ooooo");
         assert(largemainpointer < otherlarger.mainbuffer.data() + otherlarger.mainbuffer.size());
         largemainpointer = decode(largemainpointer, largemainval);
         uint32_t x = 0;
-        uint32_t val = 0;// where I put decoded values
+        if(debug2[x]!=largemainval) throw logic_error("no0");
+      //  cout<<"(bef ev) I am at "<<x<<" with value "<<debug2[x]<<endl;
 
+        uint32_t val = 0;// where I put decoded values
+uint32_t y  = 0;
         while (endbyte > inbyte) {
 
             inbyte = decode(inbyte, val);
+            if(val != debug1[y])  throw logic_error("no");
+            ++y;
 //cout<<"read from small="<<val<<endl;
+         ///   cout<<"(beg main) I am at "<<x<<" with value "<<debug2[x]<<endl;
+
+            if(debug2[x]!=largemainval) {
+                cout<<"I am supposed to be at "<<x<<" the value there should be "<<debug2[x]<<endl;
+                cout<<"instead I am getting "<<largemainval<<endl;
+                throw logic_error("no11111");
+            }
+
             if (otherlarger.highbuffer[x >> BlockSizeLog].first < val) {
+
+            //    cout<<"(bef do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+
+                if (debug2[x] != largemainval) {
+                    cout << "I am supposed to be at " << x
+                            << " the value there should be " << debug2[x]
+                            << endl;
+                    cout << "instead I am getting " << largemainval << endl;
+                    throw logic_error("no2222xxxxx");
+                }
+              //  cout<<"(bef do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+                uint32_t check = 0;
                 do {
-//cout<<"skipping"<<endl;          
-          x = ((x >> BlockSizeLog)+1)<<BlockSizeLog;
+                    //cout<<"skipping x="<<x<<endl;
+                    x = ((x >> BlockSizeLog) + 1) << BlockSizeLog;
+                    //        cout<<"skipping x to "<<x<<endl;
                     if (x >= otherlarger.Length) {
-//cout<<"we skipped to the end, aborting"<<endl;
+                        //cout<<"we skipped to the end, aborting"<<endl;
                         goto END_OF_MAIN;
                     }
+
+                    largemainpointer = otherlarger.mainbuffer.data()
+                            + otherlarger.highbuffer[x >> BlockSizeLog].second;
+                    largemainpointer = decode(largemainpointer, largemainval);
+
+                    if (debug2[x] != largemainval) {
+                        cout << "I am supposed to be at " << x
+                                << " the value there should be " << debug2[x]
+                                << endl;
+                        cout << "instead I am getting " << largemainval << endl;
+                        throw logic_error("no2222");
+                        check = x;
+                    }
+                //    cout<<"(in do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+
                 } while (otherlarger.highbuffer[x >> BlockSizeLog].first < val);
-                largemainpointer
-                        = otherlarger.mainbuffer.data() + otherlarger.highbuffer[x >> BlockSizeLog].second;
+                largemainpointer = otherlarger.mainbuffer.data()
+                        + otherlarger.highbuffer[x >> BlockSizeLog].second;
                 largemainpointer = decode(largemainpointer, largemainval);
+               /// cout<<"(after do) I am at "<<x<<" with value "<<debug2[x]<<endl;
+
+                if (debug2[x] != largemainval) {
+                    cout << "I am supposed to be at " << x
+                            << " the value there should be " << debug2[x]
+                            << endl;
+                    cout << "instead I am getting " << largemainval << endl;
+                    cout << "last check at " << check << endl;
+                    throw logic_error("no1");
+                }
             }
-//cout<<"largemainval="<<largemainval<<endl;
+            //cout<<"largemainval="<<largemainval<<endl;
             while (largemainval < val) {
                 ++x;
                 if (x >= otherlarger.Length) {
@@ -88,6 +156,8 @@ if(mainbuffer.size()==0) throw logic_error("ooooo");
                 }
                 largemainpointer = decode(largemainpointer, largemainval);
 //cout<<"new largemainval="<<largemainval<<endl;
+                if(debug2[x]!=largemainval) throw logic_error("no2");
+                ///cout<<"(end main) I am at "<<x<<" with value "<<debug2[x]<<endl;
              }
             if (largemainval == val) {
 //cout<<"Intersection "<<intersectsize<<" is "<<val<<endl;
@@ -104,7 +174,7 @@ if(intersectsize>1) if(val == 0) throw runtime_error("bo");
     typedef vector<pair<uint32_t, uint32_t>> higharray;
     higharray highbuffer;
     uint32_t Length;
-    Skipping(const Skipping & other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer), 
+    Skipping(const Skipping & other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
     highbuffer(other.highbuffer), Length(other.Length) {
 if(Length == 0) throw logic_error("fff");
 if(mainbuffer.size()==0) throw logic_error("oooooffff");
@@ -114,7 +184,7 @@ private:
     // making it private on purpose
     Skipping();
     Skipping & operator=(const Skipping &);
-  
+
     void load(uint32_t * data, uint32_t length);
     template<uint32_t i>
     uint8_t extract7bits(const uint32_t val) {
@@ -172,7 +242,7 @@ uint32_t sanity = 0;
  sanity += howmany;
         for (uint32_t x = 0; x < howmany; ++x) {
             const uint32_t v = data[x + (k << BlockSizeLog)];
-//cout<<"v ="<<v<<endl;            
+//cout<<"v ="<<v<<endl;
 const uint32_t val = v - prev;
 //cout<<"delta is "<<val<<" prev is "<<prev<<" v="<<v<<endl;
             prev = v;
@@ -220,7 +290,7 @@ assert(sanity == Length);
     mainbuffer.shrink_to_fit();
 // check that what we wrote is correct
      bout = mainbuffer.data();
- 
+
 uint32_t val = 0;
 for(uint32_t k = 0; k < Length;++k) {
 bout = reinterpret_cast<uint8_t * >(decode(bout,val));
