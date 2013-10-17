@@ -228,19 +228,19 @@ int main(int argc, char **argv) {
                     if (thisschemesanswer != correctanswer) {
                         cerr << "expecting cardinality of " << correctanswer;
                         cerr << " got " << thisschemesanswer << "." << endl;
-if                    (correctanswer < 10)
-                    for(uint32_t x : out)
-                    cerr<<x<<endl;
-                } else {
-                    cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
-                    for(size_t jj = 0; jj < correctanswer; ++jj)
-                    if(out[jj]!= out2[jj]) {
-                        cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
-                        break;
+                        for(size_t jj=0; (jj < thisschemesanswer)&&(jj<correctanswer)&&(jj<10);++jj) {
+                          cout<<" index = "<<jj<<" expected "<<out[jj]<<" but got "<<out2[jj]<<endl;
+                        }
+                    } else {
+                      cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
+                      for(size_t jj = 0; jj < correctanswer; ++jj)
+                        if(out[jj]!= out2[jj]) {
+                          cerr<<"Differ at "<<jj<<" got "<<out2[jj]<<" should find "<<out[jj]<<endl;
+                          break;
+                       }
                     }
+                    throw runtime_error("bug");
                 }
-                throw runtime_error("bug");
-            }
         }
         volume = 0;
         z.reset();
