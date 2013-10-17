@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
         if (skipping) {
             vector < Skipping > sdata;
             for(vector<uint32_t> & x : data)
-                sdata.emplace_back(Skipping(32,x.data(),static_cast<uint32_t>(x.size())));
+                sdata.emplace_back(Skipping(5,x.data(),static_cast<uint32_t>(x.size())));
             for (size_t k = 0; k < 2 * howmany; k += 2) {
                 vector < uint32_t > out(buffer.size());
                 size_t correctanswer = classicalintersection(&data[k][0],

@@ -23,7 +23,7 @@ class Skipping {
 public:
     Skipping(uint32_t BS) : BlockSizeLog(BS),
         mainbuffer(), highbuffer(), Length(0) {
-        assert((BlockSizeLog > 0) && (BlockSizeLog < 32));
+        if((BlockSizeLog == 0) && (BlockSizeLog >= 32)) throw runtime_error("please use a reasonnable BlockSizeLog");
     }
 
     ~Skipping() {}
@@ -31,7 +31,7 @@ public:
     Skipping(uint32_t BS, uint32_t * data, uint32_t length) :
         BlockSizeLog(BS),
         mainbuffer(), highbuffer(), Length(0) {
-        assert((BlockSizeLog > 0) && (BlockSizeLog < 32));
+        if((BlockSizeLog == 0) && (BlockSizeLog >= 32)) throw runtime_error("please use a reasonnable BlockSizeLog");
         load(data, length);// cheap constructor
     }
 
