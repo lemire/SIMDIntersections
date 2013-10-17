@@ -28,12 +28,20 @@ int main(int argc, char **argv) {
     uint32_t S = 12;
     uint32_t ratio = 1;
     bool skipping = false;
+    uint32_t skipgaplog = 0;
     map<string, intersectionfunction> myschemes(realschemes);
     int c;
-    while ((c = getopt(argc, argv, "uns:S:m:l:r:hk")) != -1)
+    while ((c = getopt(argc, argv, "uns:S:m:l:r:hk:")) != -1)
         switch (c) {
         case 'k':
             skipping = true;
+            skipgaplog = atoi(optarg);
+            if ((S < 1) or (S > 31)) {
+                cerr<<"Skip param needs to be within [1,31]."<<endl;
+                printusage();
+                return -1;
+            }
+            cout<<"#using skip steps of "<<(1<<skipgaplog)<<endl;
             myschemes.clear();
             break;
         case 'u':
@@ -214,7 +222,7 @@ int main(int argc, char **argv) {
         if (skipping) {
             vector < Skipping > sdata;
             for(vector<uint32_t> & x : data)
-                sdata.emplace_back(Skipping(5,x.data(),static_cast<uint32_t>(x.size())));
+                sdata.emplace_back(Skipping(skipgaplog,x.data(),static_cast<uint32_t>(x.size())));
             for (size_t k = 0; k < 2 * howmany; k += 2) {
                 vector < uint32_t > out(buffer.size());
                 size_t correctanswer = classicalintersection(&data[k][0],
@@ -230,7 +238,7 @@ int main(int argc, char **argv) {
                         cerr << " got " << thisschemesanswer << "." << endl;
                         int times = 0;
                         for(size_t jj=0; (jj < thisschemesanswer)&&(jj<correctanswer)&&(times<10);++jj) {
-                          if(out[jj]!=out2[jj]) { 
+                          if(out[jj]!=out2[jj]) {
                             cout<<" index = "<<jj<<" expected "<<out[jj]<<" but got "<<out2[jj]<<endl;
                             ++times;
                           }
