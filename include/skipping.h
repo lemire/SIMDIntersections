@@ -32,9 +32,6 @@ public:
         load(data, length);// cheap constructor
     }
 
-    Skipping(Skipping && other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
-    highbuffer(other.highbuffer), Length(other.Length) {
-    }
 
 
     ~Skipping() {}
@@ -116,6 +113,15 @@ public:
     uint32_t Length;
 
 private:
+
+    Skipping(Skipping && other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
+    highbuffer(other.highbuffer), Length(other.Length) {
+    }
+    Skipping(const Skipping & other) : BlockSizeLog(other.BlockSizeLog), mainbuffer(other.mainbuffer),
+    highbuffer(other.highbuffer), Length(other.Length) {
+        cout<<"Just copied "<<storageInBytes()<<endl;
+    }
+
     // making it private on purpose
     Skipping();
     // making it private on purpose

@@ -220,9 +220,9 @@ int main(int argc, char **argv) {
          * Skipping is a standard technique in IR. We test it here.
          */
         if (skipping) {
-            vector < Skipping > sdata;
+            vector < shared_ptr<Skipping> > sdata;
             for(vector<uint32_t> & x : data)
-                sdata.emplace_back(Skipping(skipgaplog,x.data(),static_cast<uint32_t>(x.size())));
+                sdata.emplace_back(shared_ptr<Skipping>(new Skipping(skipgaplog,x.data(),static_cast<uint32_t>(x.size()))));
             for (size_t k = 0; k < 2 * howmany; k += 2) {
                 vector < uint32_t > out(buffer.size());
                 size_t correctanswer = classicalintersection(&data[k][0],
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
                         &out[0]);
                 out.resize(correctanswer);
                 vector < uint32_t > out2(buffer.size());
-                size_t thisschemesanswer = sdata[k].intersect(sdata[k+1],&out2[0]);
+                size_t thisschemesanswer = sdata[k]->intersect(*sdata[k+1],&out2[0]);
                 out2.resize(thisschemesanswer);
                 if (out != out2) {
                     if (thisschemesanswer != correctanswer) {
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
                 volume += data[k].size();
                 volume += data[k + 1].size();
                 bogus
-                += sdata[k].intersect(sdata[k+1],&buffer[0]);
+                += sdata[k]->intersect(*sdata[k+1],&buffer[0]);
             }
 
         }
