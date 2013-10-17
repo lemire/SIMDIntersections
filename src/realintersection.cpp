@@ -228,9 +228,14 @@ int main(int argc, char **argv) {
                     if (thisschemesanswer != correctanswer) {
                         cerr << "expecting cardinality of " << correctanswer;
                         cerr << " got " << thisschemesanswer << "." << endl;
-                        for(size_t jj=0; (jj < thisschemesanswer)&&(jj<correctanswer)&&(jj<10);++jj) {
-                          cout<<" index = "<<jj<<" expected "<<out[jj]<<" but got "<<out2[jj]<<endl;
+                        int times = 0;
+                        for(size_t jj=0; (jj < thisschemesanswer)&&(jj<correctanswer)&&(times<10);++jj) {
+                          if(out[jj]!=out2[jj]) { 
+                            cout<<" index = "<<jj<<" expected "<<out[jj]<<" but got "<<out2[jj]<<endl;
+                            ++times;
+                          }
                         }
+                        if(times == 0) cout<<"content is correct, but incomplete/too much"<<endl;
                     } else {
                       cerr << "Same cardinality "<< correctanswer<<". Good. "<< endl;
                       for(size_t jj = 0; jj < correctanswer; ++jj)

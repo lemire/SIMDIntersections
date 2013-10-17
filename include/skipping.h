@@ -68,10 +68,12 @@ if(mainbuffer.size()==0) throw logic_error("ooooo");
 //cout<<"read from small="<<val<<endl;
             if (otherlarger.highbuffer[x >> BlockSizeLog].first < val) {
                 do {
-///cout<<"skipping"<<endl;          
-          x += 1 << BlockSizeLog;
-                    if (x >= otherlarger.Length)
+//cout<<"skipping"<<endl;          
+          x = ((x >> BlockSizeLog)+1)<<BlockSizeLog;
+                    if (x >= otherlarger.Length) {
+//cout<<"we skipped to the end, aborting"<<endl;
                         goto END_OF_MAIN;
+                    }
                 } while (otherlarger.highbuffer[x >> BlockSizeLog].first < val);
                 largemainpointer
                         = otherlarger.mainbuffer.data() + otherlarger.highbuffer[x >> BlockSizeLog].second;
@@ -80,8 +82,10 @@ if(mainbuffer.size()==0) throw logic_error("ooooo");
 //cout<<"largemainval="<<largemainval<<endl;
             while (largemainval < val) {
                 ++x;
-                if (x >= otherlarger.Length)
+                if (x >= otherlarger.Length) {
+//cout<<"We moved to the end"<<endl;
                     goto END_OF_MAIN;
+                }
                 largemainpointer = decode(largemainpointer, largemainval);
 //cout<<"new largemainval="<<largemainval<<endl;
              }
