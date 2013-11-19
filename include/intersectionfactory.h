@@ -40,7 +40,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
      schemes[ "widevectorleo" ] =  leowidevector_intersect;
 
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
-    schemes[ "natemediumdanfar" ] = danfar_medium;
+    schemes[ "danfar" ] = danfar_medium;
+    schemes[ "danfarfar" ] = danfarfar_medium;
 
     schemes[ "scalarnate" ] =  nate_scalar;
     schemes[ "scalarnatewg" ] =  nate_scalarwithoutgoto;
@@ -71,7 +72,8 @@ std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     schemes[ "natemedium" ] =  nate_count_medium;
     schemes[ "natemediumdan" ] =  natedan_count_medium;
     schemes[ "natemediumdanalt" ] =  natedanalt_count_medium;
-    schemes[ "natemediumdanfar" ] =  danfar_count_medium;
+    schemes[ "danfar" ] =  danfar_count_medium;
+
     schemes[ "natemediumfarfine" ] =  danfarfine_count_medium;
     return schemes;
 }
@@ -130,8 +132,9 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "widevectorleo",     leowidevector_intersect},
 
     {   "natemediumdanalt", natedanalt_medium},
-    {   "natemediumdanfar", danfar_medium},
+    {   "danfar", danfar_medium},
 
+    {   "danfarfar", danfarfar_medium},
 
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
     {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD}};
@@ -153,7 +156,7 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"natemedium", nate_count_medium},
 	{	"natemediumdan", natedan_count_medium},
 	{   "natemediumdanalt", natedanalt_count_medium},
-        {   "natemediumdanfar", danfar_count_medium},
+        {   "danfar", danfar_count_medium},
         {   "natemediumdanfinefar", danfarfine_count_medium}
 };
 
