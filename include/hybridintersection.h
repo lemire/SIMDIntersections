@@ -51,9 +51,9 @@ size_t danielshybridintersection(const uint32_t * set1,
 
     if ((50 * length1 <= length2) or (50 * length2 <= length1)) {
             if (length1 < length2)
-                return natedanalt_medium(set1, length1, set2, length2,out);
+                return danfar_medium(set1, length1, set2, length2,out);
             else
-                return natedanalt_medium(set2, length2, set1, length1,out);
+                return danfar_medium(set2, length2, set1, length1,out);
     }
    if (length1 < length2)
         return match_v4_f2_p0(set1, length1, set2, length2, out);
