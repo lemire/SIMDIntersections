@@ -748,6 +748,7 @@ size_t danfarfine_count_medium(const uint32_t *rare, const size_t lenRare,
             stopFreq + freqspace - freq, rare, stopRare + rarespace - rare);
 }
 
+
 size_t SIMDgalloping(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
@@ -780,7 +781,15 @@ size_t SIMDgalloping(const uint32_t *rare, const size_t lenRare,
                 if (freq + veclen * (2 * offset ) * 32 <= stopFreq) {
                     offset *= 2;
                 } else if (freq + veclen * (offset + 1) * 32 <= stopFreq) {
-                    offset += 1;
+                    offset = static_cast<uin32_t>((stopFreq - freq ) / (veclen * 32));
+                    //offset += 1;
+                    if (freq[veclen * offset * 32 + veclen * 31 + vecmax]
+                                    < matchRare) {
+                       freq += veclen * offset * 32;
+                       goto FINISH_SCALAR;
+                    } else {
+                       break;
+                    }
                 } else {
                     freq += veclen * offset * 32;
                     goto FINISH_SCALAR;
@@ -905,7 +914,6 @@ size_t SIMDgalloping(const uint32_t *rare, const size_t lenRare,
     FINISH_SCALAR: return (out - initout) + nate_scalar(freq,
             stopFreq + freqspace - freq, rare, stopRare + rarespace - rare, out);
 }
-
 
 size_t SIMDgalloping2(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
