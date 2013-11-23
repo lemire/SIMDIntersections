@@ -62,8 +62,6 @@ static size_t __frogadvanceUntil(const uint32_t * array, const size_t pos,
 
 }
 
-
-
 /**
  * EXPERIMENTAL VERSION
  *

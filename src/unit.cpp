@@ -588,8 +588,12 @@ int test1(intersectionfunction f, bool testwriteback) {
     size_t cs = classicalintersection(firstpost, 227, secondpost,
             4786, correct.data());
     correct.resize(cs);
-    if (inter != correct)
+    if (inter != correct) {
+        cout<<inter.size() <<" "<<correct.size()<<endl;
+        for(size_t i = 0; (i <inter.size()) && (i <correct.size()); ++i)
+            cout<<i<<" "<<inter[i]<<" "<<correct[i]<<endl;
         return 1;
+    }
     if(!testwriteback) return 0;
     vector < uint32_t > inter2(firstpost,firstpost+227);
     size_t s2 = f(inter2.data(), 227, secondpost, 4786, inter2.data());

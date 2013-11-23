@@ -47,6 +47,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "scalarnatewg" ] =  nate_scalarwithoutgoto;
 
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
+    schemes[ "simdgalloping" ] =  SIMDgalloping;
+    schemes[ "simdgalloping2" ] =  SIMDgalloping2;
 
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
@@ -121,6 +123,9 @@ std::map<std::string,intersectionfunction> realschemes = {
 
 
     {   "scalar1sgalloping", onesidedgallopingintersection},
+    {"simdgalloping", SIMDgalloping},
+    {"simdgalloping2", SIMDgalloping2},
+
     {   "scalar1sgallopingexperimental", onesidedgallopingintersection_experimental},
 
     {   "scalarnate", nate_scalar},
