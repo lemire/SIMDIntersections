@@ -770,35 +770,32 @@ size_t SIMDgalloping(const uint32_t *rare, const size_t lenRare,
         const vec Match = _mm_set1_epi32(matchRare);
 
         if (freq[veclen * 31 + vecmax] < matchRare) { // if no match possible
-            enum {
-                spanunit = 32
-            };
             uint32_t offset = 1;
-            if (freq + veclen  * spanunit > stopFreq) {
-                freq += veclen * spanunit;
+            if (freq + veclen  * 32 > stopFreq) {
+                freq += veclen * 32;
                 goto FINISH_SCALAR;
             }
-            while (freq[veclen * offset * spanunit + veclen * 31 + vecmax]
+            while (freq[veclen * offset * 32 + veclen * 31 + vecmax]
                     < matchRare) { // if no match possible
-                if (freq + veclen * (2 * offset ) * spanunit <= stopFreq) {
+                if (freq + veclen * (2 * offset ) * 32 <= stopFreq) {
                     offset *= 2;
-                } else if (freq + veclen * (offset + 1) * spanunit <= stopFreq) {
+                } else if (freq + veclen * (offset + 1) * 32 <= stopFreq) {
                     offset += 1;
                 } else {
-                    freq += veclen * offset * spanunit;
+                    freq += veclen * offset * 32;
                     goto FINISH_SCALAR;
                 }
             }
             uint32_t lower = offset / 2;
             while (lower + 1 != offset) {
                 const uint32_t mid = (lower + offset) / 2;
-                if (freq[veclen * mid * spanunit + veclen * 31 + vecmax]
+                if (freq[veclen * mid * 32 + veclen * 31 + vecmax]
                         < matchRare)
                     lower = mid;
                 else
                     offset = mid;
             }
-            freq += veclen * offset * spanunit;
+            freq += veclen * offset * 32;
         }
         vec Q0,Q1,Q2,Q3;
         if (freq[veclen * 15 + vecmax] >= matchRare) {
