@@ -41,6 +41,8 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 
     schemes[ "natemediumdanalt" ] =  natedanalt_medium;
     schemes[ "danfar" ] = danfar_medium;
+    schemes[ "danfarmov" ] = danfar_medium_mov;
+
     schemes[ "danfarfar" ] = danfarfar_medium;
 
     schemes[ "scalarnate" ] =  nate_scalar;
@@ -138,6 +140,7 @@ std::map<std::string,intersectionfunction> realschemes = {
 
     {   "natemediumdanalt", natedanalt_medium},
     {   "danfar", danfar_medium},
+    {   "danfarmov", danfar_medium_mov},
 
     {   "danfarfar", danfarfar_medium},
 
