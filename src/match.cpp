@@ -49,7 +49,7 @@ size_t match_v4_f2_p0
 
     VEC_T F0, F1;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint32_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -140,7 +140,7 @@ size_t match_v4_f4_p0
 
     VEC_T F0, F1, F2, F3;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint32_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -240,7 +240,7 @@ size_t match_v4_f8_p0
 
     VEC_T F0, F1, F2, F3, F4, F5, F6, F7;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -360,7 +360,7 @@ size_t match_v4_f2_p1
     VEC_T Rare;
     VEC_T F0, F1;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -468,7 +468,7 @@ size_t match_v4_f4_p1
 
     VEC_T F0, F1, F2, F3;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -586,7 +586,7 @@ size_t match_v4_f8_p1
 
     VEC_T F0, F1, F2, F3, F4, F5, F6, F7;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -722,7 +722,7 @@ size_t match_v4_f2_p2
 
     VEC_T F0, F1;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -838,7 +838,7 @@ size_t match_v4_f4_p2
 
     VEC_T F0, F1, F2, F3;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -960,7 +960,7 @@ size_t match_v4_f8_p2
 
     VEC_T F0, F1, F2, F3, F4, F5, F6, F7;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -1101,7 +1101,7 @@ size_t match_v4_f2_p3
 
     VEC_T F0, F1;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -1221,7 +1221,7 @@ size_t match_v4_f4_p3
 
     VEC_T F0, F1, F2, F3;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
@@ -1351,7 +1351,7 @@ size_t match_v4_f8_p3
 
     VEC_T F0, F1, F2, F3, F4, F5, F6, F7;
 
-    if (COMPILER_RARELY(rare >= stopRare)) goto FINISH_SCALAR;
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
     uint64_t valRare;
     valRare = rare[0];
     VEC_SET_ALL_TO_INT(Rare, valRare);
