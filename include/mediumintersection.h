@@ -507,7 +507,6 @@ size_t danfar_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
         return 0;
-    cout<<"lenFreq="<<lenFreq<<" lenRare="<<lenRare<<endl;
     assert(lenRare <= lenFreq);
     const uint32_t * const initout (out);
     typedef __m128i vec;
