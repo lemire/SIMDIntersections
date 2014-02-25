@@ -343,6 +343,9 @@ FINISH_SCALAR:
     return count + tail;
 }
 
+
+
+// unsafe, assumes signed ints
 size_t match_v4_f2_p1
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -449,7 +452,7 @@ FINISH_SCALAR:
 }
 
 
-
+// unsafe, assumes signed ints
 size_t match_v4_f4_p1
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -568,6 +571,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
+// unsafe, assumes signed ints
 size_t match_v4_f8_p1
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -704,6 +708,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
+// unsafe, assumes signed ints
 size_t match_v4_f2_p2
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -819,7 +824,7 @@ FINISH_SCALAR:
 }
 
 
-
+// unsafe, assumes signed ints
 size_t match_v4_f4_p2
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -942,6 +947,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
+// unsafe, assumes signed ints
 size_t match_v4_f8_p2
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -1083,6 +1089,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
+// unsafe, assumes signed ints
 size_t match_v4_f2_p3
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -1202,7 +1209,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
-
+// unsafe, assumes signed ints
 size_t match_v4_f4_p3
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
@@ -1332,7 +1339,7 @@ FINISH_SCALAR:
     return count + tail;
 }
 
-
+// unsafe, assumes signed ints
 size_t match_v4_f8_p3
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,
