@@ -4,10 +4,10 @@
 # replace the YOURCXX variable with a path to a C++11 compatible compiler.
 ifeq ($(INTEL), 1)
 # if you wish to use the Intel compiler, please do "make INTEL=1".
-    YOURCXX ?= /opt/intel/bin/icpc
+    CXX ?= /opt/intel/bin/icpc
     CXXFLAGS = -std=c++0x -O3 -Wall -mAVX -DNDEBUG=1 -g3
 else 
-    YOURCXX ?= g++-4.7
+    CXX ?= g++-4.7
 ifeq ($(DEBUG),1)
     CXXFLAGS = -mavx -std=c++11 -Weffc++ -pedantic -D_GLIBCXX_DEBUG -DDEBUG=1 -ggdb -Wall -Wextra -Wcast-align -Wconversion  -Winline
 else
@@ -15,7 +15,6 @@ else
 endif
 endif
 
-CXX := $(YOURCXX)
 
 
 
