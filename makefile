@@ -25,20 +25,26 @@ HEADERS= $(shell ls include/*h)
 all: unit testintersection realintersection getmatrix
 	echo "please run unit tests by running the unit executable"
 
+intersection.o: src/intersection.cpp include/common.h  
+	$(CXX) $(CXXFLAGS) -Iinclude -c src/intersection.cpp  
+
 match.o: src/match.cpp include/match.h  
 	$(CXX) $(CXXFLAGS) -Iinclude -c src/match.cpp  
 
-testintersection: $(HEADERS) src/testintersection.cpp  match.o
-	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  match.o
+thomaswu.o: src/thomaswu.cpp $(HEADERS)  
+	$(CXX) $(CXXFLAGS) -Iinclude -c src/thomaswu.cpp  
 
-realintersection: $(HEADERS) src/realintersection.cpp  match.o
-	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  match.o
+testintersection: $(HEADERS) src/testintersection.cpp  match.o thomaswu.o intersection.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o testintersection src/testintersection.cpp  match.o thomaswu.o intersection.o
 
-getmatrix: $(HEADERS) src/getmatrix.cpp  match.o
-	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  match.o
+realintersection: $(HEADERS) src/realintersection.cpp  match.o thomaswu.o intersection.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o realintersection src/realintersection.cpp  match.o thomaswu.o intersection.o
 
-unit: $(HEADERS) src/unit.cpp  match.o
-	$(CXX) $(CXXFLAGS) -Iinclude -o unit src/unit.cpp  match.o
+getmatrix: $(HEADERS) src/getmatrix.cpp  match.o thomaswu.o intersection.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o getmatrix src/getmatrix.cpp  match.o thomaswu.o intersection.o
+
+unit: $(HEADERS) src/unit.cpp  match.o thomaswu.o intersection.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o unit src/unit.cpp  match.o thomaswu.o intersection.o
 
 
 clean: 

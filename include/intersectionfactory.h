@@ -13,6 +13,7 @@
 #include "widevectorintersection.h"
 #include "branchless.h"
 #include "match.h"
+#include "thomaswu.h"
 
 #ifdef __INTEL_COMPILER
 /**
@@ -151,8 +152,21 @@ std::map<std::string,intersectionfunction> realschemes = {
     {   "danfarfar", danfarfar_medium},
 
     {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
-    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD}};
-
+    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD},
+    {"thomas_scalar", compute_intersection<Intersection_find_scalar>},
+    {"thomas_gallop", compute_intersection<Intersection_find_gallop>},
+    {"thomas_v1", compute_intersection<Intersection_find_v1>},
+    {"thomas_v1_aligned", compute_intersection<Intersection_find_v1_aligned>},
+    {"thomas_v1_plow", compute_intersection<Intersection_find_v1_plow>},
+    {"thomas_v2", compute_intersection<Intersection_find_v2>},
+    {"thomas_v2_aligned", compute_intersection<Intersection_find_v2_aligned>},
+    {"thomas_v3", compute_intersection<Intersection_find_v3>},
+    {"thomas_v3_aligned", compute_intersection<Intersection_find_v3_aligned>},
+    {"thomas_simdgallop_v0", compute_intersection<Intersection_find_simdgallop_v0>},
+    {"thomas_simdgallop_v1", compute_intersection<Intersection_find_simdgallop_v1>},
+    {"thomas_simdgallop_v2", compute_intersection<Intersection_find_simdgallop_v2>},
+    {"thomas_simdgallop_v3", compute_intersection<Intersection_find_simdgallop_v3>}
+};
 
 std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"@hybriddan",danielshybridintersectioncardinality},
@@ -171,7 +185,7 @@ std::map<std::string,cardinalityintersectionfunction> schemes = {
 	{	"natemediumdan", natedan_count_medium},
 	{   "natemediumdanalt", natedanalt_count_medium},
         {   "danfar", danfar_count_medium},
-        {   "natemediumdanfinefar", danfarfine_count_medium}
+        {   "natemediumdanfinefar", danfarfine_count_medium},
 };
 
 std::set<std::string> buggyschemes = {"widevectorleo"};
