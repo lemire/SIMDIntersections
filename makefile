@@ -21,7 +21,7 @@ endif
 
 HEADERS= $(shell ls include/*h)
 
-all: unit testintersection realintersection getmatrix
+all: unit testintersection realintersection getmatrix benchintersection
 	echo "please run unit tests by running the unit executable"
 
 intersection.o: src/intersection.cpp include/common.h  
@@ -44,8 +44,10 @@ getmatrix: $(HEADERS) src/getmatrix.cpp  match.o thomaswu.o intersection.o
 
 unit: $(HEADERS) src/unit.cpp  match.o thomaswu.o intersection.o
 	$(CXX) $(CXXFLAGS) -Iinclude -o unit src/unit.cpp  match.o thomaswu.o intersection.o
+benchintersection: $(HEADERS) src/benchintersection.cpp  match.o thomaswu.o intersection.o
+	$(CXX) $(CXXFLAGS) -Iinclude -o benchintersection src/benchintersection.cpp  match.o thomaswu.o intersection.o
 
 
 clean: 
-	rm -f *.o testintersection realintersection getmatrix
+	rm -f *.o testintersection realintersection getmatrix benchintersection
 

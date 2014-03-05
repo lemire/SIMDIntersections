@@ -15,10 +15,7 @@
 #include "match.h"
 #include "thomaswu.h"
 
-#ifdef __INTEL_COMPILER
-/**
- * Intel does not really support C++11 so we have to do something ugly like this:
- */
+
 
 
 
@@ -58,7 +55,17 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
-
+    schemes[ "thomas_scalar" ] = compute_intersection<Intersection_find_scalar>;
+    schemes[ "thomas_gallop" ] =  compute_intersection<Intersection_find_gallop>;
+    schemes[ "thomas_v1" ] =  compute_intersection<Intersection_find_v1>;
+    schemes[ "thomas_v1_plow" ] =  compute_intersection<Intersection_find_v1_plow>;
+    schemes[ "thomas_v2" ] =  compute_intersection<Intersection_find_v2>;
+    schemes[ "thomas_v3" ] =  compute_intersection<Intersection_find_v3>;
+    schemes[ "thomas_v3_aligned" ] =  compute_intersection<Intersection_find_v3_aligned>;
+    schemes[ "thomas_simdgallop_v0" ] =  compute_intersection<Intersection_find_simdgallop_v0>;
+    schemes[ "thomas_simdgallop_v1" ] =  compute_intersection<Intersection_find_simdgallop_v1>;
+    schemes[ "thomas_simdgallop_v2" ] =  compute_intersection<Intersection_find_simdgallop_v2>;
+    schemes[ "thomas_simdgallop_v3" ] =  compute_intersection<Intersection_find_simdgallop_v3>;
     return schemes;
 }
 
@@ -107,95 +114,6 @@ std::map<std::string,cardinalityintersectionfunctionpart> initializefactorypart(
 
 
 std::map<std::string,cardinalityintersectionfunctionpart> partschemes = initializefactorypart();
-
-#else
-
-/**
- * This is the proper way to do it:
- */
-
-
-std::map<std::string,intersectionfunction> realschemes = {
-    {"f2p0", match_v4_f2_p0},
-    {"f4p0", match_v4_f4_p0},
-    {"f8p0", match_v4_f8_p0},
-    {"branchless", branchlessintersection},
-    {"scalarbranchlesscached", scalar_branchless_cached},
-    {"scalarbranchlesscached2", scalar_branchless_cached2},
-    {"scalardanbranchless",branchlessintersection},
-    {"scalarbranchless", scalar_branchless},
-    {"scalarbranchlessunrolled", scalar_branchless_unrolled},
-    {   "@hybriddan",danielshybridintersection},
-
-
-    {   "scalar1sgalloping", onesidedgallopingintersection},
-    {"v1", v1},
-    {"v3", v3},
-
-    {"simdgalloping", SIMDgalloping},
-    {"simdgalloping2", SIMDgalloping2},
-
-    {   "scalar1sgallopingexperimental", onesidedgallopingintersection_experimental},
-
-    {   "scalarnate", nate_scalar},
-    {   "scalarnatewg",  nate_scalarwithoutgoto},
-
-    {   "widevector", widevector_intersect},
-    {   "widevector2", widevector2_intersect},
-
-    {   "widevectorleo",     leowidevector_intersect},
-
-    {   "natemediumdanalt", natedanalt_medium},
-    {   "danfar", danfar_medium},
-    {   "danfarmov", danfar_medium_mov},
-
-    {   "danfarfar", danfarfar_medium},
-
-    {   "hssimd", highlyscalablewordpresscom::intersect_SIMD},
-    {   "hssimddan", highlyscalablewordpresscom::dan_intersect_SIMD},
-    {"thomas_scalar", compute_intersection<Intersection_find_scalar>},
-    {"thomas_gallop", compute_intersection<Intersection_find_gallop>},
-    {"thomas_v1", compute_intersection<Intersection_find_v1>},
-   // {"thomas_v1_aligned", compute_intersection<Intersection_find_v1_aligned>},
-    {"thomas_v1_plow", compute_intersection<Intersection_find_v1_plow>},
-    {"thomas_v2", compute_intersection<Intersection_find_v2>},
-   // {"thomas_v2_aligned", compute_intersection<Intersection_find_v2_aligned>},
-    {"thomas_v3", compute_intersection<Intersection_find_v3>},
-    {"thomas_v3_aligned", compute_intersection<Intersection_find_v3_aligned>},
-    {"thomas_simdgallop_v0", compute_intersection<Intersection_find_simdgallop_v0>},
-    {"thomas_simdgallop_v1", compute_intersection<Intersection_find_simdgallop_v1>},
-    {"thomas_simdgallop_v2", compute_intersection<Intersection_find_simdgallop_v2>},
-    {"thomas_simdgallop_v3", compute_intersection<Intersection_find_simdgallop_v3>}
-};
-
-std::map<std::string,cardinalityintersectionfunction> schemes = {
-	{	"@hybriddan",danielshybridintersectioncardinality},
-
-	{	"widevector", widevector_cardinality_intersect},
-    {   "widevectorleo", leowidevector_cardinality_intersect},
-
-	{	"scalargalloping",frogintersectioncardinality},
-	{	"scalar1sgalloping", onesidedgallopingintersectioncardinality},
-    {   "scalarnate", nate_count_scalar},
-
-	{	"hssimd", highlyscalablewordpresscom::cardinality_intersect_SIMD},
-	{	"hssimddan", highlyscalablewordpresscom::dan_cardinality_intersect_SIMD},
-
-	{	"natemedium", nate_count_medium},
-	{	"natemediumdan", natedan_count_medium},
-	{   "natemediumdanalt", natedanalt_count_medium},
-        {   "danfar", danfar_count_medium},
-        {   "natemediumdanfinefar", danfarfine_count_medium},
-};
-
-std::set<std::string> buggyschemes = {"widevectorleo"};
-
-std::map<std::string,cardinalityintersectionfunctionpart> partschemes = {
-	{	"schlegel",partitioned::cardinality_intersect_partitioned},
-	{	"danschlegel", partitioned::faster_cardinality_intersect_partitioned}
-};
-
-#endif
 
 /**
  * Convenience function
