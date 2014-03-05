@@ -85,6 +85,35 @@ int test1(intersectionfunction f, bool testwriteback) {
 
 }
 
+int test3(intersectionfunction f) {
+
+    vector<uint32_t> firstpost;
+    vector<uint32_t> secondpost;
+    vector<uint32_t> trueinter;
+
+    for(uint32_t i = 10; i < 31;++i) {
+        firstpost.push_back((1U<<i) | 3U);
+        trueinter.push_back((1U<<i) | 3U);
+        for(uint32_t j = 3; j< 1000;j+=11) {
+            secondpost.push_back((1U<<i) | j);
+        }
+        firstpost.push_back((1U<<i) | 1001U);
+    }
+    vector < uint32_t > inter(firstpost.size());
+    size_t s = f(firstpost.data(), firstpost.size(), secondpost.data(), secondpost.size(), inter.data());
+    inter.resize(s);
+    if(inter != trueinter) {
+        cout << inter.size() << " " << trueinter.size() << endl;
+        for (size_t i = 0; (i < inter.size()) && (i < trueinter.size()); ++i)
+            cout << i << " " << inter[i] << " " << trueinter[i] << endl;
+        return 1;
+
+        return 1;
+    }
+    return 0;
+}
+
+
 int main() {
     int error = 0;
     for (string n : allRealNames()) {
@@ -99,6 +128,12 @@ int main() {
             ++error;
         }
         if((code = test2(realschemes[n]))==0)
+        cout<<"ok ";
+        else {
+            cout<<" Error"<<code<<endl;
+            ++error;
+        }
+        if((code = test3(realschemes[n]))==0)
         cout<<"ok"<<endl;
         else {
             cout<<" Error"<<code<<endl;

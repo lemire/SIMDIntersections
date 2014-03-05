@@ -646,7 +646,6 @@ size_t danfar_medium_mov(const uint32_t *rare, const size_t lenRare,
 }
 
 
-
 size_t danfarfar_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
@@ -751,7 +750,11 @@ size_t danfarfar_medium(const uint32_t *rare, const size_t lenRare,
             stopFreq + freqspace - freq, rare, stopRare + rarespace - rare, out);
 }
 
-
+//proxy for danfarfar_medium
+size_t v3(const uint32_t *rare, const size_t lenRare,
+        const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
+    return danfarfar_medium(rare,lenRare,freq,lenFreq,out);
+}
 
 
 

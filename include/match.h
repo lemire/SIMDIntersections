@@ -65,6 +65,13 @@ size_t match_v4_f2_p0
  uint32_t *matchOut);
 
 
+// proxy for match_v4_f2_p0
+inline size_t v1(const uint32_t *rare, size_t lenRare,
+        const uint32_t *freq, size_t lenFreq,
+        uint32_t *matchOut) {
+    return match_v4_f2_p0(rare,lenRare,freq,lenFreq,matchOut);
+}
+
 size_t match_v4_f4_p0
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,

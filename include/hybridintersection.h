@@ -62,6 +62,31 @@ size_t danielshybridintersection(const uint32_t * set1,
         return match_v4_f2_p0(set2, length2, set1, length1, out);
 
 }
+size_t SIMDintersection(const uint32_t *set1,
+                        const size_t length1, const uint32_t *set2, const size_t length2, uint32_t *out) {
+    if ((length1 == 0) or (length2 == 0)) return 0;
+
+
+    if ((1000 * length1 <= length2) or (1000 * length2 <= length1)) {
+        if (length1 <= length2)
+            return SIMDgalloping(set1, length1, set2, length2, out);
+        else
+            return SIMDgalloping(set2, length2, set1, length1, out);
+    }
+
+    if ((50 * length1 <= length2) or (50 * length2 <= length1)) {
+        if (length1 <= length2)
+            return v3(set1, length1, set2, length2, out);
+        else
+            return v3(set2, length2, set1, length1, out);
+    }
+
+    if (length1 <= length2)
+        return v1(set1, length1, set2, length2, out);
+    else
+        return v1(set2, length2, set1, length1, out);
+}
+
 
 
 #endif /* HYBRIDINTERSECTION_H_ */
