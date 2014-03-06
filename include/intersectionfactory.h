@@ -67,6 +67,10 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "thomas_simdgallop_v2" ] =  compute_intersection<Intersection_find_simdgallop_v2>;
     schemes[ "thomas_simdgallop_v3" ] =  compute_intersection<Intersection_find_simdgallop_v3>;
     schemes[ "thomas_v3cmpeqflagged" ] =  compute_intersection_flagged<Intersection_find_v3_cmpeq>;
+    schemes[ "thomas_v3cmpeqscalarflagged" ] =  compute_intersection_flagged<Intersection_truefind_v3_cmpeq_scalar>;
+    schemes[ "thomas_v3cmpeqsimd32flagged" ] =  compute_intersection_flagged<Intersection_truefind_v3_cmpeq_simd32>;
+    schemes[ "thomas_v3cmpeqsimd8flagged" ] =  compute_intersection_flagged<Intersection_truefind_v3_cmpeq_simd8>;
+    schemes[ "thomas_v3cmpeqbinaryflagged" ] =  compute_intersection_flagged<Intersection_truefind_v3_cmpeq_binary>;
     return schemes;
 }
 

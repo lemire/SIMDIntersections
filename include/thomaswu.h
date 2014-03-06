@@ -73,6 +73,20 @@ typedef long (*flaggedintersectionfindfunction)(int *foundp, UINT4 goal, const U
 long
 Intersection_find_v3_cmpeq (int *foundp, UINT4 goal, const UINT4 *target, long ntargets);
 
+long
+Intersection_truefind_v3_cmpeq_scalar (int *foundp, UINT4 goal, const UINT4 *target, long ntargets);
+
+
+long
+Intersection_truefind_v3_cmpeq_simd32 (int *foundp, UINT4 goal, const UINT4 *target, long ntargets);
+
+
+long
+Intersection_truefind_v3_cmpeq_simd8 (int *foundp, UINT4 goal, const UINT4 *target, long ntargets) ;
+
+long
+Intersection_truefind_v3_cmpeq_binary (int *foundp, UINT4 goal, const UINT4 *target, long ntargets) ;
+
 template <flaggedintersectionfindfunction FINDFUNCTION>
 size_t
 compute_intersection_flagged (const uint32_t * rare,
