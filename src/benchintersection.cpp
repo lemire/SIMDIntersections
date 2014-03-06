@@ -55,6 +55,9 @@ void printusage() {
     cout << "example: likwid -m -C 1 -g BRANCH ./likwidintersection -u > uniform.out" << endl;
 #else
     cout << " Runs an exhaustive benchmark over a ClusterData distribution."<<endl;
+    cout << " -s followed by comma-separated values specifies intersections functions, chosen from:"<<endl;
+    for (string x:  allRealNames())
+        cout<< x <<endl;
     cout << " -u switches to uniform distribution" << endl;
 #endif
 }
@@ -67,7 +70,9 @@ int main(int argc, char **argv) {
     float intersectionratio = 0.3f;
     uint32_t MaxBit = 26;
     int c;
-    while ((c = getopt(argc, argv, "uns:m:R:M:S:l:h")) != -1)
+    std::vector<std::string> myschemes = allRealNames();
+
+    while ((c = getopt(argc, argv, "uns:m:R:M:S:l:hs:")) != -1)
         switch (c) {
         case 'h':
             printusage();
@@ -78,8 +83,26 @@ int main(int argc, char **argv) {
         case 'R':
             intersectionratio = atof(optarg);
             break;
+        case 's':
+            myschemes.clear();
+            {
+                const string codecsstr(optarg);
+                const vector<string> codecslst = split(codecsstr, ",:;");
+                for (auto i = codecslst.begin(); i != codecslst.end(); ++i) {
+                    if (realschemes.find(*i) == realschemes.end()) {
+                        cerr << " Warning!!! Warning: unrecognized: " << *i
+                                << endl;
+                        printusage();
+                        return -1;
+
+                    } else {
+                        myschemes.push_back(*i);
+                    }
+                }
+            }
+            break;
         case 'M':
-            intersectionratio = atoi(optarg);
+            MaxBit = atoi(optarg);
             if (MaxBit < 1) {
                 printusage();
                 return -1;
@@ -126,7 +149,7 @@ int main(int argc, char **argv) {
 #endif
 
     cout << "# size-ratio\t";
-    for (string intername : allRealNames()) {
+    for (string intername : myschemes) {
         cout << intername << "\t";
     }
     cout << "relative-intersection-size " << endl;
@@ -143,7 +166,7 @@ int main(int argc, char **argv) {
         cout << "ok." << endl;
         cout << ir << "\t";
         float aratio = 0.0f;
-        for (string intername : allRealNames()) {
+        for (string intername : myschemes) {
             intersectionfunction interfnc = realschemes[intername];
             size_t volume = 0;
 #ifdef LIKWID_MARKERS
