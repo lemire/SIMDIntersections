@@ -54,6 +54,7 @@ void printusage() {
 #ifdef LIKWID_MARKERS
     cout << "example: likwid -m -C 1 -g BRANCH ./likwidintersection -u > uniform.out" << endl;
 #else
+    cout << " Runs an exhaustive benchmark over a ClusterData distribution."<<endl;
     cout << " -u switches to uniform distribution" << endl;
 #endif
 }
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
             uniform = true;
             break;
         default:
+            printusage();
             abort();
         }
     if (howmany == 0) {

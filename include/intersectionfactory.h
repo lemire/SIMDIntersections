@@ -66,6 +66,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "thomas_simdgallop_v1" ] =  compute_intersection<Intersection_find_simdgallop_v1>;
     schemes[ "thomas_simdgallop_v2" ] =  compute_intersection<Intersection_find_simdgallop_v2>;
     schemes[ "thomas_simdgallop_v3" ] =  compute_intersection<Intersection_find_simdgallop_v3>;
+    schemes[ "thomas_v3cmpeqflagged" ] =  compute_intersection_flagged<Intersection_find_v3_cmpeq>;
     return schemes;
 }
 

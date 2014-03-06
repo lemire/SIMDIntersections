@@ -989,10 +989,10 @@ Intersection_find_simdgallop_v0 (UINT4 goal, const UINT4 *target, long ntargets)
   __m128i Match;
   __m128i F0;
   UINT4 *hits;
-  int pos, base;
+  int pos;
   const __m128i conversion =  _mm_set1_epi32(2147483648U); /* 2^31 */
 
-  int low_offset, mid_offset, high_offset, j;
+  long low_offset, mid_offset, high_offset, j;
 
 
   init_target = target;
@@ -1075,10 +1075,10 @@ Intersection_find_simdgallop_v1 (UINT4 goal, const UINT4 *target, long ntargets)
   __m128i Match;
   __m128i F0;
   UINT4 *hits;
-  int pos, base;
+  int pos;
   const __m128i conversion =  _mm_set1_epi32(2147483648U); /* 2^31 */
 
-  int low_offset, mid_offset, high_offset, j;
+  long low_offset, mid_offset, high_offset, j;
 
 
   init_target = target;
@@ -1163,10 +1163,10 @@ Intersection_find_simdgallop_v2 (UINT4 goal, const UINT4 *target, long ntargets)
   __m128i Match;
   __m128i F0, Q0, Q1, Q2, Q3;
   UINT4 *hits;
-  int pos, base;
+  int pos;
   const __m128i conversion =  _mm_set1_epi32(2147483648U); /* 2^31 */
 
-  int low_offset, mid_offset, high_offset, j;
+  long low_offset, mid_offset, high_offset, j;
 
 
   init_target = target;
@@ -1272,7 +1272,7 @@ Intersection_find_simdgallop_v3 (UINT4 goal, const UINT4 *target, long ntargets)
   int pos, base;
   const __m128i conversion =  _mm_set1_epi32(2147483648U); /* 2^31 */
 
-  int low_offset, mid_offset, high_offset, j;
+  long low_offset, mid_offset, high_offset, j;
 
 
   init_target = target;
@@ -1401,6 +1401,126 @@ Intersection_find_simdgallop_v3 (UINT4 goal, const UINT4 *target, long ntargets)
     debug(printf("base = %d, pos = %d => %d\n",base,pos,32 - pos));
     return (target - init_target) + base + (32 - pos);
       }
+    }
+  }
+}
+
+
+/* If goal exists, then returns its index in the target.  But if goal
+   does not exist, then returns some index before the next larger
+   value.  The value *foundp informs the caller whether the goal was
+   found. */
+long
+Intersection_find_v3_cmpeq (int *foundp, UINT4 goal, const UINT4 *target, long ntargets) {
+  const UINT4 *end_target, *stop_target, *init_target;
+  __m128i Match;
+  __m128i F0, Q0, Q1, Q2, Q3;
+  long pos, base;
+
+  init_target = target;
+  stop_target = &(target[ntargets - V3_BLOCKSIZE]);
+  end_target = &(target[ntargets]);
+
+  if (target >= stop_target) {
+    if ((pos = Intersection_find_scalar(goal,target,ntargets)) < ntargets && target[pos] == goal) {
+      *foundp = 1;
+    } else {
+      *foundp = 0;
+    }
+    return pos;
+
+  } else {
+    while (target[V3_BLOCKSIZE] < goal) {
+      debug(printf("target[V3_BLOCKSIZE] %u < goal %u, so advancing by V3_BLOCKSIZE\n",target[V3_BLOCKSIZE],goal));
+      target += V3_BLOCKSIZE;
+      if (target >= stop_target) {
+    pos = (target - init_target) + Intersection_find_scalar(goal,target,/*ntargets*/(end_target - target));
+    if ((pos = Intersection_find_scalar(goal,target,ntargets)) < ntargets && target[pos] == goal) {
+      *foundp = 1;
+    } else {
+      *foundp = 0;
+    }
+    return pos;
+      }
+    }
+
+    Match = _mm_set1_epi32(goal);
+
+    if (target[SIMDWIDTH * 16] >= goal) {
+      if (target[SIMDWIDTH * 8] >= goal) {
+    base = 0;
+    Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 4),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 5),Match));
+    Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 6),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 7),Match));
+    Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 0),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 1),Match));
+    Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 2),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 3),Match));
+      } else {
+    base = 32;
+    Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 8),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 9),Match));
+    Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 10),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 11),Match));
+    Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 12),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 13),Match));
+    Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 14),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 15),Match));
+      }
+    } else {
+      if (target[SIMDWIDTH * 24] >= goal) {
+    base = 64;
+    Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 4 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 5 + 16),Match));
+    Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 6 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 7 + 16),Match));
+    Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 0 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 1 + 16),Match));
+    Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 2 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 3 + 16),Match));
+      } else {
+    base = 96;
+    Q0 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 8 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 9 + 16),Match));
+    Q1 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 10 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 11 + 16),Match));
+    Q2 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 12 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 13 + 16),Match));
+    Q3 = _mm_or_si128(_mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 14 + 16),Match),
+              _mm_cmpeq_epi32(_mm_loadu_si128((__m128i *) (target) + 15 + 16),Match));
+      }
+    }
+
+#ifdef DEBUG
+    printf("Q0: ");
+    print_vector_hex(Q0);
+    printf("Q1: ");
+    print_vector_hex(Q1);
+    printf("Q2: ");
+    print_vector_hex(Q2);
+    printf("Q3: ");
+    print_vector_hex(Q3);
+#endif
+
+    F0 = _mm_or_si128(_mm_or_si128(Q0, Q1), _mm_or_si128(Q2, Q3));
+    debug(printf("F0: "));
+    debug(print_vector_hex(F0));
+
+    if (
+#ifdef HAVE_SSE4_1
+    _mm_testz_si128(F0,F0)
+#else
+    _mm_movemask_epi8(_mm_cmpeq_epi8(F0,_mm_setzero_si128())) == 0xFFFF
+#endif
+    ) {
+      debug(printf("Not found\n"));
+      *foundp = 0;
+      return (target - init_target) + base;
+    } else {
+      debug(printf("base = %d, pos = %d => %d\n",base,pos,32 - pos));
+      *foundp = 1;
+      return (target - init_target) + base;
     }
   }
 }
