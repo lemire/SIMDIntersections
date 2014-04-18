@@ -30,6 +30,7 @@ size_t match_scalar(const uint32_t *A, const size_t lenA,
     return (out - initout);
 }
 
+
 // like match_v4_f2_p0 but more portable
 size_t V1
 (const uint32_t *rare, size_t lenRare,
@@ -67,25 +68,16 @@ ADVANCE_RARE:
         *matchOut = valRare;
         valRare = rare[1]; // for next iteration
         rare += 1;
-
         if (COMPILER_RARELY(rare >= stopRare)) {
             rare -= 1;
             goto FINISH_SCALAR;
         }
-
-
-
         F0 =  _mm_cmpeq_epi32(F0,Rare); 
         F1 =  _mm_cmpeq_epi32(F1,Rare);
-
         Rare = _mm_set1_epi32(valRare);
-
-
         F0 = _mm_or_si128 (F0,F1);
-
-        //if(_mm_testz_si128(F0,F0) == 0)
-        matchOut += 1 - _mm_testz_si128(F0,F0) ;
-
+        if(_mm_testz_si128(F0,F0) == 0)
+          matchOut ++;
         F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
         F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+4));
 
