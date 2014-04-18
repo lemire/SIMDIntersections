@@ -83,8 +83,8 @@ ADVANCE_RARE:
 
         F0 = _mm_or_si128 (F0,F1);
 
-        if(_mm_testz_si128(F0,F0) == 0)
-        	matchOut++;
+        //if(_mm_testz_si128(F0,F0) == 0)
+        matchOut += 1 - _mm_testz_si128(F0,F0) ;
 
         F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
         F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+4));
