@@ -53,12 +53,12 @@ size_t V1
     uint32_t valRare;
     valRare = rare[0];
     Rare = _mm_set1_epi32(valRare);
-    //VEC_SET_ALL_TO_INT(Rare, valRare);
 
     uint64_t maxFreq;
     maxFreq = freq[2 * 4 - 1];
     F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
-    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+4));
+
 
     if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
 
@@ -75,23 +75,19 @@ ADVANCE_RARE:
 
 
 
-        F0 =  _mm_cmpeq_epi32(F0,Rare); //VEC_CMP_EQUAL(F0, Rare) ;
-        F1 =  _mm_cmpeq_epi32(F1,Rare);//VEC_CMP_EQUAL(F1, Rare);
+        F0 =  _mm_cmpeq_epi32(F0,Rare); 
+        F1 =  _mm_cmpeq_epi32(F1,Rare);
 
-        //VEC_SET_ALL_TO_INT(Rare, valRare);
         Rare = _mm_set1_epi32(valRare);
 
 
-        //VEC_OR(F0, F1);
         F0 = _mm_or_si128 (F0,F1);
 
         if(_mm_testz_si128(F0,F0) == 0)
         	matchOut++;
 
-        VEC_ADD_PTEST(matchOut, 1, F0);
-
         F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
-        F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+        F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+4));
 
     } while (maxFreq >= valRare);
 
@@ -114,7 +110,8 @@ ADVANCE_FREQ:
     maxFreq = maxProbe;
 
     F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
-    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+4));
+ 
 
     goto ADVANCE_RARE;
 
