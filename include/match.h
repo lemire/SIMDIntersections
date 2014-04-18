@@ -58,6 +58,11 @@ size_t match_scalar(const uint32_t *A, const size_t lenA,
                     const uint32_t *B, const size_t lenB,
                     uint32_t *out);
 
+// like match_v4_f2_p0 but more portable
+size_t V1
+(const uint32_t *rare, size_t lenRare,
+ const uint32_t *freq, size_t lenFreq,
+ uint32_t *matchOut);
 
 size_t match_v4_f2_p0
 (const uint32_t *rare, size_t lenRare,

@@ -21,6 +21,7 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
+    schemes[ "V1" ] = V1;
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
     schemes[ "f8p0" ] = match_v4_f8_p0;

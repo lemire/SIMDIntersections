@@ -30,6 +30,105 @@ size_t match_scalar(const uint32_t *A, const size_t lenA,
     return (out - initout);
 }
 
+// like match_v4_f2_p0 but more portable
+size_t V1
+(const uint32_t *rare, size_t lenRare,
+ const uint32_t *freq, size_t lenFreq,
+ uint32_t *matchOut) {
+    assert(lenRare <= lenFreq);
+    const uint32_t *matchOrig = matchOut;
+    if (lenFreq == 0 || lenRare == 0) return 0;
+
+    const uint64_t kFreqSpace = 2 * 4 * (0 + 1) - 1;
+    const uint64_t kRareSpace = 0;
+
+    const uint32_t *stopFreq = &freq[lenFreq] - kFreqSpace;
+    const uint32_t *stopRare = &rare[lenRare] - kRareSpace;
+
+    __m128i  Rare;
+
+    __m128i F0, F1;
+
+    if (COMPILER_RARELY( (rare >= stopRare) || (freq >= stopFreq) )) goto FINISH_SCALAR;
+    uint32_t valRare;
+    valRare = rare[0];
+    Rare = _mm_set1_epi32(valRare);
+    //VEC_SET_ALL_TO_INT(Rare, valRare);
+
+    uint64_t maxFreq;
+    maxFreq = freq[2 * 4 - 1];
+    F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
+    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+
+    if (COMPILER_RARELY(maxFreq < valRare)) goto ADVANCE_FREQ;
+
+ADVANCE_RARE:
+    do {
+        *matchOut = valRare;
+        valRare = rare[1]; // for next iteration
+        rare += 1;
+
+        if (COMPILER_RARELY(rare >= stopRare)) {
+            rare -= 1;
+            goto FINISH_SCALAR;
+        }
+
+
+
+        F0 =  _mm_cmpeq_epi32(F0,Rare); //VEC_CMP_EQUAL(F0, Rare) ;
+        F1 =  _mm_cmpeq_epi32(F1,Rare);//VEC_CMP_EQUAL(F1, Rare);
+
+        //VEC_SET_ALL_TO_INT(Rare, valRare);
+        Rare = _mm_set1_epi32(valRare);
+
+
+        //VEC_OR(F0, F1);
+        F0 = _mm_or_si128 (F0,F1);
+
+        if(_mm_testz_si128(F0,F0) == 0)
+        	matchOut++;
+
+        VEC_ADD_PTEST(matchOut, 1, F0);
+
+        F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
+        F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+
+    } while (maxFreq >= valRare);
+
+    uint64_t maxProbe;
+
+ADVANCE_FREQ:
+    do {
+        const uint64_t kProbe = (0 + 1) * 2 * 4;
+        const uint32_t *probeFreq = freq + kProbe;
+        maxProbe = freq[(0 + 2) * 2 * 4 - 1];
+
+        if (COMPILER_RARELY(probeFreq >= stopFreq)) {
+            goto FINISH_SCALAR;
+        }
+
+        freq = probeFreq;
+
+    } while (maxProbe < valRare);
+
+    maxFreq = maxProbe;
+
+    F0 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq));
+    F1 = _mm_lddqu_si128(reinterpret_cast<const __m128i *>(freq+16));
+
+    goto ADVANCE_RARE;
+
+    size_t count;
+FINISH_SCALAR:
+    count = matchOut - matchOrig;
+
+    lenFreq = stopFreq + kFreqSpace - freq;
+    lenRare = stopRare + kRareSpace - rare;
+
+    size_t tail = match_scalar(freq, lenFreq, rare, lenRare, matchOut);
+
+    return count + tail;
+}
 
 size_t match_v4_f2_p0
 (const uint32_t *rare, size_t lenRare,
