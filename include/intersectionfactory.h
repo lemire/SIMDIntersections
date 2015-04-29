@@ -14,6 +14,7 @@
 #include "branchless.h"
 #include "match.h"
 #include "thomaswu.h"
+#include "inoueetal.h"
 
 
 
@@ -21,6 +22,9 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
+    schemes[ "inoue1" ] = SIMDIntersectWithPrefilter;
+
+
     schemes[ "V1" ] = V1;
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
