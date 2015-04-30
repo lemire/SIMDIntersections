@@ -22,12 +22,7 @@
 
 std::map<std::string,intersectionfunction> realinitializefactory() {
     std::map<std::string,intersectionfunction> schemes;
-    schemes[ "inoue1" ] = SIMDIntersectWithPrefilter;
-    schemes[ "inoue2" ] = SIMDIntersectWithPrefilter2;
-    schemes[ "inoue3" ] = SIMDIntersectWithPrefilter3;
-    schemes[ "inoue5" ] = SIMDIntersectWithPrefilter3;
-
-/* SHIT: put it back
+    schemes[ "inoue" ] = SIMDIntersectWithPrefilter;
     schemes[ "V1" ] = V1;
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
@@ -60,8 +55,6 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 
     schemes[ "simdgalloping" ] =  SIMDgalloping;
     schemes[ "simdgalloping2" ] =  SIMDgalloping2;
-
-    */
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
 
