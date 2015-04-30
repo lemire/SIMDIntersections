@@ -25,6 +25,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "inoue1" ] = SIMDIntersectWithPrefilter;
     schemes[ "inoue2" ] = SIMDIntersectWithPrefilter2;
     schemes[ "inoue3" ] = SIMDIntersectWithPrefilter3;
+    schemes[ "inoue5" ] = SIMDIntersectWithPrefilter3;
 
 /* SHIT: put it back
     schemes[ "V1" ] = V1;
