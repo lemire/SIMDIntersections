@@ -370,77 +370,102 @@
 			assert(out != B);
 			size_t i_a = 0, i_b = 0, i_out = 0;
 
-			// trim lengths to be a multiple of 4
-			size_t st_a = (s_a / 4) * 4;
-			size_t st_b = (s_b / 4) * 4;
+			// trim lengths to be a multiple of 8
+			size_t st_a = (s_a / 8) * 8;
+			size_t st_b = (s_b / 8) * 8;
 
 			if (i_a < st_a && i_b < st_b) {
 				const __m128i a_mask = _mm_set_epi8(12, 12, 12, 12, 8, 8, 8, 8, 4, 4, 4, 4, 0, 0, 0, 0);
 				const __m128i b_mask = _mm_set_epi8(12, 8, 4, 0, 12, 8, 4, 0, 12, 8, 4, 0, 12, 8, 4, 0);
 
 				// load initial data in registers.
-				__m128i v_a = _mm_loadu_si128((__m128i *) &A[i_a]);
-				__m128i v_b = _mm_loadu_si128((__m128i *) &B[i_b]);
-				__m128i v_a_filter = _mm_shuffle_epi8(v_a, a_mask);
-				__m128i v_b_filter = _mm_shuffle_epi8(v_b, b_mask);
+				__m128i v_a1 = _mm_loadu_si128((__m128i *) &A[i_a]);
+				__m128i v_b1 = _mm_loadu_si128((__m128i *) &B[i_b]);
+				__m128i v_a1_filter = _mm_shuffle_epi8(v_a1, a_mask);
+				__m128i v_b1_filter = _mm_shuffle_epi8(v_b1, b_mask);
+
+				__m128i v_a2 = _mm_loadu_si128((__m128i *) &A[i_a + 4]);
+				__m128i v_b2 = _mm_loadu_si128((__m128i *) &B[i_b + 4]);
+				__m128i v_a2_filter = _mm_shuffle_epi8(v_a2, a_mask);
+				__m128i v_b2_filter = _mm_shuffle_epi8(v_b2, b_mask);
+
 
 				for(;;) {
 
 					// check for potential intersection of least significant byte.
-					__m128i v_c = _mm_cmpeq_epi8(v_a_filter, v_b_filter);
+					__m128i v_c1 = _mm_cmpeq_epi8(v_a1_filter, v_b1_filter);
+					__m128i v_c2 = _mm_cmpeq_epi8(v_a2_filter, v_b2_filter);
+					__m128i v_c = _mm_or_si128(v_c1,v_c2);
 
 					if (!_mm_movemask_epi8(v_c)) {
 						// No hit so load the next 4 lowest bytes from smallest
 					advance:
-					     uint32_t a_max = A[i_a + 3];
-					     uint32_t b_max = B[i_b + 3];
+					     uint32_t a_max = A[i_a + 7];
+					     uint32_t b_max = B[i_b + 7];
 						if (a_max <= b_max) {
-							i_a += 4;
+							i_a += 8;
 							if (i_a < st_a) {
-								v_a = _mm_loadu_si128((__m128i *) &A[i_a]);
-								v_a_filter = _mm_shuffle_epi8(v_a, a_mask);
+								v_a1 = _mm_loadu_si128((__m128i *) &A[i_a]);
+								v_a1_filter = _mm_shuffle_epi8(v_a1, a_mask);
+								v_a2 = _mm_loadu_si128((__m128i *) &A[i_a + 4]);
+								v_a2_filter = _mm_shuffle_epi8(v_a2, a_mask);
+
 							}
 							else {
 								break;
 							}
 						}
 						if (a_max >= b_max) {
-							i_b += 4;
+							i_b += 8;
 							if (i_b < st_b) {
-								v_b = _mm_loadu_si128((__m128i *) &B[i_b]);
-								v_b_filter = _mm_shuffle_epi8(v_b, b_mask);
+								v_b1 = _mm_loadu_si128((__m128i *) &B[i_b]);
+								v_b1_filter = _mm_shuffle_epi8(v_b1, b_mask);
+								v_b2 = _mm_loadu_si128((__m128i *) &B[i_b + 4]);
+								v_b2_filter = _mm_shuffle_epi8(v_b2, b_mask);
+
 							}
 							else {
 								break;
 							}
 						}
 					} else {
-
-						// TODO: Any way to figure how to do this without having to copy registers?
-						// If we can, that would free up more registers when we implement unrolling.
-						__m128i v_as = v_a;
-						__m128i v_bs = v_b;
-
-						//[ compute mask of common elements
+						int m1 =_mm_movemask_epi8(v_c1);
+						int m2 =_mm_movemask_epi8(v_c2);
 						const uint32_t cyclic_shift = _MM_SHUFFLE(0, 3, 2, 1);
-						__m128i cmp_mask1 = _mm_cmpeq_epi32(v_as, v_bs); // pairwise comparison
-						v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift); // shuffling
-						__m128i cmp_mask2 = _mm_cmpeq_epi32(v_as, v_bs); // again...
-						v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
-						__m128i cmp_mask3 = _mm_cmpeq_epi32(v_as, v_bs); // and again...
-						v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
-						__m128i cmp_mask4 = _mm_cmpeq_epi32(v_as, v_bs); // and again.
-						__m128i cmp_mask = _mm_or_si128(_mm_or_si128(cmp_mask1, cmp_mask2),
-							_mm_or_si128(cmp_mask3, cmp_mask4)); // OR-ing of comparison masks
-						// convert the 128-bit mask to the 4-bit mask
-						const int mask = _mm_movemask_ps(_mm_castsi128_ps(cmp_mask));
-						//]
+						if(m1) {
+							__m128i cmp_mask1 = _mm_cmpeq_epi32(v_a1, v_b1); // pairwise comparison
+							__m128i v_bs = _mm_shuffle_epi32(v_b1, cyclic_shift); // shuffling
+							__m128i cmp_mask2 = _mm_cmpeq_epi32(v_a1, v_bs); // again...
+							v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
+							__m128i cmp_mask3 = _mm_cmpeq_epi32(v_a1, v_bs); // and again...
+							v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
+							__m128i cmp_mask4 = _mm_cmpeq_epi32(v_a1, v_bs); // and again.
+							__m128i cmp_mask = _mm_or_si128(
+									_mm_or_si128(cmp_mask1, cmp_mask2),
+									_mm_or_si128(cmp_mask3, cmp_mask4)); // OR-ing of comparison masks
+							const int mask = _mm_movemask_ps(_mm_castsi128_ps(cmp_mask));
+							const __m128i p = _mm_shuffle_epi8(v_a1, shuffle_mask[mask]);
+							_mm_storeu_si128((__m128i*)(out + i_out), p);
+							i_out += _mm_popcnt_u32(mask); // a number of elements is a weight of the mask
 
-						//[ copy out common elements
-						const __m128i p = _mm_shuffle_epi8(v_as, shuffle_mask[mask]);
-						_mm_storeu_si128((__m128i*)(out + i_out), p);
-						i_out += _mm_popcnt_u32(mask); // I am very suspicious of the idea that a look-up table can beat _mm_popcnt_u32.
-						//]
+						}
+						if(m2) {
+							__m128i cmp_mask1 = _mm_cmpeq_epi32(v_a2, v_b2); // pairwise comparison
+							__m128i v_bs = _mm_shuffle_epi32(v_b2, cyclic_shift); // shuffling
+							__m128i cmp_mask2 = _mm_cmpeq_epi32(v_a2, v_bs); // again...
+							v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
+							__m128i cmp_mask3 = _mm_cmpeq_epi32(v_a2, v_bs); // and again...
+							v_bs = _mm_shuffle_epi32(v_bs, cyclic_shift);
+							__m128i cmp_mask4 = _mm_cmpeq_epi32(v_a2, v_bs); // and again.
+							__m128i cmp_mask = _mm_or_si128(
+									_mm_or_si128(cmp_mask1, cmp_mask2),
+									_mm_or_si128(cmp_mask3, cmp_mask4)); // OR-ing of comparison masks
+							const int mask = _mm_movemask_ps(_mm_castsi128_ps(cmp_mask));
+							const __m128i p = _mm_shuffle_epi8(v_a2, shuffle_mask[mask]);
+							_mm_storeu_si128((__m128i*)(out + i_out), p);
+							i_out += _mm_popcnt_u32(mask); // a number of elements is a weight of the mask
+
+						}
 
 						goto advance;
 					}
