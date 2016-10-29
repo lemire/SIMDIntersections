@@ -1,10 +1,12 @@
 SIMDIntersections
 =================
 
-Vectorized intersections
+Vectorized intersections : research code.
 
 Usage: 
 
+```bash
 $ make
-$ ./testintersection -n -s natemedium,natedanmedium -r 50
+$ ./testintersection 
+```
 
