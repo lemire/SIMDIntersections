@@ -3,10 +3,11 @@ SIMDIntersections
 
 Vectorized intersections : research code.
 
-Usage: 
+Usage:
 
 ```bash
 $ make
-$ ./testintersection 
+$ ./unit
+$ ./benchintersection
+$ ./realintersection
 ```
-

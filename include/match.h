@@ -64,6 +64,13 @@ size_t V1
  const uint32_t *freq, size_t lenFreq,
  uint32_t *matchOut);
 
+#ifdef __AVX2__
+size_t V1AVX
+(const uint32_t *rare, size_t lenRare,
+ const uint32_t *freq, size_t lenFreq,
+ uint32_t *matchOut);
+#endif
+
 size_t match_v4_f2_p0
 (const uint32_t *rare, size_t lenRare,
  const uint32_t *freq, size_t lenFreq,

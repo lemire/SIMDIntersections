@@ -25,6 +25,9 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "inoue" ] = SIMDIntersectWithPrefilter;
     schemes[ "lemireinoue" ] = lemireSIMDIntersectWithPrefilter;
     schemes[ "V1" ] = V1;
+#ifdef __AVX2__
+    schemes[ "V1AVX" ] = V1AVX;
+#endif
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
     schemes[ "f8p0" ] = match_v4_f8_p0;
@@ -53,8 +56,14 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "scalar1sgalloping" ] =  onesidedgallopingintersection;
     schemes[ "v1" ] =  v1;
     schemes[ "v3" ] =  v3;
+#ifdef __AVX2__
+    schemes[ "v3avx2" ] =  v3avx2;
+#endif
 
     schemes[ "simdgalloping" ] =  SIMDgalloping;
+#ifdef __AVX2__
+    schemes[ "simdgalloping_avx2" ] =  SIMDgalloping_avx2;
+#endif
     schemes[ "simdgalloping2" ] =  SIMDgalloping2;
     schemes[ "hssimd" ] =  highlyscalablewordpresscom::intersect_SIMD;
     schemes[ "hssimddan" ] =  highlyscalablewordpresscom::dan_intersect_SIMD;
