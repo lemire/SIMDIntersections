@@ -11,3 +11,7 @@ $ ./unit
 $ ./benchintersection
 $ ./realintersection
 ```
+
+## Further reading
+
+- Daniel Lemire, Nathan Kurz, Leonid Boytsov, SIMD Compression and the Intersection of Sorted Integers, Software: Practice and Experience 46 (6), 2016.  https://arxiv.org/abs/1401.6399
