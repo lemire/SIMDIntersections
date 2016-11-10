@@ -15,6 +15,7 @@
 #include "match.h"
 #include "thomaswu.h"
 #include "inoueetal.h"
+#include "tetzank.h"
 
 
 
@@ -27,6 +28,7 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
     schemes[ "V1" ] = V1;
 #ifdef __AVX2__
     schemes[ "V1AVX" ] = V1AVX;
+    schemes["tetzankshuffle"] = tetzank_intersect_vector_avx2;
 #endif
     schemes[ "f2p0" ] = match_v4_f2_p0;
     schemes[ "f4p0" ] = match_v4_f4_p0;
@@ -93,7 +95,9 @@ std::map<std::string,intersectionfunction> realinitializefactory() {
 std::map<std::string,cardinalityintersectionfunction> initializefactory() {
     std::map<std::string,cardinalityintersectionfunction> schemes;
     schemes[ "@hybriddan" ] =  danielshybridintersectioncardinality;
-
+#ifdef __AVX2__
+    schemes["tetzankshuffle"] = tetzank_intersect_vector_avx2_count;
+#endif
     schemes[ "widevector" ] =  widevector_cardinality_intersect;
     schemes[ "widevectorleo" ] =  leowidevector_cardinality_intersect;
 
