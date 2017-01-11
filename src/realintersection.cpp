@@ -22,7 +22,7 @@ void printusage() {
 
 int main(int argc, char **argv) {
     size_t howmany = 0;
-    bool natemode = false;
+    bool natemode = false; // left undocumented by design, use at your own risk
     bool safe = true;
     size_t loop = 1000;
     uint32_t S = 12;
