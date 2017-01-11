@@ -8,6 +8,7 @@
 #define VECLEN (sizeof(VEC)/sizeof(uint32_t))
 #define VECMAX (VECLEN - 1)
 
+// designed by Nathan Kurz ("Nate")
 size_t nate_count_scalar(const uint32_t *A, const size_t lenA,
         const uint32_t *B, const size_t lenB) {
 
@@ -39,6 +40,7 @@ size_t nate_count_scalar(const uint32_t *A, const size_t lenA,
     return count; // NOTREACHED
 }
 
+// designed by Nathan Kurz ("Nate")
 size_t nate_scalar(const uint32_t *A, const size_t lenA,
         const uint32_t *B, const size_t lenB, uint32_t * out) {
     const uint32_t * const initout(out);
@@ -105,7 +107,7 @@ size_t nate_scalarwithoutgoto(const uint32_t *A, const size_t lenA,
     return (out - initout); // NOTREACHED
 }
 
-
+// designed by Nathan Kurz ("Nate")
 size_t nate_count_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq) {
 
@@ -645,7 +647,7 @@ size_t danfar_medium_mov(const uint32_t *rare, const size_t lenRare,
             stopFreq + freqspace - freq, rare, stopRare + rarespace - rare, out);
 }
 
-
+// designed by Daniel Lemire ("Dan")
 size_t danfarfar_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
@@ -760,6 +762,7 @@ size_t v3(const uint32_t *rare, const size_t lenRare,
 #ifdef __AVX2__
 #include <immintrin.h>
 
+// designed by Daniel Lemire ("Dan")
 size_t danfarfar_medium_avx2(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq, uint32_t * out) {
     if (lenFreq == 0 || lenRare == 0)
@@ -871,7 +874,7 @@ size_t v3avx2(const uint32_t *rare, const size_t lenRare,
 }
 #endif
 
-
+// designed by Daniel Lemire ("Dan")
 size_t danfarfine_count_medium(const uint32_t *rare, const size_t lenRare,
         const uint32_t *freq, const size_t lenFreq) {
     size_t count = 0;
