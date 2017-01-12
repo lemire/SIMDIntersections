@@ -6,4 +6,3 @@ branches:
     - master
 
 script: make unit && ./unit
--
