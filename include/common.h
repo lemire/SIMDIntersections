@@ -41,7 +41,15 @@
 //#include <tr1/memory>
 //#include <tr1/unordered_set>
 #include <unordered_set>
-
+#include <functional>
 #include <vector>
+
+#define _LIKELY(x) __builtin_expect(!!(x), 1)
+#define _UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define _NOINLINE __attribute__((noinline))
+#define _ALWAYSINLINE __attribute__((always_inline))
+typedef std::set<std::vector<uint32_t>,
+		std::function<
+				bool(const std::vector<uint32_t>&, const std::vector<uint32_t>&)>>mySet;
 
 #endif /* COMMON_H_ */
