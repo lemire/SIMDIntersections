@@ -1,0 +1,10 @@
+language: c++
+sudo: false
+compiler:
+  - clang++
+
+branches:
+  only:
+    - master
+
+script: make unit && ./unit

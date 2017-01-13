@@ -1,5 +1,6 @@
 SIMDIntersections
 =================
+[![Build Status](https://travis-ci.org/lemire/SIMDIntersections.png)](https://travis-ci.org/lemire/SIMDIntersections)
 
 Vectorized intersections : research code.
 
