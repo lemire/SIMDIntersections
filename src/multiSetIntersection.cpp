@@ -32,7 +32,7 @@ void msis::small_vs_small(const mySet &sets, std::vector<uint32_t> &out) {
 	for (; it != sets.end(); it++) {
 		// here we can change the intersection function to any regular scalar
 		// or vector pair-set intersection algorithms.
-		size_t inter_length = tetzank_intersect_vector_avx2(intersection.data(),
+		size_t inter_length = BSintersection(intersection.data(),
 				intersection.size(), it->data(), it->size(),
 				intersection.data());
 		intersection.resize(inter_length);
@@ -43,6 +43,7 @@ void msis::small_vs_small(const mySet &sets, std::vector<uint32_t> &out) {
 // without swap
 void msis::set_vs_set(const mySet &sets, std::vector<uint32_t> &out) {
 	size_t count = 0, currentset = 0;
+	out.resize(sets.begin()->size());
 
 	mySet::iterator it = sets.begin();
 	vector<uint32_t> candidate(std::move(*it++));
@@ -77,6 +78,7 @@ void msis::set_vs_set(const mySet &sets, std::vector<uint32_t> &out) {
 
 void msis::swapping_set_vs_set(const mySet& sets, vector<uint32_t>& out) {
 	std::vector<std::pair<mySet::iterator, size_t /*current index*/>> vsets;
+	out.resize(sets.begin()->size());
 
 	auto sort_remaining = [&] {std::sort(vsets.begin(), vsets.end(),
 				[](const std::pair<mySet::iterator, size_t>& lhs,
@@ -125,6 +127,7 @@ void msis::swapping_set_vs_set(const mySet& sets, vector<uint32_t>& out) {
 }
 
 void msis::adaptive(const mySet &sets, std::vector<uint32_t> &out) {
+	out.resize(sets.begin()->size());
 	auto value = out.begin();
 	*value = sets.begin()->at(0);
 	size_t count = 0, spansize = 1, elimset = 0, currentset = 1;
@@ -184,6 +187,7 @@ void msis::adaptive(const mySet &sets, std::vector<uint32_t> &out) {
 }
 
 void msis::sequential(const mySet &sets, std::vector<uint32_t> &out) {
+	out.resize(sets.begin()->size());
 	auto value = out.begin();
 	*value = sets.begin()->at(0);
 	size_t count = 0, elimset = 0, currentset = 1;
@@ -232,6 +236,7 @@ void msis::sequential(const mySet &sets, std::vector<uint32_t> &out) {
 
 void msis::small_adaptive(const mySet &sets, std::vector<uint32_t> &out) {
 	std::vector<std::pair<mySet::iterator, size_t /*current index*/>> vsets;
+	out.resize(sets.begin()->size());
 
 	auto sort_remaining = [&] {std::sort(vsets.begin(), vsets.end(),
 				[](const std::pair<mySet::iterator, size_t>& lhs,
@@ -303,6 +308,7 @@ void msis::small_adaptive(const mySet &sets, std::vector<uint32_t> &out) {
 }
 
 void msis::max(const mySet &sets, std::vector<uint32_t> &out) {
+	out.resize(sets.begin()->size());
 	auto value = out.begin();
 	*value = sets.begin()->at(0);
 	size_t count = 0, intersect_count = 0, elimset = 0, currentset = 1;
@@ -435,7 +441,7 @@ int main() {
 	ClusteredDataGenerator cdg;
 	WallClockTimer timer;
 	mySet MultiSets;
-	vector<uint32_t> out(minlength * 2);
+	vector<uint32_t> out;
 
 #ifdef __INTEL_COMPILER
 // Intel's support for C++ sucks
@@ -495,9 +501,9 @@ int main() {
 	for (float ir : intersectionsratios) {
 		printf("intersection ratio: \e[32m%3.0f%%\e[0m\n", ir * 100);
 		for (uint32_t sr : sizeratios) {
-			printf("    size ratio: \e[32m%4d\e[0m\n", sr);
+			printf("  size ratio: \e[32m%4d\e[0m\n", sr);
 			for (int i = 3; i < 11; i++) {
-				printf("        num: \e[32m%2d\e[0m    ", i);
+				printf("    num: \e[32m%2d\e[0m  ", i);
 				// generate sets
 				MultiSets = genMultipleSets(cdg, minlength, i, 1U << MaxBit,
 						static_cast<float>(sr), ir);
@@ -518,8 +524,7 @@ int main() {
 					small_vs_small(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("small_vs_small: \e[31m%6.0f\e[0m    ",
+				printf("small_vs_small: \e[31m%6.0f\e[0m  ",
 						(double) time / TIMES);
 
 				/*********************2************************/
@@ -530,9 +535,7 @@ int main() {
 					set_vs_set(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("set_vs_set: \e[31m%6.0f\e[0m    ",
-						(double) time / TIMES);
+				printf("set_vs_set: \e[31m%6.0f\e[0m  ", (double) time / TIMES);
 
 				/*********************3************************/
 				/************swapping_set_vs_set***************/
@@ -542,8 +545,7 @@ int main() {
 					swapping_set_vs_set(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("swapping_set_vs_set: \e[31m%6.0f\e[0m    ",
+				printf("swapping_set_vs_set: \e[31m%6.0f\e[0m  ",
 						(double) time / TIMES);
 
 				/*********************4************************/
@@ -554,8 +556,7 @@ int main() {
 					adaptive(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("adaptive: \e[31m%6.0f\e[0m    ", (double) time / TIMES);
+				printf("adaptive: \e[31m%6.0f\e[0m  ", (double) time / TIMES);
 
 				/*********************5************************/
 				/*****************sequential*******************/
@@ -565,9 +566,7 @@ int main() {
 					sequential(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("sequential: \e[31m%6.0f\e[0m    ",
-						(double) time / TIMES);
+				printf("sequential: \e[31m%6.0f\e[0m  ", (double) time / TIMES);
 
 				/*********************6************************/
 				/***************small_adaptive*****************/
@@ -577,8 +576,7 @@ int main() {
 					small_adaptive(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("small_adaptive: \e[31m%6.0f\e[0m    ",
+				printf("small_adaptive: \e[31m%6.0f\e[0m  ",
 						(double) time / TIMES);
 
 				/*********************7************************/
@@ -589,8 +587,7 @@ int main() {
 					max(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
-				printf("max: \e[31m%6.0f\e[0m    ", (double) time / TIMES);
+				printf("max: \e[31m%6.0f\e[0m  ", (double) time / TIMES);
 
 				/*********************8************************/
 				/*****************BaezaYates*******************/
@@ -600,14 +597,13 @@ int main() {
 					BaezaYates(MultiSets, out);
 				}
 				time = timer.split();
-				out.resize(minlength * 2);
 				printf("BaezaYates: \e[31m%6.0f\e[0m\n", (double) time / TIMES);
 
-//				if (out != final_intersection) {
-//					std::cerr << "bad result!\n" << std::endl;
-//					return 1;
-//				} else
-//					printf("good!\n");
+				if (out != final_intersection) {
+					std::cerr << "bad result!\n" << std::endl;
+					return 1;
+				} else
+					printf("good!\n");
 				fflush(stdout);
 			}
 		}
